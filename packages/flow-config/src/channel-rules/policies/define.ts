@@ -1,6 +1,7 @@
 import type { ChannelType } from "@chatbotx.io/utils/channel"
 import type { ButtonStyle, ButtonType } from "../../steps/button"
 import { type StepType, stepTypes } from "../../steps/step-action"
+import type { ChannelPostShareCapability } from "../channel-post-share-rules"
 import type { ProductMessageCapability } from "../product-message-rules"
 
 export const CHANNEL_POLICY_VERSION = 4
@@ -121,6 +122,7 @@ const stepExecutionKinds = {
   whatsappFlow: "channel",
   sendProducts: "channel",
   sendCollection: "channel",
+  sendChannelPost: "channel",
   whatsappLocation: "channel",
   sendMessengerTemplateMessage: "channel",
   facebookCustomAudience: "worker",
@@ -137,6 +139,7 @@ export const channelDeliverableStepTypes = [
   stepTypes.enum.sendAudio,
   stepTypes.enum.sendCard,
   stepTypes.enum.sendCarousel,
+  stepTypes.enum.sendChannelPost,
   stepTypes.enum.sendCollection,
   stepTypes.enum.sendFile,
   stepTypes.enum.sendGif,
@@ -164,6 +167,7 @@ export type ChannelDeliverableStepType =
  * from `channelDeliverableStepTypes`.
  */
 const channelOptInStepTypes: readonly ChannelDeliverableStepType[] = [
+  stepTypes.enum.sendChannelPost,
   stepTypes.enum.sendProducts,
   stepTypes.enum.sendCollection,
 ]
@@ -220,6 +224,8 @@ export type ChannelFlowPolicy = {
   steps: Record<StepType, StepSupport>
   /** Present only on channels that can render `sendProducts`. */
   productMessages?: ProductMessageCapability
+  /** Present only on channels that can render `sendChannelPost`. */
+  channelPostShare?: ChannelPostShareCapability
 }
 
 type ChannelFlowPolicyDefinition = {
@@ -228,6 +234,7 @@ type ChannelFlowPolicyDefinition = {
   nativeButtonTypes?: readonly ButtonType[]
   buttonStyles?: ButtonStyleSupport
   productMessages?: ProductMessageCapability
+  channelPostShare?: ChannelPostShareCapability
   supported?: readonly ChannelDeliverableStepType[]
   noButtons?: readonly ChannelDeliverableStepType[]
 }
@@ -264,6 +271,9 @@ export const defineChannelFlowPolicy = (
     steps,
     ...(definition.productMessages
       ? { productMessages: definition.productMessages }
+      : {}),
+    ...(definition.channelPostShare
+      ? { channelPostShare: definition.channelPostShare }
       : {}),
   }
 }

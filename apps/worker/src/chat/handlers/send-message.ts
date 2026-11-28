@@ -73,6 +73,7 @@ import {
   allIntegrations,
   resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
+import { assertChannelPostStillSendable } from "../utils/channel-post-send-check"
 import {
   shouldSuppressRetryableChannelError,
   willSendRetry,
@@ -422,6 +423,15 @@ export async function sendMessageToChannel(
         message: handlerMessage,
         conversation,
         contactInboxId: contactInbox.id,
+      })
+    }
+
+    // A shared post may have been removed since the send was queued.
+    if (!isComment) {
+      await assertChannelPostStillSendable({
+        contentAttributes: message.contentAttributes,
+        contactInbox,
+        workspaceId: conversation.workspaceId,
       })
     }
 

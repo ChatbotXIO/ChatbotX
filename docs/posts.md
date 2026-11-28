@@ -594,6 +594,33 @@ post, to chosen posts, or only to posts published from Posts (the post's stored 
 only (the channels whose comments are tracked per post); Threads and TikTok fire nothing. Details,
 dedupe and loop protection: [`trigger-actions.md`](trigger-actions.md#post-comment-events).
 
+## Sending a post
+
+An agent can send one of the business's own posts into a conversation, from the composer (the post button), through the public API (`channelPost` on `messages.create` and `contacts.sendMessage`) and from a flow (`sendChannelPost` step). One service, `channelPostShareService` (`packages/business/src/channel-post/share.service.ts`), decides and builds it for all three, and the worker asks it again when the queued send runs.
+
+**Capability, not channel names.** A channel declares `channelPostShare: { mode, contentTypes }` in its flow policy (`packages/flow-config/src/channel-rules/policies/`); a channel without it cannot send posts, and the composer button, the flow menu and the API all follow the policy. Two modes (`channelPostShareModes`, `packages/utils/src/channel-post.ts`):
+
+| Mode | Sends | Channel today | Post kinds |
+|---|---|---|---|
+| `nativeMedia` | The platform's post card: `message.attachment = { type: "MEDIA_SHARE", payload: { id: <the post's platform id> } }` (both Instagram logins; the business must own the post) | Instagram (Instagram Login and Facebook Login) | photo, video, reel, carousel |
+| `textLink` | A text message: the caption's first line, a line break, the permalink (the permalink alone when there is no caption) | Messenger (no documented post share) | text, photo, video, reel, carousel, link |
+
+Stories and lives are never sent (ephemeral). The text is cut to the channel's text limit (`limits.text`, counted like every text step) at a grapheme boundary, so an emoji is never split, and ends with an ellipsis; the link is never cut, and a link longer than the limit is refused.
+
+**One rule says whether a post can be sent** (`getChannelPostShareability(policy, post)`, `packages/flow-config/src/channel-rules/channel-post-share-rules.ts`): `typeNotShareable`, `linkUnavailable` (a text-link channel and no permalink), `linkTooLong`, `shareUnsupported`. The pickers show a post the rule refuses as disabled with the reason; `channelPostManagement.list` takes `shareableOnly=true` to list only what the channels can send (SQL: the channel's content types, and a non-blank permalink for `textLink`; posts without comments are included unless `hasComments` is set).
+
+**Refusals** are `channelPostShareRefused` (422, `data.reason`): `channelPostNotFound` (missing, or removed by the platform), `channelPostInboxMismatch` (the post belongs to another inbox than the conversation's), `channelPostTypeNotShareable`, `channelPostShareUnsupported`, `channelPostLinkUnavailable`, `channelPostLinkTooLong`. A comment reply or a private reply cannot carry a post (`validation`).
+
+**Message.** The row stores `contentAttributes { type: "channel_post", shareMode, channelPostId, externalPostId, permalink, thumbnail, caption }` (a snapshot, so the inbox card survives later edits) and, for `textLink`, the built text in `content`; `nativeMedia` stores no text. The inbox renders it as a post card. It is sent through the ordinary `sendChannelMessage` job, so `clientId`, the failed-outgoing rules (`docs/failed-outgoing-messages.md`) and realtime are unchanged, and no outbound keyword automation runs on the built text.
+
+**Revalidation.** The worker checks the post again right before dispatch (`assertChannelPostStillSendable`): a post removed or moved since the send was queued fails the send as a permanent `PAYLOAD_INVALID` error (never retried) and is settled like any failed send (a member's Inbox message keeps its error; every other is removed and logged in the Error Log).
+
+**Flow step `sendChannelPost`** (content `{ channelPostId }`). The worker resolves the post once, before the message row exists (`send-flow-step.ts`). `nativeMedia` hands the channel the authored step plus `externalPostId`; `textLink` hands it a valid `sendText` step with the same step id and `buttons: []`, so the channel needs no code of its own (Messenger's `sendText` conversion sends it, and honors the comment anchor like any text). Analytics keep the authored step id. A post that cannot be resolved fails the step and is written to the Error Log. A run on another inbox than the post's fails with `channelPostInboxMismatch`. Authoring DSL: `{ "type": "sendChannelPost", "channelPostId": "..." }` with the flow `channel` set to `instagram` or `messenger`.
+
+**Templates.** A post never travels to another workspace: `channelPost` is a `strip` reference kind, so an installed flow keeps the step with no post picked and publish refuses it until someone picks one (`sendChannelPostPostRequired`).
+
+**Not verified.** Messenger has no documented post share, so it sends the text link. A post share with a comment-anchored private reply on Instagram has not been tried against a real account.
+
 ## Post analytics
 
 Growth over time of a post's platform counts (comments, reactions, shares, engagement = their sum, views). The platforms only give lifetime totals, so the daily growth comes from our own snapshots, taken by the post sync.

@@ -155,7 +155,7 @@
     "view": "Visa",
     "viewAnalytics": "Visa analys",
     "wait": "Vänta",
-    "loadMore": "Load more",
+    "loadMore": "Ladda fler",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -1605,6 +1605,28 @@
     "title": "Annonshistorik",
     "empty": "Inga annonsklick har registrerats för den här kontakten ännu."
   },
+  "contactTouchpoints": {
+    "title": "Anmäld via",
+    "empty": "Inga deltaganden registrerade för den här kontakten ännu.",
+    "kinds": {
+      "postComment": "Inläggskommentar",
+      "form": "Formulär"
+    },
+    "details": {
+      "played": "{count, plural, one {# spel} other {# spel}}",
+      "lastPrize": "Senaste pris: {prize}",
+      "score": "Poäng: {score}",
+      "completed": "Slutförd",
+      "inProgress": "Pågår",
+      "submissions": "{count, plural, one {# inskick} other {# inskick}}",
+      "pollChoice": "Röstade på {name}",
+      "leads": "{count, plural, one {# lead} other {# leads}}",
+      "requests": "{count, plural, one {# förfrågan} other {# förfrågningar}}",
+      "replies": "{count, plural, one {# svar} other {# svar}}",
+      "visits": "{count, plural, one {# besök} other {# besök}}",
+      "clicks": "{count, plural, one {# klick} other {# klick}}"
+    }
+  },
   "contactBroadcasts": {
     "empty": "Inga utskick har skickats till den här kontakten ännu.",
     "searchPlaceholder": "Sök på namn eller ID"
@@ -2695,6 +2717,20 @@
       "externalId": "Externt ID",
       "channelId": "Kanal-ID",
       "lineUserId": "LINE User ID"
+    },
+    "channelProfile": {
+      "followsBusiness": "Följer företaget",
+      "followerCount": "Följare",
+      "yes": "Ja",
+      "no": "Nej",
+      "messagingWindow": {
+        "label": "Meddelandefönster",
+        "open": "Öppet • {time}",
+        "humanAgentOpen": "Fönster för mänsklig agent • {time}",
+        "closed": "Stängt",
+        "tooltip": "Du kan svara i 24 timmar efter kundens senaste meddelande.",
+        "tooltipHumanAgent": "Du kan svara i 24 timmar efter kundens senaste meddelande. Därefter kan en mänsklig agent fortfarande svara i upp till 7 dagar."
+      }
     },
     "contactNote": {
       "label": "Kontaktanteckning"
@@ -4299,7 +4335,8 @@
       "moreOptions": "Fler alternativ",
       "findPlacesNearMe": "Hitta platser nära mig",
       "callPhoneNumber": "Ring ett telefonnummer",
-      "copyText": "Kopiera text"
+      "copyText": "Kopiera text",
+      "sendChannelPost": "Skicka ett inlägg"
     },
     "externalRequest": {
       "errors": {
@@ -4688,6 +4725,32 @@
       "limitHint": "Upp till {max} tecken när variablerna har fyllts i.",
       "fallbackHint": "I kanaler som inte kan kopiera text får kontakten den här texten som svar i stället.",
       "viewerTitle": "Kopierar den här texten"
+    },
+    "sendChannelPost": {
+      "title": "Skicka ett inlägg",
+      "description": "Välj ett av dina inlägg att skicka till kunden.",
+      "inbox": "Inkorg",
+      "inboxPlaceholder": "Välj en inkorg",
+      "noInboxes": "Anslut en Instagram- eller Messenger-inkorg för att skicka inlägg.",
+      "search": "Sök inlägg",
+      "empty": "Inga inlägg för den här inkorgen ännu.",
+      "loadError": "Det gick inte att läsa in inläggen.",
+      "retry": "Försök igen",
+      "loadMore": "Visa fler",
+      "select": "Välj ett inlägg",
+      "unavailable": "Det här inlägget är inte längre tillgängligt.",
+      "noCaption": "Ingen bildtext",
+      "openPost": "Öppna inlägget",
+      "sendFailed": "Det gick inte att skicka inlägget.",
+      "reasons": {
+        "typeNotShareable": "Den här typen av inlägg kan inte skickas här",
+        "linkUnavailable": "Det här inlägget har ingen länk att skicka",
+        "linkTooLong": "Länken är för lång för att skickas",
+        "shareUnsupported": "Den här kanalen kan inte skicka inlägg",
+        "postNotFound": "Det här inlägget finns inte längre",
+        "inboxMismatch": "Det här inlägget tillhör en annan inkorg"
+      },
+      "noMatch": "Inga inlägg matchar din sökning."
     }
   },
   "folders": {
@@ -5832,6 +5895,7 @@
     "selectConversationDescription": "Välj en konversation i listan till vänster för att visa meddelanden och börja chatta.",
     "selectConversationTitle": "Välj en konversation",
     "sentAttachments": "Skickade {count, plural, one {1 bilaga} other {# bilagor}}",
+    "sentPost": "Skickade ett inlägg",
     "signOutConfirmation": "Är du säker på att du vill logga ut?",
     "success": "Lyckades",
     "syncedSuccessfully": "Synkroniserat",
@@ -5938,7 +6002,8 @@
       "continue": "Fortsätt skicka",
       "discard": "Kasta meddelanden i kön",
       "dismiss": "Avfärda"
-    }
+    },
+    "sendChannelPostPostRequired": "Välj ett inlägg att skicka."
   },
   "messenger": {
     "botProfile": "Botprofil",
@@ -7615,6 +7680,7 @@
     "locked": {
       "flowBanner": "Det här flödet installerades från en skrivskyddad mall. Du kan titta på det men inte redigera det.",
       "badge": "Endast visning",
+      "tagEditorBanner": "Detta installerades från en skrivskyddad mall. Bara färgen kan ändras.",
       "editorBanner": "Den här installerades från en mall med endast visning. Du kan titta på den men inte redigera den.",
       "badgeHint": "Installerad från en mall med endast visning"
     },
@@ -12613,7 +12679,36 @@
     "label": "Vem som har svarat i den här konversationen",
     "unnamedMember": "Medlem",
     "loadMoreFailed": "Det gick inte att läsa in fler medlemmar",
-    "lastMessageBy": "Senaste meddelandet från {name}"
+    "lastMessageBy": "Senaste meddelandet från {name}",
+    "overflowCount": "+{overflow}"
+  },
+  "tagColor": {
+    "label": "Färg",
+    "choose": "Välj en färg",
+    "presetLabel": "Välj färgen {color}",
+    "previewLabel": "Förhandsvisning av temafärg",
+    "previewPlaceholder": "Taggnamn"
+  },
+  "composerTags": {
+    "title": "Taggar",
+    "searchLabel": "Sök taggar",
+    "searchPlaceholder": "Sök taggar",
+    "expand": "Visa alla",
+    "collapse": "Visa färre",
+    "loadMore": "Ladda fler",
+    "loadError": "Det gick inte att läsa in taggar.",
+    "empty": "Inga taggar än. Skapa taggar på sidan Taggar.",
+    "noMatch": "Inga taggar matchar sökningen.",
+    "addFailed": "Det gick inte att lägga till taggen \"{name}\".",
+    "removeFailed": "Det gick inte att ta bort taggen \"{name}\".",
+    "refreshFailed": "Det gick inte att uppdatera taggarna. Ladda om för att se de senaste.",
+    "disabledNoContact": "Den här konversationen har ingen kontakt att tagga.",
+    "disabledBlocked": "Den här kontakten är blockerad, så dess taggar kan inte ändras.",
+    "disabledNoAccess": "Du har inte behörighet att ändra den här kontaktens taggar."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {# tagg till} other {# taggar till}}"
   },
   "posts": {
     "title": "Inlägg",

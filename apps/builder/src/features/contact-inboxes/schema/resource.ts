@@ -14,6 +14,11 @@ export const contactInboxResource = createSelectSchema(contactInboxModel, {
   // sourceUserId/sourceUsername migration lack these keys entirely.
   sourceUserId: z.string().nullish(),
   sourceUsername: z.string().nullish(),
+  // Instagram profile facts (IG User Profile API). Nullish: null means the
+  // platform never reported the value, and payloads serialized before these
+  // were exposed lack the keys entirely.
+  followsBusiness: z.boolean().nullish(),
+  followerCount: z.number().int().nullish(),
 })
   .pick({
     id: true,
@@ -24,6 +29,8 @@ export const contactInboxResource = createSelectSchema(contactInboxModel, {
     sourceId: true,
     sourceUserId: true,
     sourceUsername: true,
+    followsBusiness: true,
+    followerCount: true,
     language: true,
     lastIncomingMessageAt: true,
     contactLastReadAt: true,

@@ -78,6 +78,7 @@ const mockLikeIsLatest = vi.hoisted(() => vi.fn())
 const mockChargeCommentActionOnce = vi.hoisted(() => vi.fn())
 const mockSerializeLike = vi.hoisted(() => vi.fn())
 const mockHasRoom = vi.hoisted(() => vi.fn())
+const mockResolveChannelPost = vi.hoisted(() => vi.fn())
 
 vi.mock("@chatbotx.io/business", () => ({
   chargeCommentActionOnce: mockChargeCommentActionOnce,
@@ -86,6 +87,7 @@ vi.mock("@chatbotx.io/business", () => ({
     serialize: mockSerializeLike,
   },
   messageUsageService: { hasRoom: mockHasRoom },
+  channelPostShareService: { resolveForSend: mockResolveChannelPost },
   contactActivityService: { recordDelivered: mockRecordDelivered },
   contactInboxService: {
     findByIdForWorkspace: mockFindContactInboxById,
@@ -2894,6 +2896,115 @@ describe("chat send-message handlers", () => {
         hidden: false,
         liked: true,
       })
+    })
+  })
+
+  describe("a shared post", () => {
+    const postMessage = (overrides: Record<string, unknown> = {}) => ({
+      id: "msg-post",
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      contentType: "text",
+      messageType: "outgoing",
+      senderType: "user",
+      text: "Summer sale\nhttps://example.com/p/1",
+      createdAt: new Date("2026-09-15T06:11:52.105Z"),
+      contentAttributes: {
+        type: "channel_post",
+        shareMode: "textLink",
+        channelPostId: "post-1",
+        externalPostId: "ext-1",
+        permalink: "https://example.com/p/1",
+        thumbnail: null,
+        caption: "Summer sale",
+      },
+      ...overrides,
+    })
+    const send = (
+      overrides: Record<string, unknown> = {},
+      sendFrom: "inbox" | "api" = "inbox",
+    ) =>
+      sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: postMessage(overrides) as never,
+        sendFrom,
+      })
+
+    beforeEach(() => {
+      mockResolveChannelPost.mockResolvedValue({})
+    })
+
+    test("is re-checked against the post and the inbox right before it is dispatched", async () => {
+      await send()
+
+      expect(mockResolveChannelPost).toHaveBeenCalledWith({
+        workspaceId: "ws-1",
+        inboxId: "inbox-1",
+        channel: "messenger",
+        channelPostId: "post-1",
+      })
+      expect(mockResolveChannelPost.mock.invocationCallOrder[0]).toBeLessThan(
+        mockRunChannelHandler.mock.invocationCallOrder[0] ?? 0,
+      )
+      expect(mockRunChannelHandler).toHaveBeenCalledTimes(1)
+    })
+
+    test("a post removed since the send was queued is never dispatched, is not retried, and a member's message keeps its error", async () => {
+      const { ChannelPostShareRefusedError } = await import(
+        "@chatbotx.io/business/errors"
+      )
+      mockResolveChannelPost.mockRejectedValue(
+        new ChannelPostShareRefusedError("channelPostNotFound"),
+      )
+
+      const result = await send({}, "inbox")
+
+      expect(mockRunChannelHandler).not.toHaveBeenCalled()
+      expect(result).toEqual({ messageIds: [], sentCount: 0 })
+      const failed = mockEmit.mock.calls.filter(
+        ([type]) => type === "message:failed",
+      )
+      expect(failed).toHaveLength(1)
+      expect(failed[0]?.[1]).toMatchObject({ willRetry: false })
+      expect(mockUpdateSendError).toHaveBeenCalled()
+    })
+
+    test("a post removed since the send was queued is removed, not kept, when the send did not come from the Inbox", async () => {
+      const { ChannelPostShareRefusedError } = await import(
+        "@chatbotx.io/business/errors"
+      )
+      mockResolveChannelPost.mockRejectedValue(
+        new ChannelPostShareRefusedError("channelPostNotFound"),
+      )
+
+      await send({}, "api")
+
+      expect(mockRunChannelHandler).not.toHaveBeenCalled()
+      expect(mockUpdateSendError).not.toHaveBeenCalled()
+    })
+
+    test("a provider rejection of a post share goes through the existing failure path", async () => {
+      mockRunChannelHandler.mockRejectedValueOnce(
+        new ChannelError("rejected", ChannelErrorCategory.PAYLOAD_INVALID, {
+          code: 100,
+        }),
+      )
+
+      await send()
+
+      const failed = mockEmit.mock.calls.filter(
+        ([type]) => type === "message:failed",
+      )
+      expect(failed).toHaveLength(1)
+      expect(failed[0]?.[1]).toMatchObject({ willRetry: false })
+    })
+
+    test("a message that is not a post share is never looked up", async () => {
+      await send({ contentAttributes: null })
+
+      expect(mockResolveChannelPost).not.toHaveBeenCalled()
     })
   })
 })

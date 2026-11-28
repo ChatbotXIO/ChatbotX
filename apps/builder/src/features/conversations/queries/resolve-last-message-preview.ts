@@ -1,6 +1,7 @@
 import {
   getInboundOrder,
   getWhatsappCallEntity,
+  isMessageChannelPostEntity,
   resolveWhatsappCallActivityLabelKey,
   type WhatsappCallActivityLabelKey,
 } from "@chatbotx.io/sdk"
@@ -109,6 +110,17 @@ export function resolveLastMessagePreview(
 
   if (message?.text) {
     return message.text
+  }
+
+  // An Instagram (nativeMedia) post share stores no text and no attachments:
+  // fall back to the post's caption, then to a generic label.
+  const contentAttributes = message?.contentAttributes
+  if (isMessageChannelPostEntity(contentAttributes)) {
+    const firstCaptionLine = contentAttributes.caption
+      ?.split("\n")
+      .map((line) => line.trim())
+      .find((line) => line.length > 0)
+    return firstCaptionLine ?? t("messages.sentPost")
   }
 
   const attachmentCount =

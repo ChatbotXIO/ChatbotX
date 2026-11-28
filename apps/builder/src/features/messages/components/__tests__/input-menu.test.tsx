@@ -40,6 +40,20 @@ vi.mock("../send-products-trigger", () => ({
   ),
 }))
 
+vi.mock("../send-channel-post-trigger", () => ({
+  SendChannelPostDialogTrigger: (props: {
+    inboxId: string
+    bypassThreadControlLock?: boolean
+  }) => (
+    <button
+      data-bypass={String(props.bypassThreadControlLock)}
+      data-inbox={props.inboxId}
+      data-testid="send-channel-post"
+      type="button"
+    />
+  ),
+}))
+
 vi.mock("../create-appointment-trigger", () => ({
   CreateAppointmentDialogTrigger: (props: {
     inboxId: string
@@ -192,5 +206,59 @@ describe("InputMenu — create appointment", () => {
     })
 
     expect(createAppointment()).toBeNull()
+  })
+})
+
+describe("InputMenu — send a post", () => {
+  const sendPost = () =>
+    container.querySelector<HTMLElement>('[data-testid="send-channel-post"]')
+
+  test.each([
+    "instagram",
+    "messenger",
+  ])("is offered on %s, for the inbox it sends through", (channel) => {
+    render({
+      setContent: vi.fn(),
+      contactInbox: { channel, inboxId: "inbox-5" },
+      bypassThreadControlLock: true,
+    })
+
+    expect(sendPost()?.dataset).toMatchObject({
+      inbox: "inbox-5",
+      bypass: "true",
+    })
+  })
+
+  test.each([
+    "whatsapp",
+    "telegram",
+    "threads",
+    "tiktok",
+    "smtp",
+    "omnichannel",
+    "not-a-channel",
+  ])("is not offered on %s", (channel) => {
+    render({
+      setContent: vi.fn(),
+      contactInbox: { channel, inboxId: "inbox-1" },
+    })
+
+    expect(sendPost()).toBeNull()
+  })
+
+  test("is not offered before the conversation's inbox is known", () => {
+    render({ setContent: vi.fn() })
+
+    expect(sendPost()).toBeNull()
+  })
+
+  test("is not offered while replying to a post comment", () => {
+    chatState.activePost = { id: "post-1" }
+    render({
+      setContent: vi.fn(),
+      contactInbox: { channel: "instagram", inboxId: "inbox-1" },
+    })
+
+    expect(sendPost()).toBeNull()
   })
 })

@@ -3,6 +3,7 @@ import { z } from "zod"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { postTopicPrivateAPIs } from "@/features/post-topics/api/private"
 import {
+  workspaceAnyPermissionMiddleware,
   workspaceAuthorizedMidddleware,
   workspacePermissionMiddleware,
 } from "@/middlewares/auth"
@@ -29,6 +30,7 @@ import {
   listChannelPostCommentsResponse,
   listChannelPostManagementRequest,
   listChannelPostManagementResponse,
+  listPickerChannelPostsRequest,
   mergeChannelPostCommentsRequest,
   refreshChannelPostMetricsRequest,
   refreshChannelPostMetricsResponse,
@@ -43,6 +45,14 @@ import {
 const tags = ["Posts"]
 const inWorkspace = { workspaceId: z.string() }
 const base = "/workspaces/{workspaceId}"
+
+/** Who may pick a post to send: members of the inbox, the flow editor or the Posts page. */
+const PICKER_PERMISSIONS = [
+  "contacts",
+  "onlyAssignedContacts",
+  "flows",
+  "broadcast",
+] as const
 
 /**
  * A member sees phone numbers only with the `emailAndPhone` permission, read
@@ -111,6 +121,50 @@ export const channelPostManagementAPIs = {
           input.workspaceId,
           input,
         ),
+    ),
+
+  // The post picker belongs to the inbox composer and the flow editor, whose
+  // members need not hold the Posts page's `broadcast` permission. It reads
+  // only what the picker shows (the business's own posts).
+  privateListPickerChannelPostsAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: `${base}/channel-posts/picker`,
+      summary: "List the posts of an inbox for the post picker",
+      tags,
+    })
+    .input(listPickerChannelPostsRequest.extend(inWorkspace))
+    .output(listChannelPostManagementResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .use(
+      workspaceAnyPermissionMiddleware(PICKER_PERMISSIONS),
+      (input) => input.workspaceId,
+    )
+    .handler(
+      async ({ input }) =>
+        await channelPostManagementOperations.listForPicker(
+          input.workspaceId,
+          input,
+        ),
+    ),
+
+  privateGetPickerChannelPostAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: `${base}/channel-posts/picker/{id}`,
+      summary: "Get one post for the post picker",
+      tags,
+    })
+    .input(channelPostManagementIdRequest.extend(inWorkspace))
+    .output(channelPostManagementItem)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .use(
+      workspaceAnyPermissionMiddleware(PICKER_PERMISSIONS),
+      (input) => input.workspaceId,
+    )
+    .handler(
+      async ({ input }) =>
+        await channelPostManagementOperations.get(input.workspaceId, input),
     ),
 
   privateUpdateManagedChannelPostAPI: authorizedAPI

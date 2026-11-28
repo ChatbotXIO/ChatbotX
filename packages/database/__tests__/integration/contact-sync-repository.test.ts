@@ -508,7 +508,8 @@ describe.skipIf(!databaseUrl)("contact sync repositories on Postgres", () => {
         tx,
       )
 
-      expect(linked).toBe(34_000)
+      expect(linked.linked).toBe(34_000)
+      expect(linked.contactIds).toHaveLength(contactIds.length)
       expect(written).toEqual({ dropped: 0 })
       const [{ count }] = (
         await tx.execute<{ count: string }>(
@@ -1482,8 +1483,8 @@ describe.skipIf(!databaseUrl)("contact sync repositories on Postgres", () => {
           },
           tx,
         )
-      expect(await link(tagId)).toBe(1)
-      expect(await link(tagId)).toBe(0)
+      expect(await link(tagId)).toEqual({ contactIds: [contactId], linked: 1 })
+      expect(await link(tagId)).toEqual({ contactIds: [], linked: 0 })
 
       // A tag deleted while the page imports gets no stale link.
       const deletedTagId = createId()
@@ -1493,7 +1494,7 @@ describe.skipIf(!databaseUrl)("contact sync repositories on Postgres", () => {
         name: `sync-test-${deletedTagId}`,
         deletedAt: new Date(),
       })
-      expect(await link(deletedTagId)).toBe(0)
+      expect(await link(deletedTagId)).toEqual({ contactIds: [], linked: 0 })
     })
   })
 
@@ -1629,7 +1630,7 @@ describe.skipIf(!databaseUrl)("contact sync repositories on Postgres", () => {
             { contactId: keptContact, tagId: goneTag },
           ]),
       )
-      expect(linkedPastTagDelete).toBe(1)
+      expect(linkedPastTagDelete.linked).toBe(1)
       const linkedPastContactDelete = await raceWith(
         [
           {
@@ -1639,7 +1640,7 @@ describe.skipIf(!databaseUrl)("contact sync repositories on Postgres", () => {
         ],
         () => linkTagsTo([{ contactId: goneContact, tagId: keptTag }]),
       )
-      expect(linkedPastContactDelete).toBe(0)
+      expect(linkedPastContactDelete).toEqual({ contactIds: [], linked: 0 })
 
       const goneContact2 = await createContact(committed, ref)
       contactIds.push(goneContact2)

@@ -151,7 +151,7 @@
     "clone": "Klon",
     "remove": "Hapus",
     "restore": "Pulihkan",
-    "loadMore": "Load more",
+    "loadMore": "Muat lebih banyak",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -1699,6 +1699,20 @@
       "channelId": "ID Kanal",
       "lineUserId": "LINE User ID"
     },
+    "channelProfile": {
+      "followsBusiness": "Mengikuti bisnis",
+      "followerCount": "Pengikut",
+      "yes": "Ya",
+      "no": "Tidak",
+      "messagingWindow": {
+        "label": "Jendela pesan",
+        "open": "Terbuka • {time}",
+        "humanAgentOpen": "Jendela agen manusia • {time}",
+        "closed": "Tertutup",
+        "tooltip": "Balasan diizinkan selama 24 jam setelah pesan terakhir pelanggan.",
+        "tooltipHumanAgent": "Balasan diizinkan selama 24 jam setelah pesan terakhir pelanggan. Setelah itu, agen manusia masih dapat membalas hingga 7 hari."
+      }
+    },
     "flow": {
       "label": "Flow"
     },
@@ -3160,7 +3174,8 @@
       "moreOptions": "Opsi lainnya",
       "findPlacesNearMe": "Cari tempat di dekat saya",
       "callPhoneNumber": "Telepon nomor",
-      "copyText": "Salin teks"
+      "copyText": "Salin teks",
+      "sendChannelPost": "Kirim postingan"
     },
     "externalRequest": {
       "errors": {
@@ -3501,6 +3516,32 @@
       "limitHint": "Maksimal {max} karakter setelah variabel diisi.",
       "fallbackHint": "Di saluran yang tidak bisa menyalin teks, kontak menerima teks ini sebagai balasan.",
       "viewerTitle": "Menyalin teks ini"
+    },
+    "sendChannelPost": {
+      "title": "Kirim postingan",
+      "description": "Pilih salah satu postingan Anda untuk dikirim ke pelanggan.",
+      "inbox": "Kotak masuk",
+      "inboxPlaceholder": "Pilih kotak masuk",
+      "noInboxes": "Hubungkan kotak masuk Instagram atau Messenger untuk mengirim postingan.",
+      "search": "Cari postingan",
+      "empty": "Belum ada postingan untuk kotak masuk ini.",
+      "loadError": "Postingan tidak dapat dimuat.",
+      "retry": "Coba lagi",
+      "loadMore": "Muat lebih banyak",
+      "select": "Pilih postingan",
+      "unavailable": "Postingan ini tidak lagi tersedia.",
+      "noCaption": "Tanpa keterangan",
+      "openPost": "Buka postingan",
+      "sendFailed": "Postingan tidak dapat dikirim.",
+      "reasons": {
+        "typeNotShareable": "Jenis postingan ini tidak dapat dikirim di sini",
+        "linkUnavailable": "Postingan ini tidak memiliki tautan untuk dikirim",
+        "linkTooLong": "Tautan terlalu panjang untuk dikirim",
+        "shareUnsupported": "Kanal ini tidak dapat mengirim postingan",
+        "postNotFound": "Postingan ini sudah tidak ada",
+        "inboxMismatch": "Postingan ini milik kotak masuk lain"
+      },
+      "noMatch": "Tidak ada postingan yang cocok dengan pencarian Anda."
     }
   },
   "folders": {
@@ -4581,6 +4622,7 @@
     "sendFailed": "Gagal mengirim",
     "repliedToStory": "Membalas story Anda",
     "sentAttachments": "Mengirim {count, plural, one {1 lampiran} other {# lampiran}}",
+    "sentPost": "Mengirim postingan",
     "deleteComment": "Hapus komentar",
     "deleteCommentConfirmation": "Apakah Anda yakin ingin menghapus komentar ini? Balasannya juga akan dihapus, baik dari kotak masuk Anda maupun dari Facebook. Tindakan ini tidak dapat dibatalkan.",
     "deleteMessageSuccess": "Pesan dihapus",
@@ -4770,7 +4812,8 @@
       "continue": "Lanjutkan pengiriman",
       "discard": "Buang pesan dalam antrean",
       "dismiss": "Tutup"
-    }
+    },
+    "sendChannelPostPostRequired": "Pilih postingan untuk dikirim."
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",
@@ -7608,6 +7651,7 @@
     "locked": {
       "flowBanner": "Alur ini dipasang dari templat hanya-lihat. Anda dapat melihatnya tetapi tidak dapat mengeditnya.",
       "badge": "Hanya lihat",
+      "tagEditorBanner": "Ini dipasang dari templat hanya-lihat. Hanya warna yang dapat diubah.",
       "editorBanner": "Ini dipasang dari templat hanya-lihat. Anda dapat melihatnya tetapi tidak dapat mengeditnya.",
       "badgeHint": "Diinstal dari templat hanya-lihat"
     },
@@ -8303,6 +8347,28 @@
   "contactAdReferrals": {
     "title": "Riwayat iklan",
     "empty": "Belum ada klik iklan yang tercatat untuk kontak ini."
+  },
+  "contactTouchpoints": {
+    "title": "Bergabung melalui",
+    "empty": "Belum ada partisipasi yang tercatat untuk kontak ini.",
+    "kinds": {
+      "postComment": "Komentar postingan",
+      "form": "Formulir"
+    },
+    "details": {
+      "played": "{count, plural, one {# permainan} other {# permainan}}",
+      "lastPrize": "Hadiah terakhir: {prize}",
+      "score": "Skor: {score}",
+      "completed": "Selesai",
+      "inProgress": "Sedang berlangsung",
+      "submissions": "{count, plural, one {# pengiriman} other {# pengiriman}}",
+      "pollChoice": "Memilih {name}",
+      "leads": "{count, plural, one {# lead} other {# lead}}",
+      "requests": "{count, plural, one {# permintaan} other {# permintaan}}",
+      "replies": "{count, plural, one {# balasan} other {# balasan}}",
+      "visits": "{count, plural, one {# kunjungan} other {# kunjungan}}",
+      "clicks": "{count, plural, one {# klik} other {# klik}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "Belum ada broadcast yang dikirim ke kontak ini.",
@@ -12613,7 +12679,36 @@
     "label": "Siapa yang membalas di percakapan ini",
     "unnamedMember": "Anggota",
     "loadMoreFailed": "Tidak dapat memuat anggota lainnya",
-    "lastMessageBy": "Pesan terakhir dari {name}"
+    "lastMessageBy": "Pesan terakhir dari {name}",
+    "overflowCount": "+{overflow}"
+  },
+  "tagColor": {
+    "label": "Warna",
+    "choose": "Pilih warna",
+    "presetLabel": "Pilih warna {color}",
+    "previewLabel": "Pratinjau warna tema",
+    "previewPlaceholder": "Nama tag"
+  },
+  "composerTags": {
+    "title": "Tag",
+    "searchLabel": "Cari tag",
+    "searchPlaceholder": "Cari tag",
+    "expand": "Tampilkan semua",
+    "collapse": "Tampilkan lebih sedikit",
+    "loadMore": "Muat lebih banyak",
+    "loadError": "Tidak dapat memuat tag.",
+    "empty": "Belum ada tag. Buat tag di halaman Tag.",
+    "noMatch": "Tidak ada tag yang cocok dengan pencarian Anda.",
+    "addFailed": "Tidak dapat menambahkan tag \"{name}\".",
+    "removeFailed": "Tidak dapat menghapus tag \"{name}\".",
+    "refreshFailed": "Tidak dapat memuat ulang tag. Muat ulang halaman untuk melihat yang terbaru.",
+    "disabledNoContact": "Percakapan ini tidak memiliki kontak untuk diberi tag.",
+    "disabledBlocked": "Kontak ini diblokir, sehingga tag-nya tidak dapat diubah.",
+    "disabledNoAccess": "Anda tidak memiliki akses untuk mengubah tag kontak ini."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {# tag lagi} other {# tag lagi}}"
   },
   "posts": {
     "title": "Postingan",

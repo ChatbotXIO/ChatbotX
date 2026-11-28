@@ -4,6 +4,7 @@ import {
   channelPostExportService,
   channelPostManagementService,
   channelPostMetricsRefreshService,
+  channelPostShareService,
 } from "@chatbotx.io/business"
 import { refreshChannelPostNow } from "@chatbotx.io/channel-registry/channel-post-refresh"
 import type { z } from "zod"
@@ -16,6 +17,7 @@ import type {
   listChannelPostAuthorsRequest,
   listChannelPostCommentsRequest,
   listChannelPostManagementRequest,
+  listPickerChannelPostsRequest,
   mergeChannelPostCommentsRequest,
   startChannelPostCommentExportRequest,
   updateChannelPostManagementRequest,
@@ -87,15 +89,44 @@ export const channelPostManagementOperations = {
     }),
 
   list: async (workspaceId: string, input: ListInput) => {
-    const { cursor, hasComments = true, limit, sort, ...filters } = input
+    const { cursor, hasComments, limit, shareableOnly, sort, ...filters } =
+      input
     return await channelPostManagementService.list({
       cursor,
-      filters: { ...filters, hasComments },
+      filters: {
+        ...filters,
+        // Only posts with comments are listed by default; a list of what can be
+        // sent is about every post.
+        hasComments: hasComments ?? !shareableOnly,
+        ...(shareableOnly
+          ? { shareable: channelPostShareService.shareCriteria() }
+          : {}),
+      },
       limit,
       sort,
       workspaceId,
     })
   },
+
+  get: async (workspaceId: string, input: { id: string }) =>
+    await channelPostManagementService.get({ id: input.id, workspaceId }),
+
+  /** The picker's list: all posts of one inbox, so unsendable ones can show as disabled. */
+  listForPicker: async (
+    workspaceId: string,
+    input: z.output<typeof listPickerChannelPostsRequest>,
+  ) =>
+    await channelPostManagementService.list({
+      cursor: input.cursor,
+      filters: {
+        hasComments: false,
+        inboxIds: [input.inboxId],
+        ...(input.search ? { search: input.search } : {}),
+      },
+      limit: input.limit,
+      sort: "newest",
+      workspaceId,
+    }),
 
   update: async (workspaceId: string, input: UpdateInput) =>
     await channelPostManagementService.update({

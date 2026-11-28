@@ -53,6 +53,7 @@ const startSync = vi.fn()
 const syncStatus = vi.fn()
 const refreshChannelPostNow = vi.fn()
 const requestMetricsRefresh = vi.fn()
+const shareCriteria = vi.fn()
 const topicList = vi.fn()
 const topicCreate = vi.fn()
 const topicUpdate = vi.fn()
@@ -89,6 +90,7 @@ vi.mock("@chatbotx.io/business", () => ({
   channelPostExportService: { build: exportBuild },
   channelPostManagementService: { bulkUpdate, get, list, listAuthors, update },
   channelPostMetricsRefreshService: { requestMetricsRefresh },
+  channelPostShareService: { shareCriteria },
   channelPostSyncService: {
     listStatus: syncStatus,
     request: startSync,
@@ -115,6 +117,7 @@ const {
   channelPostSyncInboxFilter,
   deleteChannelPostCommentRequest,
   exportChannelPostCommentsRequest,
+  exportChannelPostRowsFilters,
   getChannelPostCommentExportRequest,
   likeChannelPostCommentRequest,
   listChannelPostAuthorsRequest,
@@ -218,6 +221,56 @@ describe("GET /v1/channel-posts/management", () => {
     })
   })
 
+  test("shareableOnly lists what a channel can send: the channels' rules as filters, and posts without comments too", async () => {
+    list.mockResolvedValue({ items: [] })
+    const criteria = [
+      {
+        channel: "instagram",
+        contentTypes: ["photo"],
+        requirePermalink: false,
+      },
+    ]
+    shareCriteria.mockReturnValue(criteria)
+
+    await call("GET", "/v1/channel-posts/management", {
+      inboxIds: ["7"],
+      limit: 30,
+      shareableOnly: true,
+      sort: "newest",
+    })
+
+    expect(list).toHaveBeenCalledWith({
+      cursor: undefined,
+      filters: { hasComments: false, inboxIds: ["7"], shareable: criteria },
+      limit: 30,
+      sort: "newest",
+      workspaceId: "ws-1",
+    })
+  })
+
+  test("shareableOnly keeps an explicit hasComments, and false adds no filter", async () => {
+    list.mockResolvedValue({ items: [] })
+    shareCriteria.mockReturnValue([])
+
+    await call("GET", "/v1/channel-posts/management", {
+      hasComments: true,
+      limit: 30,
+      shareableOnly: true,
+      sort: "newest",
+    })
+    await call("GET", "/v1/channel-posts/management", {
+      limit: 30,
+      shareableOnly: false,
+      sort: "newest",
+    })
+
+    expect(list.mock.calls[0]?.[0].filters).toEqual({
+      hasComments: true,
+      shareable: [],
+    })
+    expect(list.mock.calls[1]?.[0].filters).toEqual({ hasComments: true })
+  })
+
   test("passes the filters through and honours hasComments=false", async () => {
     list.mockResolvedValue({ items: [] })
 
@@ -265,6 +318,20 @@ describe("management request schemas", () => {
     expect(parsed.limit).toBe(30)
     expect(parsed.sort).toBe("newest")
     expect(parsed.hasComments).toBeUndefined()
+  })
+
+  test("shareableOnly accepts only the literals true and false, and is not an export filter", () => {
+    expect(
+      listChannelPostManagementRequest.parse({ shareableOnly: "true" })
+        .shareableOnly,
+    ).toBe(true)
+    expect(
+      listChannelPostManagementRequest.safeParse({ shareableOnly: "1" })
+        .success,
+    ).toBe(false)
+    expect(exportChannelPostRowsFilters.shape).not.toHaveProperty(
+      "shareableOnly",
+    )
   })
 
   test("hasComments accepts only the literals true and false", () => {

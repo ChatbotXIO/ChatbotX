@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
+import { UNKNOWN_VALUE_PLACEHOLDER } from "@/features/contacts/lib/scoped-identity-rows"
 import { LockBadge } from "@/features/templates/components/lock-badge"
 import { UndeletableGuard } from "@/features/templates/components/lock-context"
 
@@ -102,6 +103,30 @@ export function getTagColumns({
       enableSorting: true,
     },
     {
+      id: "color",
+      accessorKey: "color",
+      header: t("tagColor.label"),
+      cell: ({ row }) =>
+        row.original.color ? (
+          <span
+            aria-label={row.original.color}
+            className="inline-block size-5 rounded-full border border-border"
+            role="img"
+            style={{ backgroundColor: row.original.color }}
+            title={row.original.color}
+          />
+        ) : (
+          <span aria-hidden className="text-muted-foreground">
+            {UNKNOWN_VALUE_PLACEHOLDER}
+          </span>
+        ),
+      size: 60,
+      meta: {
+        label: t("tagColor.label"),
+      },
+      enableSorting: false,
+    },
+    {
       id: "contacts",
       accessorKey: "contacts",
       header: ({ column }) => (
@@ -115,6 +140,8 @@ export function getTagColumns({
       meta: {
         label: t("fields.contacts.label"),
       },
+      // The count is computed per page row, not a sortable column.
+      enableSorting: false,
       enableHiding: false,
     },
     {

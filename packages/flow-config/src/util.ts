@@ -39,7 +39,7 @@ const MAX_SIGNED_BIGINT = 9223372036854775807n
  * (a value that's all digits but exceeds the signed bigint range).
  */
 const STRICT_DIGITS_REGEX = /^\d+$/
-const isWithinSignedBigintRange = (value: string): boolean => {
+export const isWithinSignedBigintRange = (value: string): boolean => {
   try {
     return BigInt(value) <= MAX_SIGNED_BIGINT
   } catch {

@@ -23,6 +23,7 @@ export const RealtimeEventType = {
   contactInboxThreadControlUpdated: "contactInboxThreadControlUpdated",
   pipelineItemChanged: "pipelineItemChanged",
   socialPostChanged: "socialPostChanged",
+  contactTagsChanged: "contactTagsChanged",
 } as const
 
 type RealtimeEventTypeValue =
@@ -53,6 +54,7 @@ export const EVENT_DELIVERY = {
   [RealtimeEventType.contactInboxThreadControlUpdated]: "workspace",
   [RealtimeEventType.pipelineItemChanged]: "workspace",
   [RealtimeEventType.socialPostChanged]: "workspace",
+  [RealtimeEventType.contactTagsChanged]: "workspace",
 } as const satisfies Record<RealtimeEventTypeValue, RealtimeEventDelivery>
 
 const guestRealtimeEventTypes = new Set<RealtimeEventTypeValue>([
@@ -559,6 +561,28 @@ export type RealtimeEventSocialPostChanged = {
   data: SocialPostChangedData
 }
 
+/** Most contact ids one `contactTagsChanged` event carries; larger changes are split into several events. */
+export const CONTACT_TAGS_CHANGED_MAX_CONTACT_IDS = 500
+
+/**
+ * The tags attached to these contacts changed (an attach or a detach that
+ * actually changed a link). Carries ids only, so a client refetches the tag
+ * preview of the rows it has loaded through its authorised read instead of
+ * trusting the event. A tag rename, recolor or delete does not emit it.
+ */
+export const contactTagsChangedSchema = z.object({
+  contactIds: z
+    .array(z.string())
+    .min(1)
+    .max(CONTACT_TAGS_CHANGED_MAX_CONTACT_IDS),
+})
+export type ContactTagsChangedData = z.infer<typeof contactTagsChangedSchema>
+
+export type RealtimeEventContactTagsChanged = {
+  eventType: typeof RealtimeEventType.contactTagsChanged
+  data: ContactTagsChangedData
+}
+
 /**
  * Inbox translation results for a conversation. Member-only: it is NOT in
  * `guestRealtimeEventTypes`, because an outgoing message's `displayText` is the
@@ -615,6 +639,7 @@ type AllRealtimeEventData =
   | RealtimeEventContactInboxThreadControlUpdated
   | RealtimeEventPipelineItemChanged
   | RealtimeEventSocialPostChanged
+  | RealtimeEventContactTagsChanged
 
 type RealtimeConversationScopedEventData = Extract<
   AllRealtimeEventData,

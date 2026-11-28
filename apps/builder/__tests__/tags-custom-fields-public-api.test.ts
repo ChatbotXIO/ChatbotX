@@ -11,6 +11,7 @@ type RouteConfig = {
 type CapturedProcedure = {
   route: RouteConfig
   handler?: (...args: unknown[]) => unknown
+  input?: { safeParse: (value: unknown) => { success: boolean } }
 }
 
 const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
@@ -21,7 +22,10 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
     capturedProcedures.push(record)
 
     const chain = {
-      input: vi.fn(() => chain),
+      input: vi.fn((schema: CapturedProcedure["input"]) => {
+        record.input = schema
+        return chain
+      }),
       output: vi.fn(() => chain),
       errors: vi.fn(() => chain),
       handler: vi.fn((fn: (...args: unknown[]) => unknown) => {
@@ -145,6 +149,63 @@ describe("POST /v1/tags", () => {
     })
     expect(result).toEqual({ id: "1", name: "VIP", folderId: "7" })
   })
+
+  test("passes color to tagService.create and returns it", async () => {
+    tagService.create.mockResolvedValueOnce({
+      data: { id: "1", name: "VIP", folderId: null, color: "#1A2B3C" },
+    })
+
+    const result = await procedure.handler?.({
+      context: tokenContext,
+      input: { name: "VIP", color: "#1A2B3C" },
+    })
+
+    expect(tagService.create).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      data: { name: "VIP", color: "#1A2B3C" },
+    })
+    expect(result).toMatchObject({ color: "#1A2B3C" })
+  })
+})
+
+describe("PATCH /v1/tags/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/tags/{id}")
+  const ctx = { workspaceId: "workspace-1", id: "1" }
+
+  test("a color-only update forwards only the color", async () => {
+    tagService.update.mockResolvedValueOnce({ id: "1" })
+
+    await procedure.handler?.({
+      context: tokenContext,
+      input: { id: "1", color: "#abcdef" },
+    })
+
+    expect(tagService.update).toHaveBeenLastCalledWith(ctx, {
+      color: "#abcdef",
+    })
+  })
+
+  test("a folder-only update forwards only the folder", async () => {
+    tagService.update.mockResolvedValueOnce({ id: "1" })
+
+    await procedure.handler?.({
+      context: tokenContext,
+      input: { id: "1", folderId: null },
+    })
+
+    expect(tagService.update).toHaveBeenLastCalledWith(ctx, { folderId: null })
+  })
+
+  test.each([
+    ["PATCH", findProcedure("PATCH", "/v1/tags/{id}")],
+    ["PUT", findProcedure("PUT", "/v1/tags/{id}")],
+  ])("%s accepts a color-only or folder-only body and rejects an empty one", (_method, route) => {
+    const accepts = (value: unknown) => route.input?.safeParse(value).success
+
+    expect(accepts({ id: "1", color: "#112233" })).toBe(true)
+    expect(accepts({ id: "1", folderId: "0" })).toBe(true)
+    expect(accepts({ id: "1" })).toBe(false)
+  })
 })
 
 describe("PUT /v1/tags/{id}", () => {
@@ -162,6 +223,34 @@ describe("PUT /v1/tags/{id}", () => {
       { workspaceId: "workspace-1", id: "1" },
       { name: "VIP", folderId: "0" },
     )
+  })
+
+  test("forwards a color, and null to clear it; omitted stays out of the patch", async () => {
+    tagService.update.mockResolvedValue({ id: "1" })
+    const ctx = { workspaceId: "workspace-1", id: "1" }
+
+    await procedure.handler?.({
+      context: tokenContext,
+      input: { id: "1", name: "VIP", color: "#abcdef" },
+    })
+    await procedure.handler?.({
+      context: tokenContext,
+      input: { id: "1", name: "VIP", color: null },
+    })
+    await procedure.handler?.({
+      context: tokenContext,
+      input: { id: "1", name: "VIP" },
+    })
+
+    expect(tagService.update).toHaveBeenNthCalledWith(1, ctx, {
+      name: "VIP",
+      color: "#abcdef",
+    })
+    expect(tagService.update).toHaveBeenNthCalledWith(2, ctx, {
+      name: "VIP",
+      color: null,
+    })
+    expect(tagService.update).toHaveBeenNthCalledWith(3, ctx, { name: "VIP" })
   })
 })
 

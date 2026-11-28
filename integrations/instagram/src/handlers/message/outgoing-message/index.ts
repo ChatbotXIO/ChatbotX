@@ -15,6 +15,7 @@ import {
   ChannelError,
   ChannelErrorCategory,
   contentTypes,
+  isMessageChannelPostEntity,
   type MessageHandlers,
   type OutgoingContact,
   type OutgoingMessage,
@@ -34,8 +35,12 @@ import {
   type InstagramSendMessageRequest,
 } from "../../../schema"
 import { convertCanonicalQuickReplies } from "./canonical-quick-replies"
-import { getAttachmentTemplate } from "./send-attachment"
+import {
+  getAttachmentTemplate,
+  toMediaShareAttachment,
+} from "./send-attachment"
 import { convertFlowStepCarousel } from "./send-carousel"
+import { convertFlowStepChannelPost } from "./send-channel-post"
 import { convertFlowStepFile } from "./send-file"
 import { convertFlowStepGif } from "./send-gif"
 import { convertFlowStepMedia } from "./send-media"
@@ -99,6 +104,7 @@ export const handledFlowStepTypes = [
   stepTypes.enum.sendGif,
   stepTypes.enum.sendQuickReply,
   stepTypes.enum.sendCarousel,
+  stepTypes.enum.sendChannelPost,
 ] as const satisfies readonly StepType[]
 
 export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
@@ -143,6 +149,18 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
 export function* convertMessage(
   message: OutgoingMessage,
 ): Generator<InstagramSendMessage> {
+  // A post share sends the post itself: the row carries no text for it.
+  if (
+    isMessageChannelPostEntity(message.contentAttributes) &&
+    message.contentAttributes.shareMode === "nativeMedia"
+  ) {
+    yield {
+      attachment: toMediaShareAttachment(
+        message.contentAttributes.externalPostId,
+      ),
+    }
+    return
+  }
   if (message.contentType === contentTypes.enum.text) {
     if (message.text) {
       yield {
@@ -287,6 +305,9 @@ export async function* convertFlowStep(
       yield* convertFlowStepCarousel(
         props as SendFlowStepProps<InstagramAuthValue, SendCarouselStepSchema>,
       ) as Generator<InstagramSendMessage>
+      break
+    case stepTypes.enum.sendChannelPost:
+      yield* convertFlowStepChannelPost(props)
       break
     default:
       throw new Error(`Unsupported Instagram flow step: ${step.stepType}`)

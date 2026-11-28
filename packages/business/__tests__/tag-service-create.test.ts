@@ -113,6 +113,11 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   return { ...actual, createId: () => "generated-id" }
 })
 
+// The realtime publisher is Redis-backed and irrelevant here (see tag-service-contact-tags-changed.test.ts).
+vi.mock("../src/tag/realtime", () => ({
+  publishContactTagsChanged: vi.fn(async () => undefined),
+}))
+
 const { tagService } = await import("../src/tag/service")
 
 const WS = "ws-test-1"
@@ -233,6 +238,89 @@ describe("tagService root folder handling", () => {
     expect(ensureExists).not.toHaveBeenCalled()
     const valuesArg = insertValues.mock.calls[0]?.[0] as Record<string, unknown>
     expect(valuesArg.folderId).toBeNull()
+  })
+})
+
+describe("tagService color", () => {
+  test("create persists the color and invalidates the tag cache", async () => {
+    await tagService.create({
+      workspaceId: WS,
+      data: { name: "VIP", color: "#1A2B3C" },
+    })
+
+    expect(insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "VIP", color: "#1A2B3C" }),
+    )
+    expect(invalidateCacheByTags).toHaveBeenCalled()
+  })
+
+  test("update with a color writes it and invalidates the tag cache", async () => {
+    await tagService.update(
+      { workspaceId: WS, id: "tag-1" },
+      { name: "A", color: "#00ff00" },
+    )
+
+    expect(updateSet).toHaveBeenCalledWith({ name: "A", color: "#00ff00" })
+    expect(invalidateCacheByTags).toHaveBeenCalled()
+  })
+
+  test("update with null clears the color; omitted leaves it out of the write", async () => {
+    await tagService.update(
+      { workspaceId: WS, id: "tag-1" },
+      { name: "A", color: null },
+    )
+    await tagService.update({ workspaceId: WS, id: "tag-1" }, { name: "A" })
+
+    expect(updateSet).toHaveBeenNthCalledWith(1, { name: "A", color: null })
+    expect(updateSet).toHaveBeenNthCalledWith(2, { name: "A" })
+  })
+
+  test("update without a name skips the duplicate-name check and leaves the name out of the write and the guard", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    vi.mocked(assertResourceEditable).mockClear()
+    findFirst.mockClear()
+    findOrFail.mockResolvedValue({ id: "tag-1", name: "Same" })
+
+    await tagService.update(
+      { workspaceId: WS, id: "tag-1" },
+      { color: "#112233" },
+    )
+
+    expect(findFirst).not.toHaveBeenCalled()
+    expect(updateSet).toHaveBeenLastCalledWith({ color: "#112233" })
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({ changedKeys: [] }),
+    )
+  })
+
+  test("update with nothing to write returns the tag unchanged without an empty set", async () => {
+    const stored = { id: "tag-1", name: "Same" }
+    findOrFail.mockResolvedValue(stored)
+    updateSet.mockClear()
+
+    const result = await tagService.update({ workspaceId: WS, id: "tag-1" }, {})
+
+    expect(result).toBe(stored)
+    expect(updateSet).not.toHaveBeenCalled()
+  })
+
+  test("a color-only change is not a locked content key (lock policy stays name)", async () => {
+    const { assertResourceEditable } = await import(
+      "../src/template/installed-resource.service"
+    )
+    vi.mocked(assertResourceEditable).mockClear()
+    findOrFail.mockResolvedValue({ id: "tag-1", name: "Same" })
+
+    await tagService.update(
+      { workspaceId: WS, id: "tag-1" },
+      { name: "Same", color: "#112233" },
+    )
+
+    expect(assertResourceEditable).toHaveBeenCalledWith(
+      expect.objectContaining({ changedKeys: [] }),
+    )
   })
 })
 

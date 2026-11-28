@@ -9,6 +9,8 @@ type ColorPickerFieldProps = {
   required?: boolean
   description?: string
   descriptionType?: "inline" | "tooltip"
+  /** `#RRGGBBAA` when true (default); plain `#RRGGBB` when false. */
+  alpha?: boolean
 }
 
 export const ColorPickerField = (props: ColorPickerFieldProps) => {
@@ -18,6 +20,7 @@ export const ColorPickerField = (props: ColorPickerFieldProps) => {
     required,
     description,
     descriptionType = "inline",
+    alpha = true,
   } = props
 
   return (
@@ -29,7 +32,7 @@ export const ColorPickerField = (props: ColorPickerFieldProps) => {
       required={required}
     >
       {(field) => (
-        <InputColor alpha={true} className="mt-0" label="" {...field} />
+        <InputColor alpha={alpha} className="mt-0" label="" {...field} />
       )}
     </FormFieldWrapper>
   )

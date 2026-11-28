@@ -119,11 +119,18 @@ const assertNoViewOnlyCopies = async (
 const folderRefOf = (row: { folderId: string | null }) =>
   row.folderId ? { folderSourceId: row.folderId } : {}
 
+/** Left out when the tag has no color, so an uncolored tag keeps its fingerprint. */
+const colorRefOf = (row: { color: string | null }) =>
+  row.color ? { color: row.color } : {}
+
 const buildTagManifestEntries = (
-  tags: Pick<TagModel, "id" | "name" | "folderId">[],
+  tags: Pick<TagModel, "id" | "name" | "folderId" | "color">[],
 ): Record<string, TemplateTagManifestEntry> =>
   Object.fromEntries(
-    tags.map((tag) => [tag.id, { name: tag.name, ...folderRefOf(tag) }]),
+    tags.map((tag) => [
+      tag.id,
+      { name: tag.name, ...folderRefOf(tag), ...colorRefOf(tag) },
+    ]),
   )
 
 const buildCustomFieldManifestEntries = (

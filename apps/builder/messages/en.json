@@ -1907,6 +1907,20 @@
       "externalId": "External ID",
       "channelId": "Channel ID"
     },
+    "channelProfile": {
+      "followsBusiness": "Follows business",
+      "followerCount": "Followers",
+      "yes": "Yes",
+      "no": "No",
+      "messagingWindow": {
+        "label": "Messaging window",
+        "open": "Open • {time}",
+        "humanAgentOpen": "Human agent window • {time}",
+        "closed": "Closed",
+        "tooltip": "Replies are allowed for 24 hours after the customer's last message.",
+        "tooltipHumanAgent": "Replies are allowed for 24 hours after the customer's last message. After that, a human agent can still reply for up to 7 days."
+      }
+    },
     "flow": {
       "label": "Flow"
     },
@@ -3999,7 +4013,8 @@
       "moreOptions": "More options",
       "findPlacesNearMe": "Find places near me",
       "callPhoneNumber": "Call Phone Number",
-      "copyText": "Copy Text"
+      "copyText": "Copy Text",
+      "sendChannelPost": "Send a post"
     },
     "externalRequest": {
       "errors": {
@@ -4340,6 +4355,32 @@
       "limitHint": "Up to {max} characters after variables are filled in.",
       "fallbackHint": "On channels that cannot copy text, the contact receives this text as a reply instead.",
       "viewerTitle": "Copies this text"
+    },
+    "sendChannelPost": {
+      "title": "Send a post",
+      "description": "Pick one of your posts to send to the customer.",
+      "inbox": "Inbox",
+      "inboxPlaceholder": "Select an inbox",
+      "noInboxes": "Connect an Instagram or Messenger inbox to send posts.",
+      "search": "Search posts",
+      "empty": "No posts found for this inbox yet.",
+      "loadError": "Couldn't load the posts.",
+      "retry": "Try again",
+      "loadMore": "Load more",
+      "select": "Select a post",
+      "unavailable": "This post is no longer available.",
+      "noCaption": "No caption",
+      "openPost": "Open post",
+      "sendFailed": "Couldn't send the post.",
+      "reasons": {
+        "typeNotShareable": "This kind of post can't be sent here",
+        "linkUnavailable": "This post has no link to send",
+        "linkTooLong": "The link is too long to send",
+        "shareUnsupported": "This channel can't send posts",
+        "postNotFound": "This post no longer exists",
+        "inboxMismatch": "This post belongs to another inbox"
+      },
+      "noMatch": "No posts match your search."
     }
   },
   "folders": {
@@ -5263,6 +5304,7 @@
     "sendFailed": "Failed to send",
     "repliedToStory": "Replied to your story",
     "sentAttachments": "Sent {count, plural, one {1 attachment} other {# attachments}}",
+    "sentPost": "Sent a post",
     "deleteComment": "Delete comment",
     "deleteCommentConfirmation": "Are you sure you want to delete this comment? Its replies will also be deleted, both in your inbox and on Facebook. This action cannot be undone.",
     "deleteMessageSuccess": "Message deleted",
@@ -5452,7 +5494,8 @@
       "continue": "Keep sending",
       "discard": "Discard queued messages",
       "dismiss": "Dismiss"
-    }
+    },
+    "sendChannelPostPostRequired": "Pick a post to send."
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",
@@ -8486,6 +8529,7 @@
     "locked": {
       "flowBanner": "This flow was installed from a view-only template. You can look at it but not edit it.",
       "badge": "View only",
+      "tagEditorBanner": "This was installed from a view-only template. Only the color can be changed.",
       "editorBanner": "This was installed from a view-only template. You can look at it but not edit it.",
       "badgeHint": "Installed from a view-only template"
     },
@@ -9298,6 +9342,28 @@
   "contactAdReferrals": {
     "title": "Ads history",
     "empty": "No ad clicks recorded for this contact yet."
+  },
+  "contactTouchpoints": {
+    "title": "Opted In through",
+    "empty": "No opt-ins recorded for this contact yet.",
+    "kinds": {
+      "postComment": "Post comment",
+      "form": "Form"
+    },
+    "details": {
+      "played": "{count, plural, one {# play} other {# plays}}",
+      "lastPrize": "Last prize: {prize}",
+      "score": "Score: {score}",
+      "completed": "Completed",
+      "inProgress": "In progress",
+      "submissions": "{count, plural, one {# submission} other {# submissions}}",
+      "pollChoice": "Voted for {name}",
+      "leads": "{count, plural, one {# lead} other {# leads}}",
+      "requests": "{count, plural, one {# request} other {# requests}}",
+      "replies": "{count, plural, one {# reply} other {# replies}}",
+      "visits": "{count, plural, one {# visit} other {# visits}}",
+      "clicks": "{count, plural, one {# click} other {# clicks}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "No broadcasts have been sent to this contact yet.",
@@ -12613,7 +12679,36 @@
     "label": "Who replied in this conversation",
     "unnamedMember": "Member",
     "loadMoreFailed": "Couldn't load more members",
-    "lastMessageBy": "Last message by {name}"
+    "lastMessageBy": "Last message by {name}",
+    "overflowCount": "+{overflow}"
+  },
+  "tagColor": {
+    "label": "Color",
+    "choose": "Choose a color",
+    "presetLabel": "Choose color {color}",
+    "previewLabel": "Theme color preview",
+    "previewPlaceholder": "Tag name"
+  },
+  "composerTags": {
+    "title": "Tags",
+    "searchLabel": "Search tags",
+    "searchPlaceholder": "Search tags",
+    "expand": "Show all",
+    "collapse": "Show less",
+    "loadMore": "Load more",
+    "loadError": "Could not load tags.",
+    "empty": "No tags yet. Create tags on the Tags page.",
+    "noMatch": "No tags match your search.",
+    "addFailed": "Could not add the tag \"{name}\".",
+    "removeFailed": "Could not remove the tag \"{name}\".",
+    "refreshFailed": "Could not refresh the tags. Reload to see the latest.",
+    "disabledNoContact": "This conversation has no contact to tag.",
+    "disabledBlocked": "This contact is blocked, so its tags cannot be changed.",
+    "disabledNoAccess": "You do not have access to change this contact's tags."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {# more tag} other {# more tags}}"
   },
   "posts": {
     "title": "Posts",

@@ -286,6 +286,9 @@ export const REFERENCE_KIND_POLICY: Readonly<Record<string, ReferencePolicy>> =
     messengerTemplate: "verifyInTarget",
     whatsappTemplate: "verifyInTarget",
     broadcast: "strip",
+    // A post belongs to one connected account of one workspace, so it can never
+    // mean the same thing in another workspace.
+    channelPost: "strip",
     workspaceMember: "strip",
     inboxTeam: "strip",
     [EXTERNAL_REFERENCE_KIND]: "external",
@@ -315,6 +318,9 @@ export const STEP_REFERENCE_OVERRIDES: Readonly<
   // an integration of one workspace, so a foreign id is removed on install.
   sendMessengerTemplateMessage: { "template.id": "messengerTemplate" },
   sendWaTemplateMessage: { "template.id": "whatsappTemplate" },
+  // The post to send. Posts never travel between workspaces: the step stays,
+  // empty, for the installer to pick one of their own.
+  sendChannelPost: { channelPostId: "channelPost" },
   sendCollection: {
     "conditions.categoryId": "productCategory",
     "conditions.subcategoryId": "productCategory",
@@ -400,6 +406,7 @@ export const STEP_REFERENCE_SLOT_SHAPE: Readonly<
 > = {
   // Members never travel: the step stays, for the installer to pick someone.
   assignConversation: { assignedId: "emptiable" },
+  sendChannelPost: { channelPostId: "emptiable" },
   // `inboxId` is nullable, not optional, on these two steps.
   sendWaTemplateMessage: {
     inboxId: "nullable",

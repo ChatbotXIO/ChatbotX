@@ -1,3 +1,4 @@
+import { hexColorSchema } from "@chatbotx.io/utils/color"
 import { customFieldTypes } from "@chatbotx.io/utils/custom-field"
 import { z } from "zod"
 import { type FlowVersionSchema, flowVersionSchema } from "../nodes/index"
@@ -45,6 +46,8 @@ export const templateTagManifestEntrySchema = z.object({
   name: z.string().trim().min(1),
   /** A `manifests.folders` sourceId; absent at the root and on older payloads. */
   folderSourceId: z.string().optional(),
+  /** `#RRGGBB`; absent when the tag has no color and on older payloads. */
+  color: hexColorSchema.optional(),
 })
 export type TemplateTagManifestEntry = z.infer<
   typeof templateTagManifestEntrySchema

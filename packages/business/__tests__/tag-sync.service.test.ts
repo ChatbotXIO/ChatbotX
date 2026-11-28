@@ -8,6 +8,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ---------------------------------------------------------------------------
 const mockQueueAdd = vi.fn(async () => undefined)
 
+// The realtime publisher pulls in the whole worker-config surface; irrelevant here.
+vi.mock("../src/tag/realtime", () => ({
+  publishContactTagsChanged: vi.fn(async () => undefined),
+}))
+
 vi.mock("@chatbotx.io/worker-config", () => ({
   DefaultJobAction: {
     exportContacts: "exportContacts",

@@ -19,7 +19,7 @@ import {
 import { Input } from "@chatbotx.io/ui/components/ui/input";
 import { Label } from "@chatbotx.io/ui/components/ui/label";
 import { Loader2, PipetteIcon } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactElement } from "react";
 import {
   hexToRgb,
   rgbToHsl,
@@ -44,12 +44,16 @@ export const colorSchema = z
 interface ColorPickerProps {
   value: string;
   onChange: (value: string) => void;
-  onBlur: () => void;
+  onBlur?: () => void;
   isLoading?: boolean;
-  label: string;
+  label?: string;
   error?: string;
   className?: string;
   alpha?: boolean;
+  /** Replaces the default swatch button as the popover trigger. */
+  trigger?: ReactElement;
+  /** Hides the inline hex input; the popover still has its own. */
+  hideInput?: boolean;
 }
 
 interface ColorValues {
@@ -69,6 +73,8 @@ export default function InputColor({
   error,
   className = "mt-6",
   alpha = false,
+  trigger,
+  hideInput = false,
 }: ColorPickerProps) {
   const [colorFormat, setColorFormat] = useState(alpha ? "HEXA" : "HEX");
   const [colorValues, setColorValues] = useState<ColorValues>(() => {
@@ -261,7 +267,7 @@ export default function InputColor({
   const handlePopoverChange = (open: boolean) => {
     if (!open) {
       setColorFormat(alpha ? "HEXA" : "HEX");
-      onBlur();
+      onBlur?.();
     }
   };
 
@@ -318,6 +324,7 @@ export default function InputColor({
         <Popover onOpenChange={handlePopoverChange}>
           <PopoverTrigger
             render={
+              trigger ?? (
               <Button
                 className="border-border h-10 w-10 border shadow-none relative overflow-hidden"
                 size={"icon"}
@@ -337,6 +344,7 @@ export default function InputColor({
                   />
                 )}
               </Button>
+              )
             }
           />
           <PopoverContent className="w-auto p-3" align="start">
@@ -524,6 +532,7 @@ export default function InputColor({
             </div>
           </PopoverContent>
         </Popover>
+        {!hideInput && (
         <div className="relative flex-1 sm:flex-none">
           <Input
             placeholder={label}
@@ -538,6 +547,7 @@ export default function InputColor({
             </span>
           )}
         </div>
+        )}
       </div>
       {error && <p className="text-destructive mt-1.5 text-sm">{error}</p>}
       {hexInputError && (

@@ -96,6 +96,11 @@ vi.mock("../src/tag/sync.service", () => ({
   tagSyncService: { enqueueAttachMany: vi.fn() },
 }))
 
+// The realtime publisher is Redis-backed and irrelevant here (see tag-service-contact-tags-changed.test.ts).
+vi.mock("../src/tag/realtime", () => ({
+  publishContactTagsChanged: vi.fn(async () => undefined),
+}))
+
 const { tagService } = await import("../src/tag/service")
 
 beforeEach(() => {
@@ -244,7 +249,7 @@ describe("detachFromContactForTrigger", () => {
   })
 
   test("plain-deletes the contact/tag links, scoped to contactId + tagIds", async () => {
-    deleteWhere.mockResolvedValue(undefined)
+    deleteWhere.mockReturnValue({ returning: async () => [] })
 
     await tagService.detachFromContactForTrigger({
       workspaceId: "ws-1",

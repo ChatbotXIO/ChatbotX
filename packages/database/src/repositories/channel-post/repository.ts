@@ -97,7 +97,54 @@ const liveObservationGuard = (
 const channelPostScope = (workspaceId: string) =>
   eq(channelPostModel.workspaceId, workspaceId)
 
+/** A post as the send path reads it: what it takes to build and check one share. */
+export type ChannelPostForShare = {
+  caption: string | null
+  channel: string
+  contentType: ChannelPostContentType | null
+  externalPostId: string
+  id: string
+  inboxId: string
+  /** Whether the post belongs to the inbox the caller asked about. */
+  inboxMatches: boolean
+  permalink: string | null
+  thumbnail: string | null
+}
+
 export const channelPostRepository = {
+  /**
+   * The live post `channelPostId` of the workspace, for a send on `inboxId`.
+   * A post the platform confirmed gone (`removedAt`) is not returned, so it can
+   * no longer be sent. The post of another inbox is still returned, with
+   * `inboxMatches: false`, so the caller can tell "not found" from "wrong inbox".
+   */
+  async findForInbox(
+    input: { channelPostId: string; inboxId: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<ChannelPostForShare | null> {
+    const [row] = await tx
+      .select({
+        caption: channelPostModel.caption,
+        channel: channelPostModel.channel,
+        contentType: channelPostModel.contentType,
+        externalPostId: channelPostModel.externalPostId,
+        id: channelPostModel.id,
+        inboxId: channelPostModel.inboxId,
+        permalink: channelPostModel.permalink,
+        thumbnail: channelPostModel.thumbnail,
+      })
+      .from(channelPostModel)
+      .where(
+        and(
+          channelPostScope(input.workspaceId),
+          eq(channelPostModel.id, input.channelPostId),
+          isNull(channelPostModel.removedAt),
+        ),
+      )
+      .limit(1)
+    return row ? { ...row, inboxMatches: row.inboxId === input.inboxId } : null
+  },
+
   async findByExternalId(
     input: { channel: string; externalPostId: string; workspaceId: string },
     tx: DatabaseClient = db,

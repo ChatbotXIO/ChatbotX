@@ -252,6 +252,13 @@ Tags and custom fields carry `folderSourceId` in the manifest, left out at the r
 install **creates** goes to its template folder, else the install folder, else the root.
 A folder of a category the installer may not use is not created, and neither is its root.
 
+### Tag color
+
+A tag's manifest entry carries `color` (`#RRGGBB`), left out when the tag has none, so an uncolored
+tag keeps its fingerprint and templates saved before tag colors still parse. An install sets the color
+only on tags it **creates**: a same-name tag the installer already had keeps its own color (or none).
+The lock policy for a tag stays `["name"]`, so a View-only copy's color can still be changed.
+
 ### List order
 
 Lists keep the source's order after an install:

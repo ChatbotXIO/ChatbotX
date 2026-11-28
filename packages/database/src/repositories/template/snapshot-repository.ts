@@ -24,7 +24,14 @@ export const templateSnapshotRepository = {
   async findTags(
     lookup: ManifestLookup,
     tx: DatabaseClient = db,
-  ): Promise<{ id: string; name: string; folderId: string | null }[]> {
+  ): Promise<
+    {
+      id: string
+      name: string
+      folderId: string | null
+      color: string | null
+    }[]
+  > {
     if (matchesNothing(lookup)) {
       return []
     }
@@ -35,7 +42,7 @@ export const templateSnapshotRepository = {
         ...(lookup.ids ? { id: { in: [...lookup.ids] } } : {}),
         ...(lookup.names ? { name: { in: [...lookup.names] } } : {}),
       },
-      columns: { id: true, name: true, folderId: true },
+      columns: { id: true, name: true, folderId: true, color: true },
       orderBy: OLDEST_FIRST,
       limit: lookup.limit,
     })

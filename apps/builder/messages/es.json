@@ -151,7 +151,7 @@
     "clone": "Clonar",
     "remove": "Quitar",
     "restore": "Restaurar",
-    "loadMore": "Load more",
+    "loadMore": "Cargar más",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -1856,6 +1856,20 @@
       "channelId": "ID del canal",
       "lineUserId": "LINE User ID"
     },
+    "channelProfile": {
+      "followsBusiness": "Sigue al negocio",
+      "followerCount": "Seguidores",
+      "yes": "Sí",
+      "no": "No",
+      "messagingWindow": {
+        "label": "Ventana de mensajes",
+        "open": "Abierta • {time}",
+        "humanAgentOpen": "Ventana de agente humano • {time}",
+        "closed": "Cerrada",
+        "tooltip": "Se puede responder durante 24 horas tras el último mensaje del cliente.",
+        "tooltipHumanAgent": "Se puede responder durante 24 horas tras el último mensaje del cliente. Después, un agente humano aún puede responder hasta 7 días."
+      }
+    },
     "flow": {
       "label": "Flujo"
     },
@@ -3317,7 +3331,8 @@
       "moreOptions": "Más opciones",
       "findPlacesNearMe": "Buscar lugares cerca de mí",
       "callPhoneNumber": "Llamar a un número de teléfono",
-      "copyText": "Copiar texto"
+      "copyText": "Copiar texto",
+      "sendChannelPost": "Enviar una publicación"
     },
     "externalRequest": {
       "errors": {
@@ -3658,6 +3673,32 @@
       "limitHint": "Hasta {max} caracteres tras rellenar las variables.",
       "fallbackHint": "En los canales que no pueden copiar texto, el contacto recibe este texto como respuesta.",
       "viewerTitle": "Copia este texto"
+    },
+    "sendChannelPost": {
+      "title": "Enviar una publicación",
+      "description": "Elige una de tus publicaciones para enviarla al cliente.",
+      "inbox": "Bandeja",
+      "inboxPlaceholder": "Selecciona una bandeja",
+      "noInboxes": "Conecta una bandeja de Instagram o Messenger para enviar publicaciones.",
+      "search": "Buscar publicaciones",
+      "empty": "Aún no hay publicaciones para esta bandeja.",
+      "loadError": "No se pudieron cargar las publicaciones.",
+      "retry": "Reintentar",
+      "loadMore": "Cargar más",
+      "select": "Selecciona una publicación",
+      "unavailable": "Esta publicación ya no está disponible.",
+      "noCaption": "Sin texto",
+      "openPost": "Abrir publicación",
+      "sendFailed": "No se pudo enviar la publicación.",
+      "reasons": {
+        "typeNotShareable": "Este tipo de publicación no se puede enviar aquí",
+        "linkUnavailable": "Esta publicación no tiene enlace para enviar",
+        "linkTooLong": "El enlace es demasiado largo para enviarlo",
+        "shareUnsupported": "Este canal no puede enviar publicaciones",
+        "postNotFound": "Esta publicación ya no existe",
+        "inboxMismatch": "Esta publicación pertenece a otra bandeja de entrada"
+      },
+      "noMatch": "Ninguna publicación coincide con tu búsqueda."
     }
   },
   "folders": {
@@ -4581,6 +4622,7 @@
     "sendFailed": "Error al enviar",
     "repliedToStory": "Respondió a tu historia",
     "sentAttachments": "Se enviaron {count, plural, one {1 archivo adjunto} other {# archivos adjuntos}}",
+    "sentPost": "Se envió una publicación",
     "deleteComment": "Eliminar comment",
     "deleteCommentConfirmation": "Are tú sure tú want un Eliminar este comment? Its respuestas se also be deleted, both en tu inbox y en Facebook. este action cannot be undone.",
     "deleteMessageSuccess": "Mensaje deleted",
@@ -4770,7 +4812,8 @@
       "continue": "Seguir enviando",
       "discard": "Descartar mensajes en cola",
       "dismiss": "Descartar"
-    }
+    },
+    "sendChannelPostPostRequired": "Elige una publicación para enviar."
   },
   "instagram": {
     "description": "This integración lets tú Crear Instagram bots.",
@@ -7608,6 +7651,7 @@
     "locked": {
       "flowBanner": "Este flujo se instaló desde una plantilla de solo lectura. Puedes verlo, pero no editarlo.",
       "badge": "Solo lectura",
+      "tagEditorBanner": "Esto se instaló desde una plantilla de solo lectura. Solo se puede cambiar el color.",
       "editorBanner": "Esto se instaló desde una plantilla de solo lectura. Puedes verlo, pero no editarlo.",
       "badgeHint": "Instalado desde una plantilla de solo lectura"
     },
@@ -8303,6 +8347,28 @@
   "contactAdReferrals": {
     "title": "Historial de anuncios",
     "empty": "Aún no se han registrado clics en anuncios de este contacto."
+  },
+  "contactTouchpoints": {
+    "title": "Se unió a través de",
+    "empty": "Aún no hay participaciones registradas para este contacto.",
+    "kinds": {
+      "postComment": "Comentario en publicación",
+      "form": "Formulario"
+    },
+    "details": {
+      "played": "{count, plural, one {# jugada} other {# jugadas}}",
+      "lastPrize": "Último premio: {prize}",
+      "score": "Puntos: {score}",
+      "completed": "Completado",
+      "inProgress": "En curso",
+      "submissions": "{count, plural, one {# envío} other {# envíos}}",
+      "pollChoice": "Votó por {name}",
+      "leads": "{count, plural, one {# lead} other {# leads}}",
+      "requests": "{count, plural, one {# solicitud} other {# solicitudes}}",
+      "replies": "{count, plural, one {# respuesta} other {# respuestas}}",
+      "visits": "{count, plural, one {# visita} other {# visitas}}",
+      "clicks": "{count, plural, one {# clic} other {# clics}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "Aún no se ha enviado ninguna difusión a este contacto.",
@@ -12613,7 +12679,36 @@
     "label": "Quién respondió en esta conversación",
     "unnamedMember": "Miembro",
     "loadMoreFailed": "No se pudieron cargar más miembros",
-    "lastMessageBy": "Último mensaje de {name}"
+    "lastMessageBy": "Último mensaje de {name}",
+    "overflowCount": "+{overflow}"
+  },
+  "tagColor": {
+    "label": "Color",
+    "choose": "Elegir un color",
+    "presetLabel": "Elegir el color {color}",
+    "previewLabel": "Vista previa del color del tema",
+    "previewPlaceholder": "Nombre de la etiqueta"
+  },
+  "composerTags": {
+    "title": "Etiquetas",
+    "searchLabel": "Buscar etiquetas",
+    "searchPlaceholder": "Buscar etiquetas",
+    "expand": "Mostrar todas",
+    "collapse": "Mostrar menos",
+    "loadMore": "Cargar más",
+    "loadError": "No se pudieron cargar las etiquetas.",
+    "empty": "Aún no hay etiquetas. Crea etiquetas en la página Etiquetas.",
+    "noMatch": "Ninguna etiqueta coincide con tu búsqueda.",
+    "addFailed": "No se pudo añadir la etiqueta \"{name}\".",
+    "removeFailed": "No se pudo quitar la etiqueta \"{name}\".",
+    "refreshFailed": "No se pudieron actualizar las etiquetas. Recarga para ver lo más reciente.",
+    "disabledNoContact": "Esta conversación no tiene un contacto al que etiquetar.",
+    "disabledBlocked": "Este contacto está bloqueado, por lo que no se pueden cambiar sus etiquetas.",
+    "disabledNoAccess": "No tienes acceso para cambiar las etiquetas de este contacto."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {# etiqueta más} other {# etiquetas más}}"
   },
   "posts": {
     "title": "Publicaciones",

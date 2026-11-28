@@ -1033,6 +1033,7 @@ describe("syncTagDelete", () => {
       contactInboxIds: ["ci-1"],
     })
     expect(tagChannelDeleteContactTagsForContacts).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
       tagId: "tag-1",
       contactIds: ["contact-1"],
     })

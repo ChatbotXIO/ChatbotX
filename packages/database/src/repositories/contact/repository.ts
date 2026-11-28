@@ -126,6 +126,14 @@ const PUBLIC_CONTACT_RELATIONS = {
   },
 } as const
 
+/** Result of `contactRepository.linkTags`. */
+export type LinkedContactTags = {
+  /** Contacts that gained at least one tag link. */
+  contactIds: string[]
+  /** Pairs newly linked. */
+  linked: number
+}
+
 export const contactRepository = {
   buildListWhere: buildContactListWhere,
   resolveOrderBy: resolveContactOrderBy,
@@ -529,6 +537,8 @@ export const contactRepository = {
    * tags of `workspaceId` `FOR SHARE`: a soft delete is an `UPDATE`, so it
    * waits for this commit, and one committed first fails the re-checked
    * `deletedAt IS NULL`. Pairs of a deleted contact or tag are not linked.
+   * Resolves how many pairs were newly linked and which contacts gained a tag
+   * (so the caller can tell open inboxes after the commit).
    */
   async linkTags(
     input: {
@@ -536,9 +546,9 @@ export const contactRepository = {
       pairs: { contactId: string; tagId: string }[]
     },
     tx: DatabaseClient = db,
-  ): Promise<number> {
+  ): Promise<LinkedContactTags> {
     if (input.pairs.length === 0) {
-      return 0
+      return { contactIds: [], linked: 0 }
     }
     return await tx.transaction(async (trx) => {
       const liveContacts = await contactRepository.lockLiveIds(
@@ -568,6 +578,7 @@ export const contactRepository = {
           liveContacts.has(pair.contactId) && liveTagIds.has(pair.tagId),
       )
       let linked = 0
+      const changedContactIds = new Set<string>()
       for (
         let offset = 0;
         offset < pairs.length;
@@ -579,8 +590,11 @@ export const contactRepository = {
           .onConflictDoNothing()
           .returning({ contactId: contactsToTagsModel.contactId })
         linked += inserted.length
+        for (const row of inserted) {
+          changedContactIds.add(row.contactId)
+        }
       }
-      return linked
+      return { contactIds: [...changedContactIds], linked }
     })
   },
 }

@@ -3,13 +3,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mockAttach = vi.fn()
 const mockDetach = vi.fn()
-const mockReplace = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   tagService: {
     attachByNamesToContacts: (...args: unknown[]) => mockAttach(...args),
     detachByNamesFromContacts: (...args: unknown[]) => mockDetach(...args),
-    replaceContactTagsByNames: (...args: unknown[]) => mockReplace(...args),
   },
 }))
 
@@ -30,7 +28,6 @@ vi.mock("../../permissions", () => ({
 vi.mock("../../schema/contact-tag", () => ({
   addContactTagRequest: {},
   removeContactTagsRequest: {},
-  updateContactTagRequest: {},
 }))
 
 const { addContactTagAction: addContactTagActionUntyped } = await import(
@@ -43,12 +40,6 @@ const { removeContactTagAction: removeContactTagActionUntyped } = await import(
   "../remove-contact-tag.action"
 )
 const removeContactTagAction = removeContactTagActionUntyped as unknown as (
-  props: unknown,
-) => Promise<unknown>
-const { updateContactTagAction: updateContactTagActionUntyped } = await import(
-  "../update-contact-tag.action"
-)
-const updateContactTagAction = updateContactTagActionUntyped as unknown as (
   props: unknown,
 ) => Promise<unknown>
 const { requireContactPermissionScope } = await import("../../permissions")
@@ -101,29 +92,5 @@ describe("removeContactTagAction", () => {
       names: ["tag-a"],
       accessScope,
     })
-  })
-})
-
-describe("updateContactTagAction", () => {
-  test("delegates to tagService.replaceContactTagsByNames with the resolved access scope", async () => {
-    const accessScope = { restrictToAssignedUserId: "user-1" }
-    vi.mocked(requireContactPermissionScope).mockResolvedValue(
-      accessScope as never,
-    )
-    const resolvedTags = [{ id: "tag-1", name: "alpha" }]
-    mockReplace.mockResolvedValue(resolvedTags)
-
-    const result = await updateContactTagAction({
-      bindArgsParsedInputs: ["ws-1"],
-      parsedInput: { contactId: "c-1", tags: ["alpha"] },
-    } as never)
-
-    expect(mockReplace).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      contactId: "c-1",
-      names: ["alpha"],
-      accessScope,
-    })
-    expect(result).toEqual(resolvedTags)
   })
 })

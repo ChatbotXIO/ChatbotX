@@ -231,6 +231,7 @@ describe("syncTagDelete — full workspace delete", () => {
       contactInboxIds: ["ci-1"],
     })
     expect(tagChannelDeleteContactTagsForContacts).toHaveBeenCalledWith({
+      workspaceId: WS,
       tagId: TAG_ID,
       contactIds: ["c-1"],
     })
@@ -248,6 +249,7 @@ describe("syncTagDelete — full workspace delete", () => {
     await runDelete()
 
     expect(tagChannelDeleteContactTagsForContacts).toHaveBeenCalledWith({
+      workspaceId: WS,
       tagId: TAG_ID,
       contactIds: ["c-manual"],
     })

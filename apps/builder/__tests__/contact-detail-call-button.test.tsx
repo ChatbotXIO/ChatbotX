@@ -14,8 +14,11 @@ import type { GetContactResponse } from "@/features/contacts/schema/query"
 // every call (a naive `() => (key) => key`) makes that dependency array
 // change every render, looping `setContactFields` forever.
 const translate = (key: string) => key
+// Stable identity: the field-building effect depends on the formatter.
+const formatter = { number: (value: number) => String(value) }
 vi.mock("next-intl", () => ({
   useTranslations: () => translate,
+  useFormatter: () => formatter,
 }))
 
 const toastErrorMock = vi.fn()

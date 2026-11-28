@@ -251,13 +251,15 @@ export const instagramMessageAttachmentPayloadSchema = z.object({
   buttons: z.array(instagramButtonSchema).optional(),
   elements: z.array(instagramElementSchema).optional(),
   attachment_id: z.string().optional(),
+  // The platform id of the post a `MEDIA_SHARE` attachment shares.
+  id: z.string().optional(),
 })
 export type InstagramMessageAttachmentPayload = z.infer<
   typeof instagramMessageAttachmentPayloadSchema
 >
 
 export const instagramMessageAttachmentSchema = z.object({
-  type: z.enum(["image", "video", "audio", "file", "template"]),
+  type: z.enum(["image", "video", "audio", "file", "template", "MEDIA_SHARE"]),
   payload: instagramMessageAttachmentPayloadSchema,
 })
 export type InstagramMessageAttachment = z.infer<

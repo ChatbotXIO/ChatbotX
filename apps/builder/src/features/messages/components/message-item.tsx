@@ -14,6 +14,7 @@ import {
   getWhatsappCallPermissionReply,
   getWhatsappFlowResponse,
   getWhatsappPaymentMethod,
+  isMessageChannelPostEntity,
   isMessageProductEntity,
 } from "@chatbotx.io/sdk"
 import {
@@ -76,6 +77,7 @@ import {
   isThreadControlEcho,
 } from "../lib/thread-control-content"
 import type { MessageResourceWithRelations } from "../schema/resource"
+import { ChannelPostCard } from "./channel-post-card"
 import { InboundOrderBubble } from "./inbound-order-bubble"
 import { MessageActions, MessageActionsEditor } from "./message-actions"
 import { MessageBubble } from "./message-bubble"
@@ -241,7 +243,8 @@ export const MessageItem = (props: MessageItemProps) => {
       paymentMethod ||
       hasPaymentRequests ||
       threadControlActivity ||
-      threadControlContext,
+      threadControlContext ||
+      (!isDeleted && isMessageChannelPostEntity(message.contentAttributes)),
   )
 
   // A call card defaults to the centered `full` variant, but a call still has
@@ -1080,6 +1083,19 @@ const RenderContentAttributes = (
   )
   if (threadControlContext) {
     return <ThreadControlContextCard data={threadControlContext} />
+  }
+
+  // A deleted share keeps only the deleted placeholder, not the post card.
+  if (
+    message.deletedAt == null &&
+    isMessageChannelPostEntity(message.contentAttributes)
+  ) {
+    return (
+      <ChannelPostCard
+        post={message.contentAttributes}
+        sentText={message.text}
+      />
+    )
   }
 
   if (isMessageProductEntity(message.contentAttributes)) {

@@ -2,6 +2,7 @@ import {
   type ConversationParticipantPreview,
   conversationService,
   resolveContactAvatarUrl,
+  tagService,
 } from "@chatbotx.io/business"
 import { resolveAdReferral } from "@chatbotx.io/business/ads-conversion/channel-fields"
 import { notFoundException } from "@chatbotx.io/business/errors"
@@ -11,6 +12,7 @@ import {
   createMessageRepository,
   recentParticipantsRelation,
 } from "@chatbotx.io/database/repositories"
+import type { ContactTagPreview } from "@chatbotx.io/database/repositories/tag"
 import { userColumnsWithoutSecrets } from "@chatbotx.io/database/repositories/user-columns"
 import type {
   ContactInboxOperationalModel,
@@ -27,6 +29,7 @@ import {
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
 import { decodeCursor, encodeCursor } from "@/lib/pagination"
 import { mapConversationParticipants } from "../lib/map-participants"
+import { ROW_TAG_PREVIEW_LIMIT } from "../lib/tag-preview"
 import type {
   ConversationCompactContactInboxResource,
   ConversationContactInboxResource,
@@ -72,6 +75,8 @@ const mapConversationContactInbox = (
   sourceId: contactInbox.sourceId,
   sourceUserId: contactInbox.sourceUserId,
   sourceUsername: contactInbox.sourceUsername,
+  followsBusiness: contactInbox.followsBusiness,
+  followerCount: contactInbox.followerCount,
   language: contactInbox.language,
   lastMessageAt: contactInbox.lastMessageAt,
   lastIncomingMessageAt: contactInbox.lastIncomingMessageAt,
@@ -130,6 +135,29 @@ type ConversationContactInbox = ContactInboxOperationalModel & {
   inbox: InboxModel
 }
 
+const NO_TAGS: ContactTagPreview = { tagCount: 0, tagPreview: [] }
+
+/**
+ * The tag preview of every contact on a page, in one batched read (a constant
+ * two queries however many rows the page has).
+ */
+const loadTagPreviews = async (
+  workspaceId: string,
+  contacts: readonly ({ id: string } | null | undefined)[],
+): Promise<Map<string, ContactTagPreview>> => {
+  const contactIds = contacts.flatMap((contact) =>
+    contact ? [contact.id] : [],
+  )
+  if (contactIds.length === 0) {
+    return new Map()
+  }
+  return await tagService.listTagPreviewsByContactIds({
+    workspaceId,
+    contactIds,
+    limit: ROW_TAG_PREVIEW_LIMIT,
+  })
+}
+
 /**
  * Resolves a conversation's contact avatar. One contact often shows up in
  * several conversations of a page (a DM plus its comment threads); the avatar
@@ -139,12 +167,13 @@ type ConversationContactInbox = ContactInboxOperationalModel & {
 const createConversationContactResolver = (
   workspaceId: string,
   finalize: AvatarFinalizer,
+  tagPreviews: ReadonlyMap<string, ContactTagPreview>,
 ) => {
   const avatars = new Map<string, Promise<string | null>>()
   return async <T extends { id: string; avatar: string | null }>(
     contact: T | null,
     contactInboxes: readonly ConversationContactInbox[],
-  ): Promise<T | null> => {
+  ): Promise<(T & ContactTagPreview) | null> => {
     if (!contact) {
       return null
     }
@@ -157,7 +186,11 @@ const createConversationContactResolver = (
       )
       avatars.set(key, avatar)
     }
-    return { ...contact, avatar: await avatar }
+    return {
+      ...contact,
+      avatar: await avatar,
+      ...(tagPreviews.get(contact.id) ?? NO_TAGS),
+    }
   }
 }
 
@@ -230,28 +263,36 @@ export async function listConversations(
 
   // ── Shard-aware message lookups (parallelized) ──────────────────────────
   const messageRepository = await createMessageRepository()
-  const lastMessagesResults = await Promise.all(
-    page.map((c) => {
-      // Anchor on this conversation's own lastActivityAt, not a contactInbox's
-      // lastMessageAt — a contact's ContactInbox is shared across their DM and
-      // every comment-thread conversation, so its lastMessageAt reflects
-      // whichever of those was most recently active, not this specific one.
-      // Using the wrong (later) anchor excludes this conversation's real last
-      // message from the sharded time window, returning an empty preview.
-      // Don't bail when lastActivityAt is missing: historical imports populate
-      // messages but never set it, so bailing hid the last-message preview.
-      // resolveLastMessageSinceTime falls back to a full-history scan instead.
-      return messageRepository.findLastByConversation(c.id, {
-        attachmentCountOnly: true,
-        limit: 1,
-        sinceTime: resolveLastMessageSinceTime(c.lastActivityAt),
-        workspaceId,
-      })
-    }),
-  )
+  // The tag previews are one batched read, independent of the message lookups.
+  const [lastMessagesResults, tagPreviews] = await Promise.all([
+    Promise.all(
+      page.map((c) => {
+        // Anchor on this conversation's own lastActivityAt, not a contactInbox's
+        // lastMessageAt — a contact's ContactInbox is shared across their DM and
+        // every comment-thread conversation, so its lastMessageAt reflects
+        // whichever of those was most recently active, not this specific one.
+        // Using the wrong (later) anchor excludes this conversation's real last
+        // message from the sharded time window, returning an empty preview.
+        // Don't bail when lastActivityAt is missing: historical imports populate
+        // messages but never set it, so bailing hid the last-message preview.
+        // resolveLastMessageSinceTime falls back to a full-history scan instead.
+        return messageRepository.findLastByConversation(c.id, {
+          attachmentCountOnly: true,
+          limit: 1,
+          sinceTime: resolveLastMessageSinceTime(c.lastActivityAt),
+          workspaceId,
+        })
+      }),
+    ),
+    loadTagPreviews(
+      workspaceId,
+      page.map((c) => c.contact),
+    ),
+  ])
   const resolveContact = createConversationContactResolver(
     workspaceId,
     createAvatarFinalizer(workspaceId, { publicUrls: access.publicUrls }),
+    tagPreviews,
   )
 
   const lastMessagesByConversationId = new Map(
@@ -336,9 +377,8 @@ export const findConversation = async (
   }
 
   const messageRepository = await createMessageRepository()
-  const lastMessages = await messageRepository.findLastByConversation(
-    conversation.id,
-    {
+  const [lastMessages, tagPreviews] = await Promise.all([
+    messageRepository.findLastByConversation(conversation.id, {
       attachmentCountOnly: true,
       messageTypes: ["incoming", "outgoing"],
       limit: 1,
@@ -352,8 +392,9 @@ export const findConversation = async (
         endOfHour,
       ),
       workspaceId: input.workspaceId,
-    },
-  )
+    }),
+    loadTagPreviews(input.workspaceId, [conversation.contact]),
+  ])
 
   return {
     data: {
@@ -361,6 +402,7 @@ export const findConversation = async (
       contact: await createConversationContactResolver(
         input.workspaceId,
         createAvatarFinalizer(input.workspaceId, options),
+        tagPreviews,
       )(conversation.contact, conversation.contactInboxes),
       contactInboxes: mapConversationContactInboxes(
         conversation.contactInboxes,

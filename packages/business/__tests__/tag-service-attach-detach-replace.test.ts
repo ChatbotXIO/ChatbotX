@@ -151,6 +151,11 @@ vi.mock("../src/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn(), debug: vi.fn(), info: vi.fn() },
 }))
 
+// The realtime publisher is Redis-backed and irrelevant here (see tag-service-contact-tags-changed.test.ts).
+vi.mock("../src/tag/realtime", () => ({
+  publishContactTagsChanged: vi.fn(async () => undefined),
+}))
+
 const { tagService } = await import("../src/tag/service")
 
 // A DELETE resolves to nothing; with `.returning()` it reports every
@@ -761,6 +766,20 @@ describe("tagService.detachByNamesFromContacts", () => {
   })
 })
 
+/** What the transaction's INSERT and DELETE report as really changed (their RETURNING rows). */
+function setChangedLinks({
+  inserted = [],
+  deleted = [],
+}: {
+  inserted?: string[]
+  deleted?: string[]
+}) {
+  mockTxInsertBuilder.returning.mockResolvedValue(
+    inserted.map((tagId) => ({ tagId })),
+  )
+  state.removedPairs = deleted.map((tagId) => ({ contactId: "c-1", tagId }))
+}
+
 describe("tagService.replaceContactTagsByNames", () => {
   beforeEach(() => {
     resetState()
@@ -784,7 +803,7 @@ describe("tagService.replaceContactTagsByNames", () => {
 
   test("clears all tags: only enqueues detach for each previously set tag", async () => {
     state.findOrFailResult = { id: "c-1" }
-    state.txContactToTagsFindMany = [{ tagId: "tag-1" }, { tagId: "tag-2" }]
+    setChangedLinks({ deleted: ["tag-1", "tag-2"] })
     state.txTagFindMany = []
 
     await tagService.replaceContactTagsByNames({
@@ -810,7 +829,7 @@ describe("tagService.replaceContactTagsByNames", () => {
 
   test("purely additive: only enqueues attach for new tags", async () => {
     state.findOrFailResult = { id: "c-1" }
-    state.txContactToTagsFindMany = []
+    setChangedLinks({ inserted: ["tag-1", "tag-2"] })
     state.txTagFindMany = [
       { id: "tag-1", name: "alpha" },
       { id: "tag-2", name: "beta" },
@@ -848,7 +867,7 @@ describe("tagService.replaceContactTagsByNames", () => {
 
   test("purely subtractive: only enqueues detach for removed tags", async () => {
     state.findOrFailResult = { id: "c-1" }
-    state.txContactToTagsFindMany = [{ tagId: "tag-1" }, { tagId: "tag-2" }]
+    setChangedLinks({ deleted: ["tag-2"] })
     state.txTagFindMany = [{ id: "tag-1", name: "alpha" }]
 
     await tagService.replaceContactTagsByNames({
@@ -868,7 +887,7 @@ describe("tagService.replaceContactTagsByNames", () => {
 
   test("mixed update: enqueues both attach for new and detach for removed tags", async () => {
     state.findOrFailResult = { id: "c-1" }
-    state.txContactToTagsFindMany = [{ tagId: "tag-1" }, { tagId: "tag-2" }]
+    setChangedLinks({ inserted: ["tag-3"], deleted: ["tag-1"] })
     state.txTagFindMany = [
       { id: "tag-2", name: "beta" },
       { id: "tag-3", name: "gamma" },
@@ -901,7 +920,7 @@ describe("tagService.replaceContactTagsByNames", () => {
 
   test("unchanged tags are not re-synced (no attach or detach)", async () => {
     state.findOrFailResult = { id: "c-1" }
-    state.txContactToTagsFindMany = [{ tagId: "tag-1" }]
+    setChangedLinks({})
     state.txTagFindMany = [{ id: "tag-1", name: "alpha" }]
 
     await tagService.replaceContactTagsByNames({
@@ -919,7 +938,7 @@ describe("tagService.replaceContactTagsByNames", () => {
 
   test("swallows emitTagApplied errors and still calls enqueueAttach", async () => {
     state.findOrFailResult = { id: "c-1" }
-    state.txContactToTagsFindMany = []
+    setChangedLinks({ inserted: ["tag-1"] })
     state.txTagFindMany = [{ id: "tag-1", name: "alpha" }]
     emitTagApplied.mockRejectedValue(new Error("bus failure"))
 
@@ -941,7 +960,7 @@ describe("tagService.replaceContactTagsByNames", () => {
 
   test("returns the resolved tag list", async () => {
     state.findOrFailResult = { id: "c-1" }
-    state.txContactToTagsFindMany = []
+    setChangedLinks({})
     const resolvedTags = [{ id: "tag-1", name: "alpha", workspaceId: "ws-1" }]
     state.txTagFindMany = resolvedTags
 
@@ -956,7 +975,7 @@ describe("tagService.replaceContactTagsByNames", () => {
 
   test("calls invalidateCacheByTags with correct workspace cache keys", async () => {
     state.findOrFailResult = { id: "c-1" }
-    state.txContactToTagsFindMany = []
+    setChangedLinks({})
     state.txTagFindMany = []
 
     await tagService.replaceContactTagsByNames({
@@ -970,5 +989,64 @@ describe("tagService.replaceContactTagsByNames", () => {
       workspaceId: "ws-7",
       ids: ["c-1"],
     })
+  })
+
+  test("drops the caches even when an enqueue fails, and the error still propagates", async () => {
+    state.findOrFailResult = { id: "c-1" }
+    setChangedLinks({ inserted: ["tag-1"] })
+    state.txTagFindMany = [{ id: "tag-1", name: "alpha" }]
+    enqueueAttach.mockRejectedValueOnce(new Error("queue down"))
+
+    await expect(
+      tagService.replaceContactTagsByNames({
+        workspaceId: "ws-9",
+        contactId: "c-1",
+        names: ["alpha"],
+      }),
+    ).rejects.toThrow("queue down")
+
+    expect(invalidateCacheByTags).toHaveBeenCalledWith(["tags", "tags:ws-9"])
+    expect(contactInvalidate).toHaveBeenCalledWith({
+      workspaceId: "ws-9",
+      ids: ["c-1"],
+    })
+  })
+
+  test("a failing tag cache drop still drops the contact cache and keeps the enqueue error", async () => {
+    state.findOrFailResult = { id: "c-1" }
+    setChangedLinks({ inserted: ["tag-1"] })
+    state.txTagFindMany = [{ id: "tag-1", name: "alpha" }]
+    enqueueAttach.mockRejectedValueOnce(new Error("queue down"))
+    invalidateCacheByTags.mockRejectedValueOnce(new Error("redis down"))
+
+    await expect(
+      tagService.replaceContactTagsByNames({
+        workspaceId: "ws-9",
+        contactId: "c-1",
+        names: ["alpha"],
+      }),
+    ).rejects.toThrow("queue down")
+
+    expect(contactInvalidate).toHaveBeenCalledWith({
+      workspaceId: "ws-9",
+      ids: ["c-1"],
+    })
+  })
+
+  test("a failing cache drop alone does not fail a replace that wrote its links", async () => {
+    state.findOrFailResult = { id: "c-1" }
+    setChangedLinks({ inserted: ["tag-1"] })
+    state.txTagFindMany = [{ id: "tag-1", name: "alpha" }]
+    contactInvalidate.mockRejectedValueOnce(new Error("redis down"))
+
+    await expect(
+      tagService.replaceContactTagsByNames({
+        workspaceId: "ws-9",
+        contactId: "c-1",
+        names: ["alpha"],
+      }),
+    ).resolves.toEqual([{ id: "tag-1", name: "alpha" }])
+
+    expect(invalidateCacheByTags).toHaveBeenCalledWith(["tags", "tags:ws-9"])
   })
 })

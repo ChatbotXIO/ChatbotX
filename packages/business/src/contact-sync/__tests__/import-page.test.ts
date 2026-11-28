@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   resolveLinks: vi.fn(),
   mergeProfiles: vi.fn(),
   linkTags: vi.fn(),
+  publishTagsChanged: vi.fn(),
   bulkUpsertValues: vi.fn(),
   incrementBy: vi.fn(),
   usageIncrement: vi.fn(),
@@ -22,6 +23,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     linkTags: mocks.linkTags,
   },
   contactCustomFieldRepository: { bulkUpsertValues: mocks.bulkUpsertValues },
+}))
+// A UI refresh of the open inbox, not an automation event: it is allowed.
+vi.mock("../../tag/realtime", () => ({
+  publishContactTagsChanged: mocks.publishTagsChanged,
 }))
 vi.mock("../../quota-enforcement/service", () => ({
   quotaEnforcementService: { incrementBy: mocks.incrementBy },
@@ -148,7 +153,7 @@ beforeEach(() => {
   mocks.resolveUnmappedTags.mockImplementation(async (input) => input.state)
   mocks.resolveUnmappedFields.mockImplementation(async (input) => input.state)
   mocks.mergeProfiles.mockResolvedValue([])
-  mocks.linkTags.mockResolvedValue(0)
+  mocks.linkTags.mockResolvedValue({ linked: 0, contactIds: [] })
   mocks.bulkUpsertValues.mockResolvedValue({ dropped: 0 })
   mocks.usageIncrement.mockResolvedValue(undefined)
 })
@@ -438,6 +443,40 @@ describe("importContactSyncPage", () => {
 
     await expect(run([record()])).resolves.toMatchObject({
       counters: { created: 1 },
+    })
+  })
+
+  test("tells open inboxes about the contacts that gained a tag, after the link committed", async () => {
+    mocks.resolveLinks.mockResolvedValue({
+      importedContacts: 0,
+      contactInboxIds: new Map([["psid-1", link("c-old")]]),
+      newContactCreatedEvents: [],
+    })
+    mocks.linkTags.mockResolvedValue({ linked: 1, contactIds: ["c-old"] })
+
+    await run([record({ tags: [{ id: "t-1", name: "VIP" }] })])
+
+    expect(mocks.publishTagsChanged).toHaveBeenCalledExactlyOnceWith({
+      workspaceId: "ws-1",
+      contactIds: ["c-old"],
+    })
+    expect(
+      mocks.publishTagsChanged.mock.invocationCallOrder[0],
+    ).toBeGreaterThan(mocks.linkTags.mock.invocationCallOrder[0] as number)
+  })
+
+  test("publishes no contact when every link already existed", async () => {
+    mocks.resolveLinks.mockResolvedValue({
+      importedContacts: 0,
+      contactInboxIds: new Map([["psid-1", link("c-old")]]),
+      newContactCreatedEvents: [],
+    })
+
+    await run([record({ tags: [{ id: "t-1", name: "VIP" }] })])
+
+    expect(mocks.publishTagsChanged).toHaveBeenCalledExactlyOnceWith({
+      workspaceId: "ws-1",
+      contactIds: [],
     })
   })
 })

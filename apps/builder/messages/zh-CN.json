@@ -155,7 +155,7 @@
     "view": "查看",
     "viewAnalytics": "查看分析",
     "wait": "等等",
-    "loadMore": "Load more",
+    "loadMore": "加载更多",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -1793,6 +1793,28 @@
     "title": "广告历史",
     "empty": "尚未记录此联系人的广告点击。"
   },
+  "contactTouchpoints": {
+    "title": "通过以下方式加入",
+    "empty": "此联系人暂无参与记录。",
+    "kinds": {
+      "postComment": "帖子评论",
+      "form": "表单"
+    },
+    "details": {
+      "played": "{count, plural, one {#次游玩} other {#次游玩}}",
+      "lastPrize": "最近奖品：{prize}",
+      "score": "得分：{score}",
+      "completed": "已完成",
+      "inProgress": "进行中",
+      "submissions": "{count, plural, one {#次提交} other {#次提交}}",
+      "pollChoice": "投票给 {name}",
+      "leads": "{count, plural, one {#条线索} other {#条线索}}",
+      "requests": "{count, plural, one {#个请求} other {#个请求}}",
+      "replies": "{count, plural, one {#条回复} other {#条回复}}",
+      "visits": "{count, plural, one {#次访问} other {#次访问}}",
+      "clicks": "{count, plural, one {#次点击} other {#次点击}}"
+    }
+  },
   "contactBroadcasts": {
     "empty": "尚未向此联系人发送任何广播。",
     "searchPlaceholder": "按名称或 ID 搜索"
@@ -2695,6 +2717,20 @@
       "externalId": "外部 ID",
       "channelId": "渠道 ID",
       "lineUserId": "LINE User ID"
+    },
+    "channelProfile": {
+      "followsBusiness": "关注了商家",
+      "followerCount": "粉丝数",
+      "yes": "是",
+      "no": "否",
+      "messagingWindow": {
+        "label": "消息窗口",
+        "open": "开放中 • {time}",
+        "humanAgentOpen": "人工客服窗口 • {time}",
+        "closed": "已关闭",
+        "tooltip": "客户最后一条消息后的 24 小时内可以回复。",
+        "tooltipHumanAgent": "客户最后一条消息后的 24 小时内可以回复。之后人工客服仍可在最多 7 天内回复。"
+      }
     },
     "contactNote": {
       "label": "联系人备注"
@@ -4299,7 +4335,8 @@
       "moreOptions": "更多选项",
       "findPlacesNearMe": "查找我附近的地点",
       "callPhoneNumber": "拨打电话号码",
-      "copyText": "复制文本"
+      "copyText": "复制文本",
+      "sendChannelPost": "发送帖子"
     },
     "externalRequest": {
       "errors": {
@@ -4688,6 +4725,32 @@
       "limitHint": "填入变量后最多 {max} 个字符。",
       "fallbackHint": "在无法复制文本的渠道上，联系人会以回复的形式收到此文本。",
       "viewerTitle": "复制此文本"
+    },
+    "sendChannelPost": {
+      "title": "发送帖子",
+      "description": "选择您的一条帖子发送给客户。",
+      "inbox": "收件箱",
+      "inboxPlaceholder": "选择收件箱",
+      "noInboxes": "请连接 Instagram 或 Messenger 收件箱以发送帖子。",
+      "search": "搜索帖子",
+      "empty": "此收件箱暂无帖子。",
+      "loadError": "无法加载帖子。",
+      "retry": "重试",
+      "loadMore": "加载更多",
+      "select": "选择帖子",
+      "unavailable": "此帖子已不可用。",
+      "noCaption": "无说明文字",
+      "openPost": "打开帖子",
+      "sendFailed": "无法发送帖子。",
+      "reasons": {
+        "typeNotShareable": "此类帖子无法在此发送",
+        "linkUnavailable": "此帖子没有可发送的链接",
+        "linkTooLong": "链接过长，无法发送",
+        "shareUnsupported": "此渠道无法发送帖子",
+        "postNotFound": "此帖子已不存在",
+        "inboxMismatch": "此帖子属于另一个收件箱"
+      },
+      "noMatch": "没有与搜索匹配的帖子。"
     }
   },
   "folders": {
@@ -5830,6 +5893,7 @@
     "selectConversationTitle": "选择对话",
     "sendFailed": "发送失败",
     "sentAttachments": "已发送 {count, plural, one {1 个附件} other {# 个附件}}",
+    "sentPost": "已发送一篇帖子",
     "signOutConfirmation": "您确定要退出吗？",
     "success": "成功",
     "syncedSuccessfully": "同步成功",
@@ -5938,7 +6002,8 @@
       "continue": "继续发送",
       "discard": "丢弃排队中的消息",
       "dismiss": "忽略"
-    }
+    },
+    "sendChannelPostPostRequired": "请选择要发送的帖子。"
   },
   "messenger": {
     "botProfile": "机器人个人数据",
@@ -7615,6 +7680,7 @@
     "locked": {
       "flowBanner": "此流程来自仅查看的模板。你可以查看，但无法编辑。",
       "badge": "仅查看",
+      "tagEditorBanner": "这是从仅查看模板安装的。只能更改颜色。",
       "editorBanner": "这是从仅查看模板安装的。你可以查看，但不能编辑。",
       "badgeHint": "从仅查看范本安装"
     },
@@ -12613,7 +12679,36 @@
     "label": "谁在此会话中回复过",
     "unnamedMember": "成员",
     "loadMoreFailed": "无法加载更多成员",
-    "lastMessageBy": "{name} 的最后一条消息"
+    "lastMessageBy": "{name} 的最后一条消息",
+    "overflowCount": "+{overflow}"
+  },
+  "tagColor": {
+    "label": "颜色",
+    "choose": "选择颜色",
+    "presetLabel": "选择颜色 {color}",
+    "previewLabel": "主题色预览",
+    "previewPlaceholder": "标签名称"
+  },
+  "composerTags": {
+    "title": "标签",
+    "searchLabel": "搜索标签",
+    "searchPlaceholder": "搜索标签",
+    "expand": "显示全部",
+    "collapse": "收起",
+    "loadMore": "加载更多",
+    "loadError": "无法加载标签。",
+    "empty": "还没有标签。请在“标签”页面创建标签。",
+    "noMatch": "没有与搜索匹配的标签。",
+    "addFailed": "无法添加标签“{name}”。",
+    "removeFailed": "无法移除标签“{name}”。",
+    "refreshFailed": "无法刷新标签。请重新加载以查看最新内容。",
+    "disabledNoContact": "此对话没有可添加标签的联系人。",
+    "disabledBlocked": "此联系人已被屏蔽，无法更改其标签。",
+    "disabledNoAccess": "你没有权限更改此联系人的标签。"
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {另有 # 个标签} other {另有 # 个标签}}"
   },
   "posts": {
     "title": "帖子",

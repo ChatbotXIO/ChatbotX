@@ -269,6 +269,38 @@ describe("sendMessageEditorMenus — Send Products", () => {
   })
 })
 
+describe("sendMessageEditorMenus — Send Post", () => {
+  const SEND_POST_LABEL = "flows.actions.sendChannelPost"
+  const hasSendPost = (channel: MenuData["beforeStep"]["channel"]) =>
+    sendMessageEditorMenus(t, buildMenuData(channel)).some(
+      (item) => item.label === SEND_POST_LABEL,
+    )
+
+  it("is offered only where the channel policy can send posts", () => {
+    expect(hasSendPost(channelTypes.enum.instagram)).toBe(true)
+    expect(hasSendPost(channelTypes.enum.messenger)).toBe(true)
+    for (const channel of [
+      channelTypes.enum.omnichannel,
+      channelTypes.enum.whatsapp,
+      channelTypes.enum.telegram,
+      channelTypes.enum.threads,
+      channelTypes.enum.tiktok,
+      channelTypes.enum.smtp,
+    ]) {
+      expect(hasSendPost(channel)).toBe(false)
+    }
+  })
+
+  it("adds the sendChannelPost step", () => {
+    const item = sendMessageEditorMenus(
+      t,
+      buildMenuData(channelTypes.enum.instagram),
+    ).find((candidate) => candidate.label === SEND_POST_LABEL)
+
+    expect(item?.stepType).toBe(stepTypes.enum.sendChannelPost)
+  })
+})
+
 describe("sendMessageEditorMenus — WhatsApp-only send steps", () => {
   const stepTypesFor = (channel: MenuData["beforeStep"]["channel"]) =>
     sendMessageEditorMenus(t, buildMenuData(channel)).map(

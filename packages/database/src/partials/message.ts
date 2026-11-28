@@ -1,3 +1,4 @@
+import { channelPostShareRefusalReasons } from "@chatbotx.io/utils/channel-post"
 import { z } from "zod"
 
 export const senderTypes = z.enum(["bot", "contact", "system", "user", "api"])
@@ -216,3 +217,14 @@ export const isResendableMessage = (
     (!message.parentId || hasReplyTargetCreatedAt(message.contentAttributes))
   )
 }
+
+export const CHANNEL_POST_SHARE_REFUSED_CODE = "channelPostShareRefused"
+
+/** The `data` an API caller gets with a refused post send, so it can branch on `reason`. */
+export const channelPostShareRefusedDataSchema = z.object({
+  reason: z
+    .enum(channelPostShareRefusalReasons)
+    .describe(
+      "`channelPostNotFound`: no such post (or it was removed). `channelPostInboxMismatch`: the post belongs to another inbox. `channelPostTypeNotShareable`: the channel cannot send this kind of post. `channelPostShareUnsupported`: the channel cannot send posts. `channelPostLinkUnavailable`: the post has no link to send. `channelPostLinkTooLong`: the link is longer than a message may be.",
+    ),
+})

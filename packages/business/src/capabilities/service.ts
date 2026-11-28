@@ -274,6 +274,14 @@ const getFlowSpecCapabilities = (
       ...(policy.productMessages
         ? { productMessages: policy.productMessages }
         : {}),
+      ...(policy.channelPostShare
+        ? {
+            channelPostShare: {
+              mode: policy.channelPostShare.mode,
+              contentTypes: [...policy.channelPostShare.contentTypes],
+            },
+          }
+        : {}),
     },
   }
 }

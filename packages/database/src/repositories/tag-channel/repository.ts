@@ -52,7 +52,7 @@ export const tagChannelRepository = {
       contactInbox: { id: string; contactId: string }
     },
     tx: DatabaseClient = db,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const { workspaceId, channelType, integrationId, label, contactInbox } =
       input
 
@@ -66,7 +66,7 @@ export const tagChannelRepository = {
       })
       .returning({ id: tagModel.id })
     if (!tag) {
-      return
+      return false
     }
 
     const [tagChannel] = await tx
@@ -85,13 +85,14 @@ export const tagChannelRepository = {
       })
       .returning({ id: tagChannelModel.id })
     if (!tagChannel) {
-      return
+      return false
     }
 
-    await tx
+    const linkedNow = await tx
       .insert(contactsToTagsModel)
       .values({ contactId: contactInbox.contactId, tagId: tag.id })
       .onConflictDoNothing()
+      .returning({ contactId: contactsToTagsModel.contactId })
     await tx
       .insert(contactToTagChannelModel)
       .values({
@@ -100,6 +101,8 @@ export const tagChannelRepository = {
         contactInboxId: contactInbox.id,
       })
       .onConflictDoNothing()
+    // True when the contact did not have the tag yet (a changed link).
+    return linkedNow.length > 0
   },
 
   /** `sync-tag(create)` Zalo path: name-based mapping, no API call. */
@@ -367,14 +370,15 @@ export const tagChannelRepository = {
       )
   },
 
+  /** Unlinks the tag from the contacts; resolves the contacts that really had it. */
   async deleteContactTagsForContacts(
     input: { tagId: string; contactIds: string[] },
     tx: DatabaseClient = db,
-  ): Promise<void> {
+  ): Promise<string[]> {
     if (input.contactIds.length === 0) {
-      return
+      return []
     }
-    await tx
+    const removed = await tx
       .delete(contactsToTagsModel)
       .where(
         and(
@@ -382,6 +386,8 @@ export const tagChannelRepository = {
           inArray(contactsToTagsModel.contactId, input.contactIds),
         ),
       )
+      .returning({ contactId: contactsToTagsModel.contactId })
+    return removed.map((row) => row.contactId)
   },
 
   /** `sync-tag(delete)` catch-all page: id-paged by `contactId`. */

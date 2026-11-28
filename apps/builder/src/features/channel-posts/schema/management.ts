@@ -173,6 +173,11 @@ export const listChannelPostManagementRequest = z.object({
     .describe(
       "Text found in the caption or permalink, or an exact external post id.",
     ),
+  shareableOnly: booleanQuery
+    .optional()
+    .describe(
+      "`true` lists only posts a channel can send into a conversation with the `channelPost` message (`messages.create`, `contacts.sendMessage`): a post kind the channel takes, and a link where the channel sends one. Combine with `inboxIds` for one inbox. When set and `hasComments` is omitted, posts without comments are listed too. Omit or `false` for every post.",
+    ),
   sort: channelPostManagementSorts
     .default("newest")
     .describe("Order of the list (default `newest`)."),
@@ -181,6 +186,18 @@ export const listChannelPostManagementRequest = z.object({
     .describe(
       "Only posts that carry at least one of these topics. Get ids from `postTopics.list`.",
     ),
+})
+
+/**
+ * The post picker of the composer and of the flow step: every post of one
+ * inbox, newest first, sendable or not (the picker shows the ones a channel
+ * cannot send as disabled, with the reason).
+ */
+export const listPickerChannelPostsRequest = z.object({
+  cursor: channelPostManagementCursor.optional(),
+  inboxId: zodBigintIdAsString().describe("Inbox whose posts are listed."),
+  limit: z.coerce.number().int().min(1).max(100).default(30),
+  search: z.string().trim().min(1).max(200).optional(),
 })
 
 export const listChannelPostManagementResponse = z.object({
@@ -533,7 +550,11 @@ export const deleteChannelPostCommentResponse = z.object({
 
 /** The list filters a posts-list export (`kind: rows`) is selected by: the list request without paging. */
 export const exportChannelPostRowsFilters =
-  listChannelPostManagementRequest.omit({ cursor: true, limit: true })
+  listChannelPostManagementRequest.omit({
+    cursor: true,
+    limit: true,
+    shareableOnly: true,
+  })
 
 /** The list filters that carry several values (repeated query keys in the export route). */
 export const EXPORT_ROWS_ARRAY_KEYS = [

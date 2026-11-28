@@ -4,8 +4,12 @@ import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 import { useIsLocked } from "@/features/templates/components/lock-context"
 
+/** Banner text under `templates.locked`; a resource with an editable part says so. */
+type LockedBannerKey = "editorBanner" | "tagEditorBanner"
+
 type LockedDialogFieldsetProps = {
   resourceId?: string | null
+  bannerKey?: LockedBannerKey
   children: ReactNode
 }
 
@@ -16,6 +20,7 @@ type LockedDialogFieldsetProps = {
  */
 export function LockedDialogFieldset({
   resourceId,
+  bannerKey = "editorBanner",
   children,
 }: LockedDialogFieldsetProps) {
   const t = useTranslations("templates.locked")
@@ -30,7 +35,7 @@ export function LockedDialogFieldset({
         data-testid="template-locked-banner"
         role="status"
       >
-        {t("editorBanner")}
+        {t(bannerKey)}
       </div>
       <fieldset
         className="m-0 min-w-0 border-0 p-0"

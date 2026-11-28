@@ -1,5 +1,6 @@
 import {
   contactInboxThreadControlUpdatedSchema,
+  contactTagsChangedSchema,
   messageTranslationUpdatedSchema,
   pipelineItemChangedSchema,
   RealtimeEventType,
@@ -40,6 +41,7 @@ export const REALTIME_EVENT_SCHEMAS: {
     contactInboxThreadControlUpdatedSchema,
   [RealtimeEventType.pipelineItemChanged]: pipelineItemChangedSchema,
   [RealtimeEventType.socialPostChanged]: socialPostChangedSchema,
+  [RealtimeEventType.contactTagsChanged]: contactTagsChangedSchema,
   [RealtimeEventType.messageTranslationUpdated]:
     messageTranslationUpdatedSchema,
 }

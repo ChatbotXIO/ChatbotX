@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { act } from "react"
+import { act, useEffect } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { ContactInboxPanel } from "@/features/contacts/contact-inbox-panel"
@@ -17,9 +17,20 @@ const notesMock = vi.fn().mockResolvedValue({ data: [] })
 const couponsMock = vi.fn().mockResolvedValue([])
 const appointmentsMock = vi.fn().mockResolvedValue([])
 const sequencesMock = vi.fn().mockResolvedValue({ data: [] })
+const contactTagsMock = vi.fn().mockResolvedValue({ data: [] })
 vi.mock("@/lib/orpc/query", () => ({
   orpc: {
     contactsAPIs: {
+      listContactTagsAuthenticatedAPI: {
+        queryOptions: ({
+          input,
+        }: {
+          input: { workspaceId: string; contactId: string }
+        }) => ({
+          queryKey: ["contact-tags", input.workspaceId, input.contactId],
+          queryFn: () => contactTagsMock(input),
+        }),
+      },
       getContactAuthenticatedAPI: {
         queryOptions: ({
           input,
@@ -151,8 +162,28 @@ vi.mock(
   }),
 )
 
+const touchpointsListProps = vi.hoisted(() => ({
+  current: null as null | Record<string, unknown>,
+}))
+vi.mock("@/features/contacts/components/contact-touchpoints-list", () => ({
+  ContactTouchpointsList: (props: Record<string, unknown>) => {
+    touchpointsListProps.current = props
+    return <div data-testid="touchpoints-section" />
+  },
+}))
+
+const tagFieldProps = vi.hoisted(() => ({
+  current: null as null | { tags: { id: string }[] },
+  mounts: 0,
+}))
 vi.mock("@/features/contacts/components/update-contact-tag-field", () => ({
-  default: () => null,
+  default: (props: { tags: { id: string }[] }) => {
+    tagFieldProps.current = props
+    useEffect(() => {
+      tagFieldProps.mounts += 1
+    }, [])
+    return <div data-testid="tag-field" />
+  },
 }))
 
 const broadcastsListProps = vi.hoisted(() => ({
@@ -273,6 +304,9 @@ describe("ContactInboxPanel", () => {
     couponsMock.mockClear()
     appointmentsMock.mockClear()
     sequencesMock.mockClear()
+    contactTagsMock.mockClear()
+    tagFieldProps.current = null
+    tagFieldProps.mounts = 0
     latestAccordionOnValueChange = undefined
     broadcastsListProps.current = null
     threadControlView.current = null
@@ -412,13 +446,14 @@ describe("ContactInboxPanel", () => {
     ).toBe("Patched Jane")
   })
 
-  test("lists the sections with ads history and appointments first, and Broadcasts right before Sequences", () => {
+  test("lists the sections with Opted In through first, ads history and appointments next, and Broadcasts right before Sequences", () => {
     seededContact = makeContact("contact-1", "Jane")
 
     render()
 
     // The accordion mock renders every trigger; the titles echo their keys.
     const order = [
+      "contactTouchpoints.title",
       "contactAdReferrals.title",
       "appointments.title",
       "coupons.title",
@@ -432,6 +467,152 @@ describe("ContactInboxPanel", () => {
 
     expect(positions.every((position) => position >= 0)).toBe(true)
     expect(positions).toEqual([...positions].sort((a, b) => a - b))
+  })
+
+  test("mounts the touchpoints section for the contact only once its accordion item opens", () => {
+    seededContact = makeContact("contact-1", "Jane")
+    touchpointsListProps.current = null
+
+    render()
+    expect(touchpointsListProps.current).toBeNull()
+
+    act(() => {
+      latestAccordionOnValueChange?.(["contactTouchpoints.title"])
+    })
+
+    expect(
+      container.querySelector('[data-testid="touchpoints-section"]'),
+    ).not.toBeNull()
+    expect(touchpointsListProps.current).toEqual({
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+    })
+  })
+
+  test("reads the Tags editor's tags from their own query, only once the section opens", async () => {
+    seededContact = {
+      ...makeContact("contact-1", "Jane"),
+      tags: [{ id: "old" }],
+    }
+    contactTagsMock.mockResolvedValue({ data: [{ id: "fresh" }] })
+
+    render()
+    expect(contactTagsMock).not.toHaveBeenCalled()
+
+    act(() => {
+      latestAccordionOnValueChange?.(["fields.tags.label"])
+    })
+
+    await vi.waitFor(() => {
+      expect(tagFieldProps.current?.tags).toEqual([{ id: "fresh" }])
+    })
+    expect(contactTagsMock).toHaveBeenCalledTimes(1)
+  })
+
+  test("the Tags editor stays mounted and enabled while a refetch is in flight", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+    contactTagsMock.mockResolvedValue({ data: [{ id: "a" }] })
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["fields.tags.label"])
+    })
+    await vi.waitFor(() => {
+      expect(tagFieldProps.current?.tags).toEqual([{ id: "a" }])
+    })
+
+    let resolveRefetch: (value: { data: { id: string }[] }) => void = () =>
+      undefined
+    contactTagsMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveRefetch = resolve
+        }),
+    )
+    act(() => {
+      queryClient.invalidateQueries({
+        queryKey: ["contact-tags", "ws-1", "contact-1"],
+      })
+    })
+    expect(tagFieldProps.current?.tags).toEqual([{ id: "a" }])
+
+    act(() => {
+      resolveRefetch({ data: [{ id: "a" }, { id: "b" }] })
+    })
+    await vi.waitFor(() => {
+      expect(tagFieldProps.current?.tags).toEqual([{ id: "a" }, { id: "b" }])
+    })
+  })
+
+  test("a failed background refetch keeps the Tags editor on the cached tags", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+    contactTagsMock.mockResolvedValue({ data: [{ id: "a" }] })
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["fields.tags.label"])
+    })
+    await vi.waitFor(() => {
+      expect(tagFieldProps.current?.tags).toEqual([{ id: "a" }])
+    })
+
+    contactTagsMock.mockRejectedValueOnce(new Error("boom"))
+    await act(async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["contact-tags", "ws-1", "contact-1"],
+      })
+    })
+
+    expect(tagFieldProps.current?.tags).toEqual([{ id: "a" }])
+  })
+
+  test("invalidating the contact's tags refetches them while the section is open, never while closed", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+    contactTagsMock.mockResolvedValue({ data: [{ id: "a" }] })
+    render()
+    await act(async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["contact-tags", "ws-1", "contact-1"],
+      })
+    })
+    expect(contactTagsMock).not.toHaveBeenCalled()
+
+    act(() => {
+      latestAccordionOnValueChange?.(["fields.tags.label"])
+    })
+    await vi.waitFor(() => {
+      expect(tagFieldProps.current?.tags).toEqual([{ id: "a" }])
+    })
+    contactTagsMock.mockResolvedValue({ data: [{ id: "a" }, { id: "b" }] })
+    await act(async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["contact-tags", "ws-1", "contact-1"],
+      })
+    })
+
+    await vi.waitFor(() => {
+      expect(tagFieldProps.current?.tags).toEqual([{ id: "a" }, { id: "b" }])
+    })
+  })
+
+  test("another contact gets a fresh Tags editor, never the previous contact's pending state", () => {
+    seededContact = makeContact("contact-1", "Jane")
+    queryClient.setQueryData(["contact-tags", "ws-1", "contact-1"], {
+      data: [{ id: "a" }],
+    })
+    queryClient.setQueryData(["contact-tags", "ws-1", "contact-2"], {
+      data: [{ id: "b" }],
+    })
+    render("conv-1")
+    act(() => {
+      latestAccordionOnValueChange?.(["fields.tags.label"])
+    })
+    expect(tagFieldProps.current?.tags).toEqual([{ id: "a" }])
+    expect(tagFieldProps.mounts).toBe(1)
+
+    seededContact = makeContact("contact-2", "John")
+    render("conv-2")
+
+    expect(tagFieldProps.current?.tags).toEqual([{ id: "b" }])
+    expect(tagFieldProps.mounts).toBe(2)
   })
 
   test("does not mount the broadcasts section before its accordion item opens", () => {

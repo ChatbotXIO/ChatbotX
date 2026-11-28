@@ -5,6 +5,8 @@ export const tagResource = createSelectSchema(tagModel, {
   id: z.string(),
   workspaceId: z.string(),
   folderId: z.string().nullable(),
+  // Tag rows cached before the color column existed have no `color` key.
+  color: z.string().nullable().default(null),
 })
 export type TagResource = z.infer<typeof tagResource>
 
@@ -12,8 +14,14 @@ export const publicTagResource = tagResource
   .pick({
     id: true,
     name: true,
+    color: true,
   })
   .extend({
+    color: z
+      .string()
+      .nullable()
+      .default(null)
+      .describe("Tag color as `#RRGGBB`, or null when it has none."),
     folderId: z
       .string()
       .nullable()

@@ -118,6 +118,7 @@ export type FlowStepSpec =
       footer?: string
       sections?: Array<{ title?: string; productIds: string[] }>
     }
+  | { type: "sendChannelPost"; id?: string; channelPostId: string }
   | {
       type: "sendViewCatalog"
       id?: string
@@ -328,6 +329,18 @@ const sendProductsStepSpecSchema = z
   })
   .describe(
     "Sends products from the workspace catalog (single product, product list or carousel; use sendViewCatalog to open the whole catalog). Only on channels that support product messages.",
+  )
+
+const sendChannelPostStepSpecSchema = z
+  .object({
+    type: stepTypeLiteral("sendChannelPost"),
+    id: stepIdField,
+    channelPostId: zodBigintAsString().describe(
+      "Id of the post to send, from `channelPostManagement.list` with `shareableOnly=true` on an inbox of the flow's channel. The post must belong to the inbox the flow runs on.",
+    ),
+  })
+  .describe(
+    "Sends one of the business's own posts: Instagram sends the post card, Messenger sends a text with the post's name and link. Set `channel` (instagram or messenger) so publish checks it: it is rejected on any other channel (see `capabilities.get`'s `unsupportedSteps`).",
   )
 
 const sendViewCatalogStepSpecSchema = z
@@ -844,6 +857,7 @@ const flowStepSpecOptions = [
   sendStepSpecSchema,
   sendTemplateStepSpecSchema,
   sendProductsStepSpecSchema,
+  sendChannelPostStepSpecSchema,
   sendViewCatalogStepSpecSchema,
   waitStepSpecSchema,
   branchStepSpecSchema,
@@ -857,7 +871,7 @@ const flowStepSpecOptions = [
 const flowStepSpecSchema: z.ZodType<FlowStepSpec> = z
   .discriminatedUnion("type", flowStepSpecOptions)
   .describe(
-    "One flow step. The `type` field selects the step kind: send, sendTemplate, sendProducts, sendViewCatalog, wait, branch, action, pipeline, startFlow, addNote or goto.",
+    "One flow step. The `type` field selects the step kind: send, sendTemplate, sendProducts, sendChannelPost, sendViewCatalog, wait, branch, action, pipeline, startFlow, addNote or goto.",
   )
 
 export type FlowSpecStepType = { type: string; description: string }

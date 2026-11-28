@@ -14,10 +14,15 @@ import {
 } from "@chatbotx.io/database/client"
 import { rootFolderId } from "@chatbotx.io/database/partials"
 import {
+  type ContactTagPreview,
+  tagRepository,
+} from "@chatbotx.io/database/repositories/tag"
+import {
   contactInboxModel,
   contactModel,
   contactsToTagsModel,
   contactToTagChannelModel,
+  conversationModel,
   tagChannelModel,
   tagModel,
 } from "@chatbotx.io/database/schema"
@@ -42,9 +47,14 @@ import {
   withDeleteGuard,
   withEditGuard,
 } from "../template/installed-resource.service"
+import { publishUnlessInTransaction } from "./publish-unless-in-transaction"
+import { publishContactTagsChanged } from "./realtime"
 import { tagSyncService } from "./sync.service"
 
 const CONTACT_CHUNK_SIZE = 200
+
+/** One contact/tag link. */
+type TagLinkPair = { contactId: string; tagId: string }
 
 // Mirrors the `contactCacheTags` pattern in `contact-custom-field/service.ts`:
 // `tags` busts the "tags" collection tag `findByKey`/`list` register under,
@@ -119,9 +129,38 @@ class TagService extends BaseService {
     )
   }
 
+  /**
+   * Live tags as id, name and color, by name, one page at a time and
+   * optionally filtered by a name substring. For pickers: unlike `list` it
+   * counts no contacts per tag and is not cached. With `contactId` each row
+   * also says whether that contact has the tag (`applied`); the caller must
+   * have checked the contact is reachable.
+   */
+  async listOptions(input: {
+    workspaceId: string
+    name?: string | null
+    page: number
+    perPage: number
+    contactId?: string | null
+  }) {
+    return await tagRepository.listOptions(input)
+  }
+
+  /**
+   * Which of `tagIds` the contact has (live tags of the workspace only); the
+   * caller must have checked the contact is reachable.
+   */
+  async listAppliedTagIds(input: {
+    workspaceId: string
+    contactId: string
+    tagIds: string[]
+  }) {
+    return await tagRepository.listAppliedTagIds(input)
+  }
+
   async create(props: {
     workspaceId: string
-    data: { name: string; folderId?: string | null }
+    data: { name: string; folderId?: string | null; color?: string | null }
   }) {
     const parsedInput = { workspaceId: props.workspaceId, ...props.data }
     const existingTag = await db.query.tagModel.findFirst({
@@ -172,22 +211,31 @@ class TagService extends BaseService {
 
   async update(
     ctx: { workspaceId: string; id: string },
-    parsedInput: { name: string; folderId?: string | null },
+    // `name` / `folderId` / `color` omitted keep the current value; null color clears it.
+    parsedInput: {
+      name?: string
+      folderId?: string | null
+      color?: string | null
+    },
   ) {
     const { workspaceId, id } = ctx
-    const existingTag = await db.query.tagModel.findFirst({
-      columns: {
-        id: true,
-      },
-      where: {
-        name: parsedInput.name,
-        workspaceId,
-        deletedAt: { isNull: true as const },
-        id: {
-          ne: id,
-        },
-      },
-    })
+    const { name } = parsedInput
+    const existingTag =
+      name === undefined
+        ? undefined
+        : await db.query.tagModel.findFirst({
+            columns: {
+              id: true,
+            },
+            where: {
+              name,
+              workspaceId,
+              deletedAt: { isNull: true as const },
+              id: {
+                ne: id,
+              },
+            },
+          })
     if (existingTag) {
       throw validationException("name", "Name is already taken.")
     }
@@ -221,17 +269,27 @@ class TagService extends BaseService {
           where: { id, workspaceId, deletedAt: { isNull: true as const } },
           message: "Tag not found",
         }),
-      changedKeys: (tag) => changedKeysOf(tag, { name: parsedInput.name }),
-      write: (tx, tag) =>
-        tx
+      changedKeys: (tag) =>
+        changedKeysOf(tag, name === undefined ? {} : { name }),
+      write: (tx, tag) => {
+        const values = {
+          ...(name === undefined ? {} : { name }),
+          ...(folderId === undefined ? {} : { folderId }),
+          ...(parsedInput.color === undefined
+            ? {}
+            : { color: parsedInput.color }),
+        }
+        // Nothing to write: an empty `set` is a SQL error, the tag stays as is.
+        if (Object.keys(values).length === 0) {
+          return Promise.resolve(tag)
+        }
+        return tx
           .update(tagModel)
-          .set({
-            name: parsedInput.name,
-            ...(folderId === undefined ? {} : { folderId }),
-          })
+          .set(values)
           .where(eq(tagModel.id, tag.id))
           .returning()
-          .then((result) => result[0]),
+          .then((result) => result[0])
+      },
     })
 
     await this.invalidateCacheTags(tagCacheTags(workspaceId))
@@ -322,108 +380,50 @@ class TagService extends BaseService {
     }
 
     const affectedContactIds: string[] = []
+    // Contacts whose links this call actually inserted (each chunk commits on
+    // its own), published in `finally` so a later chunk failing cannot hide a
+    // committed change from open inboxes.
+    const changedContactIds: string[] = []
 
-    // Process selected contacts in chunks — never load all contacts at once.
-    for (
-      let offset = 0;
-      offset < contactIds.length;
-      offset += CONTACT_CHUNK_SIZE
-    ) {
-      const idChunk = contactIds.slice(offset, offset + CONTACT_CHUNK_SIZE)
-      const contacts = await contactService.findManyByIds({
-        workspaceId,
-        ids: idChunk,
-        accessScope,
-      })
-      if (contacts.length === 0) {
-        continue
-      }
-      affectedContactIds.push(...contacts.map((contact) => contact.id))
-
-      const links = contacts.flatMap((contact) =>
-        allTags.map((selectedTag) => ({
-          contactId: contact.id,
-          tagId: selectedTag.id,
-        })),
-      )
-      // RETURNING from ON CONFLICT DO NOTHING returns only newly-inserted rows.
-      const newlyLinkedPairs = await db
-        .insert(contactsToTagsModel)
-        .values(links)
-        .onConflictDoNothing({
-          target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
-        })
-        .returning({
-          contactId: contactsToTagsModel.contactId,
-          tagId: contactsToTagsModel.tagId,
-        })
-
-      // Emit tag applied for all attempted pairs by default (existing callers
-      // depend on it for manual re-apply triggers). Flow-step callers that
-      // loop through an Add-Tag node pass emitFor:"newlyLinked" so replays
-      // don't re-fire triggers/webhooks for tags already on the contact.
-      if (emitFor === "all") {
-        for (const contact of contacts) {
-          for (const tag of allTags) {
-            try {
-              await emitTagApplied(
-                workspaceId,
-                contact.id,
-                tag.id,
-                contactInbox?.id,
-              )
-            } catch (error) {
-              logger.error({ err: error }, "Failed to emit tagApplied event:")
-            }
-          }
-        }
-      } else {
-        for (const pair of newlyLinkedPairs) {
-          try {
-            await emitTagApplied(
-              workspaceId,
-              pair.contactId,
-              pair.tagId,
-              contactInbox?.id,
-            )
-          } catch (error) {
-            logger.error({ err: error }, "Failed to emit tagApplied event:")
-          }
-        }
-      }
-      // Channel sync + ads conversion `tagApplied` trigger only for newly
-      // attached pairs (not every attempted pair, unlike the emit loop above).
-      for (const pair of newlyLinkedPairs) {
-        await tagSyncService.enqueueAttach({
+    try {
+      // Process selected contacts in chunks — never load all contacts at once.
+      for (
+        let offset = 0;
+        offset < contactIds.length;
+        offset += CONTACT_CHUNK_SIZE
+      ) {
+        const idChunk = contactIds.slice(offset, offset + CONTACT_CHUNK_SIZE)
+        const contacts = await contactService.findManyByIds({
           workspaceId,
-          contactId: pair.contactId,
-          tagId: pair.tagId,
+          ids: idChunk,
+          accessScope,
+        })
+        if (contacts.length === 0) {
+          continue
+        }
+        affectedContactIds.push(...contacts.map((contact) => contact.id))
+
+        const newlyLinkedPairs = await this.insertContactTagLinks({
+          contactIds: contacts.map((contact) => contact.id),
+          tagIds: allTags.map((tag) => tag.id),
+        })
+        changedContactIds.push(
+          ...newlyLinkedPairs.map((pair) => pair.contactId),
+        )
+        await this.afterNamedAttachChunk({
+          workspaceId,
+          contacts,
+          allTags,
+          newlyLinkedPairs,
+          contactInbox,
+          emitFor,
         })
       }
-      if (newlyLinkedPairs.length > 0) {
-        if (
-          contactInbox &&
-          adsConversionService.isEligibleChannel(contactInbox.channel)
-        ) {
-          await adsConversionService.enqueueTagAppliedEvaluationsForInbox({
-            workspaceId,
-            channel: contactInbox.channel,
-            inboxId: contactInbox.inboxId,
-            contactInboxId: contactInbox.id,
-            tagIds: newlyLinkedPairs.map((pair) => pair.tagId),
-          })
-        } else if (!contactInbox) {
-          // One batch resolve+enqueue call per chunk instead of one per pair
-          // (HIGH-1).
-          await adsConversionService.enqueueTagAppliedEvaluationsBulk({
-            workspaceId,
-            pairs: newlyLinkedPairs.map((pair) => ({
-              contactId: pair.contactId,
-              tagId: pair.tagId,
-            })),
-          })
-        }
-      }
+    } finally {
+      await publishContactTagsChanged({
+        workspaceId,
+        contactIds: changedContactIds,
+      })
     }
 
     await this.invalidateCacheTags(tagCacheTags(workspaceId))
@@ -455,17 +455,9 @@ class TagService extends BaseService {
       accessScope,
     })
 
-    // Get old tags before update
-    const oldTags = await db.query.contactsToTagsModel.findMany({
-      where: {
-        contactId: contact.id,
-      },
-      columns: {
-        tagId: true,
-      },
-    })
-    const oldTagIds = new Set(oldTags.map((t) => t.tagId))
-
+    // What this call reports is what its own INSERT and DELETE changed (their
+    // RETURNING rows), never a read taken before the transaction: a link a
+    // concurrent writer added or removed in between is still reported once.
     const { returnedTags, newlyAppliedTags, removedTagIds } =
       await db.transaction(async (tx) => {
         const upserted = await this.upsertByNames({ workspaceId, names, tx })
@@ -473,97 +465,120 @@ class TagService extends BaseService {
           upserted.length > 0
             ? await tx.query.tagModel.findMany({
                 where: { id: { in: upserted.map((tag) => tag.id) } },
+                // A fixed insert order: two replaces linking overlapping tags
+                // take the row locks in the same order instead of deadlocking.
+                orderBy: { id: "asc" },
               })
             : []
+        const wantedIds = tags.map((tag) => tag.id)
 
-        if (tags.length > 0) {
-          await tx
-            .insert(contactsToTagsModel)
-            .values(
-              tags.map((selectedTag) => ({
-                contactId: contact.id,
-                tagId: selectedTag.id,
-              })),
-            )
-            .onConflictDoNothing({
-              target: [
-                contactsToTagsModel.contactId,
-                contactsToTagsModel.tagId,
-              ],
-            })
-        }
+        const inserted =
+          tags.length > 0
+            ? await tx
+                .insert(contactsToTagsModel)
+                .values(
+                  tags.map((selectedTag) => ({
+                    contactId: contact.id,
+                    tagId: selectedTag.id,
+                  })),
+                )
+                .onConflictDoNothing({
+                  target: [
+                    contactsToTagsModel.contactId,
+                    contactsToTagsModel.tagId,
+                  ],
+                })
+                .returning({ tagId: contactsToTagsModel.tagId })
+            : []
 
-        // Remove tags no longer selected (local ContactToTag only).
-        const newTagIdSet = new Set(tags.map((t) => t.id))
-        const removedTagIds = Array.from(oldTagIds).filter(
-          (id) => !newTagIdSet.has(id),
-        )
-        if (removedTagIds.length > 0) {
-          await tx.delete(contactsToTagsModel).where(
-            tags.length > 0
+        // Remove every link no longer wanted (local ContactToTag only), also
+        // one that appeared after the caller looked.
+        const deleted = await tx
+          .delete(contactsToTagsModel)
+          .where(
+            wantedIds.length > 0
               ? and(
                   eq(contactsToTagsModel.contactId, contact.id),
-                  notInArray(
-                    contactsToTagsModel.tagId,
-                    tags.map((t) => t.id),
-                  ),
+                  notInArray(contactsToTagsModel.tagId, wantedIds),
                 )
               : eq(contactsToTagsModel.contactId, contact.id),
           )
-        }
+          .returning({ tagId: contactsToTagsModel.tagId })
 
-        const newlyAppliedTags = tags.filter((tag) => !oldTagIds.has(tag.id))
-
+        const insertedIds = new Set(inserted.map((row) => row.tagId))
         return {
           returnedTags: tags,
-          newlyAppliedTags,
-          removedTagIds,
+          newlyAppliedTags: tags.filter((tag) => insertedIds.has(tag.id)),
+          removedTagIds: deleted.map((row) => row.tagId),
         }
       })
 
-    // Emit tagApplied for newly added tags + enqueue sync
-    for (const tag of newlyAppliedTags) {
-      try {
-        await emitTagApplied(workspaceId, contact.id, tag.id)
-      } catch (error) {
-        logger.error({ err: error }, "Failed to emit tagApplied event:")
-      }
-
-      await tagSyncService.enqueueAttach({
+    // The links are committed; tell open inboxes before the side effects below
+    // (which can throw) get a chance to skip it.
+    if (newlyAppliedTags.length > 0 || removedTagIds.length > 0) {
+      await publishContactTagsChanged({
         workspaceId,
-        contactId: contact.id,
-        tagId: tag.id,
+        contactIds: [contact.id],
       })
     }
-    // One batch resolve+enqueue call for every newly-applied tag on this
-    // contact instead of one per tag (HIGH-1).
-    if (newlyAppliedTags.length > 0) {
-      await adsConversionService.enqueueTagAppliedEvaluationsBulk({
-        workspaceId,
-        pairs: newlyAppliedTags.map((tag) => ({
+
+    try {
+      // Emit tagApplied for newly added tags + enqueue sync
+      for (const tag of newlyAppliedTags) {
+        try {
+          await emitTagApplied(workspaceId, contact.id, tag.id)
+        } catch (error) {
+          logger.error({ err: error }, "Failed to emit tagApplied event:")
+        }
+
+        await tagSyncService.enqueueAttach({
+          workspaceId,
           contactId: contact.id,
           tagId: tag.id,
-        })),
-      })
-    }
-
-    // Emit tagRemoved + enqueue channel cleanup for removed tags.
-    for (const tagId of removedTagIds) {
-      try {
-        await emitTagRemoved(workspaceId, contact.id, tagId)
-      } catch (error) {
-        logger.error({ err: error }, "Failed to emit tagRemoved event:")
+        })
+      }
+      // One batch resolve+enqueue call for every newly-applied tag on this
+      // contact instead of one per tag (HIGH-1).
+      if (newlyAppliedTags.length > 0) {
+        await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+          workspaceId,
+          pairs: newlyAppliedTags.map((tag) => ({
+            contactId: contact.id,
+            tagId: tag.id,
+          })),
+        })
       }
 
-      await tagSyncService.enqueueDetach({
-        workspaceId,
-        contactId: contact.id,
-        tagId,
-      })
-    }
+      // Emit tagRemoved + enqueue channel cleanup for removed tags.
+      for (const tagId of removedTagIds) {
+        try {
+          await emitTagRemoved(workspaceId, contact.id, tagId)
+        } catch (error) {
+          logger.error({ err: error }, "Failed to emit tagRemoved event:")
+        }
 
-    await this.invalidateCacheTags(tagCacheTags(workspaceId))
-    await contactService.invalidate({ workspaceId, ids: [contact.id] })
+        await tagSyncService.enqueueDetach({
+          workspaceId,
+          contactId: contact.id,
+          tagId,
+        })
+      }
+    } finally {
+      // The write committed: both caches drop even when a downstream enqueue
+      // fails, each on its own, and a cache failure never hides that error.
+      const invalidations = await Promise.allSettled([
+        this.invalidateCacheTags(tagCacheTags(workspaceId)),
+        contactService.invalidate({ workspaceId, ids: [contact.id] }),
+      ])
+      for (const invalidation of invalidations) {
+        if (invalidation.status === "rejected") {
+          logger.error(
+            { err: invalidation.reason, workspaceId, contactId: contact.id },
+            "Failed to invalidate caches after replacing contact tags",
+          )
+        }
+      }
+    }
 
     return returnedTags
   }
@@ -600,72 +615,62 @@ class TagService extends BaseService {
     const allTagIds = allTags.map((tag) => tag.id)
 
     const affectedContactIds: string[] = []
+    // Contacts a DELETE actually unlinked, published in `finally` (each chunk
+    // commits on its own) so a later chunk failing cannot hide a committed
+    // change from open inboxes.
+    const changedContactIds: string[] = []
 
-    // Process selected contacts in chunks — never load all contacts at once.
-    for (
-      let offset = 0;
-      offset < contactIds.length;
-      offset += CONTACT_CHUNK_SIZE
-    ) {
-      const idChunk = contactIds.slice(offset, offset + CONTACT_CHUNK_SIZE)
-      const contacts = await contactService.findManyByIds({
-        workspaceId,
-        ids: idChunk,
-        accessScope,
-      })
-      if (contacts.length === 0) {
-        continue
-      }
-      const contactIdsInChunk = contacts.map((contact) => contact.id)
-      affectedContactIds.push(...contactIdsInChunk)
-      // No tag matched a name: nothing to detach, but the contacts still
-      // count as processed.
-      if (allTagIds.length === 0) {
-        continue
-      }
-
-      // One DELETE per chunk instead of one per contact.
-      const removed = await db
-        .delete(contactsToTagsModel)
-        .where(
-          and(
-            inArray(contactsToTagsModel.contactId, contactIdsInChunk),
-            inArray(contactsToTagsModel.tagId, allTagIds),
-          ),
-        )
-        .returning({
-          contactId: contactsToTagsModel.contactId,
-          tagId: contactsToTagsModel.tagId,
+    try {
+      // Process selected contacts in chunks — never load all contacts at once.
+      for (
+        let offset = 0;
+        offset < contactIds.length;
+        offset += CONTACT_CHUNK_SIZE
+      ) {
+        const idChunk = contactIds.slice(offset, offset + CONTACT_CHUNK_SIZE)
+        const contacts = await contactService.findManyByIds({
+          workspaceId,
+          ids: idChunk,
+          accessScope,
         })
-
-      // Channel cleanup (unassign + delete ContactToTagChannel) runs in the
-      // queue for every requested pair, as before: it is idempotent, and a
-      // retry after a failed enqueue must still reach the pairs the first
-      // attempt already deleted.
-      for (const contact of contacts) {
-        for (const tagId of allTagIds) {
-          await tagSyncService.enqueueDetach({
-            workspaceId,
-            contactId: contact.id,
-            tagId,
-          })
+        if (contacts.length === 0) {
+          continue
         }
-      }
+        const contactIdsInChunk = contacts.map((contact) => contact.id)
+        affectedContactIds.push(...contactIdsInChunk)
+        // No tag matched a name: nothing to detach, but the contacts still
+        // count as processed.
+        if (allTagIds.length === 0) {
+          continue
+        }
 
-      // tagRemoved only for pairs the DELETE actually removed, so removing a
-      // tag a contact does not have fires no automation.
-      for (const pair of removed) {
-        try {
-          await emitTagRemoved(
-            workspaceId,
-            pair.contactId,
-            pair.tagId,
-            contactInboxId,
+        // One DELETE per chunk instead of one per contact.
+        const removed = await db
+          .delete(contactsToTagsModel)
+          .where(
+            and(
+              inArray(contactsToTagsModel.contactId, contactIdsInChunk),
+              inArray(contactsToTagsModel.tagId, allTagIds),
+            ),
           )
-        } catch (error) {
-          logger.error({ err: error }, "Failed to emit tagRemoved event:")
-        }
+          .returning({
+            contactId: contactsToTagsModel.contactId,
+            tagId: contactsToTagsModel.tagId,
+          })
+        changedContactIds.push(...removed.map((pair) => pair.contactId))
+        await this.afterNamedDetachChunk({
+          workspaceId,
+          contactIds: contactIdsInChunk,
+          tagIds: allTagIds,
+          removed,
+          contactInboxId,
+        })
       }
+    } finally {
+      await publishContactTagsChanged({
+        workspaceId,
+        contactIds: changedContactIds,
+      })
     }
 
     if (allTagIds.length > 0) {
@@ -791,9 +796,14 @@ class TagService extends BaseService {
   async upsertByNames(props: {
     workspaceId: string
     names: string[]
+    /**
+     * Color (`#RRGGBB`) for the tags this call creates, by trimmed name. A tag
+     * that already exists keeps its own color.
+     */
+    colorsByName?: ReadonlyMap<string, string>
     tx?: DatabaseClient
   }): Promise<{ id: string; name: string }[]> {
-    const { workspaceId, tx = db } = props
+    const { workspaceId, tx = db, colorsByName } = props
     const uniqueNames = [
       ...new Set(props.names.map((name) => name.trim())),
     ].filter((name) => name.length > 0)
@@ -809,6 +819,7 @@ class TagService extends BaseService {
           id: createId(),
           name,
           workspaceId,
+          color: colorsByName?.get(name) ?? null,
         })),
       )
       .onConflictDoNothing({
@@ -829,6 +840,51 @@ class TagService extends BaseService {
     })
   }
 
+  /** The contact must be in the workspace and, for a member, inside their scope. */
+  private async requireContact(props: {
+    workspaceId: string
+    contactId: string
+    accessScope?: ContactAccessScope
+  }): Promise<void> {
+    if (props.accessScope) {
+      await contactService.findByIdOrFail({
+        workspaceId: props.workspaceId,
+        id: props.contactId,
+        accessScope: props.accessScope,
+      })
+      return
+    }
+    await findOrFail({
+      table: contactModel,
+      where: { id: props.contactId, workspaceId: props.workspaceId },
+    })
+  }
+
+  /**
+   * Throws not-found unless every id is a live tag of the workspace. For
+   * callers that must not silently skip a deleted tag (the attach paths skip
+   * them by design). Returns the live tags.
+   */
+  async requireLiveTags(props: { workspaceId: string; tagIds: string[] }) {
+    const ids = [...new Set(props.tagIds)]
+    const live = await db.query.tagModel.findMany({
+      where: {
+        workspaceId: props.workspaceId,
+        id: { in: ids },
+        deletedAt: { isNull: true as const },
+      },
+    })
+    if (live.length !== ids.length) {
+      throw notFoundException("Tag not found")
+    }
+    return live
+  }
+
+  /**
+   * Links the live tags among `tagIds` to the contact (a tag deleted since the
+   * caller listed it is skipped) and returns the ids now linked, newly or
+   * already, so a caller can tell a skipped tag from an attached one.
+   */
   async attachToContact(props: {
     workspaceId: string
     contactId: string
@@ -840,17 +896,20 @@ class TagService extends BaseService {
      * instead of the contact's most-recently-active inbox.
      */
     contactInboxId?: string
+    /** A member's scope: a contact outside it is not found. Omit for token/system callers. */
+    accessScope?: ContactAccessScope
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<string[]> {
     const { workspaceId, contactId, tagIds, contactInboxId, tx = db } = props
 
     if (tagIds.length === 0) {
-      return
+      return []
     }
 
-    await findOrFail({
-      table: contactModel,
-      where: { id: contactId, workspaceId },
+    await this.requireContact({
+      workspaceId,
+      contactId,
+      accessScope: props.accessScope,
     })
 
     const tags = await tx.query.tagModel.findMany({
@@ -863,7 +922,7 @@ class TagService extends BaseService {
     })
 
     if (tags.length === 0) {
-      return
+      return []
     }
 
     const newlyAttached = await tx
@@ -873,6 +932,12 @@ class TagService extends BaseService {
         target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
       })
       .returning({ tagId: contactsToTagsModel.tagId })
+
+    await publishUnlessInTransaction(
+      props.tx,
+      workspaceId,
+      newlyAttached.length > 0 ? [contactId] : [],
+    )
 
     for (const pair of newlyAttached) {
       emitTagApplied(workspaceId, contactId, pair.tagId, contactInboxId) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
@@ -894,6 +959,7 @@ class TagService extends BaseService {
         })),
       )
     }
+    return tags.map((tag) => tag.id)
   }
 
   /**
@@ -934,69 +1000,45 @@ class TagService extends BaseService {
 
     let attachedPairCount = 0
     const affectedContactIds: string[] = []
-    for (let i = 0; i < uniqueContactIds.length; i += CONTACT_CHUNK_SIZE) {
-      const idChunk = uniqueContactIds.slice(i, i + CONTACT_CHUNK_SIZE)
-      const contacts = await contactService.findManyByIds({
-        workspaceId,
-        ids: idChunk,
-        accessScope,
-      })
-      if (contacts.length === 0) {
-        continue
-      }
-      affectedContactIds.push(...contacts.map((contact) => contact.id))
-
-      const links = contacts.flatMap((contact) =>
-        tags.map((tag) => ({
-          contactId: contact.id,
-          tagId: tag.id,
-        })),
-      )
-
-      const newlyLinkedPairs = await db
-        .insert(contactsToTagsModel)
-        .values(links)
-        .onConflictDoNothing({
-          target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
-        })
-        .returning({
-          contactId: contactsToTagsModel.contactId,
-          tagId: contactsToTagsModel.tagId,
-        })
-
-      attachedPairCount += newlyLinkedPairs.length
-
-      const pairsToSync = recoverUnsyncedPairs
-        ? await this.findUnsyncedContactTagPairs({
-            contactIds: contacts.map((contact) => contact.id),
-            tagIds: tags.map((tag) => tag.id),
-          })
-        : newlyLinkedPairs
-
-      for (const pair of pairsToSync) {
-        try {
-          await emitTagApplied(workspaceId, pair.contactId, pair.tagId)
-        } catch (error) {
-          logger.error({ err: error }, "Failed to emit tagApplied event")
-        }
-      }
-      // One batch resolve+enqueue call per chunk instead of one per pair
-      // (HIGH-1) — bulkAttachToContacts already chunks contacts at 200.
-      await adsConversionService.enqueueTagAppliedEvaluationsBulk({
-        workspaceId,
-        pairs: pairsToSync.map((pair) => ({
-          contactId: pair.contactId,
-          tagId: pair.tagId,
-        })),
-      })
-
-      await tagSyncService.enqueueAttachMany(
-        pairsToSync.map((pair) => ({
+    // Contacts whose links this call inserted, published in `finally` (each
+    // chunk commits on its own).
+    const changedContactIds: string[] = []
+    try {
+      for (let i = 0; i < uniqueContactIds.length; i += CONTACT_CHUNK_SIZE) {
+        const idChunk = uniqueContactIds.slice(i, i + CONTACT_CHUNK_SIZE)
+        const contacts = await contactService.findManyByIds({
           workspaceId,
-          contactId: pair.contactId,
-          tagId: pair.tagId,
-        })),
-      )
+          ids: idChunk,
+          accessScope,
+        })
+        if (contacts.length === 0) {
+          continue
+        }
+        affectedContactIds.push(...contacts.map((contact) => contact.id))
+
+        const newlyLinkedPairs = await this.insertContactTagLinks({
+          contactIds: contacts.map((contact) => contact.id),
+          tagIds: tags.map((tag) => tag.id),
+        })
+
+        attachedPairCount += newlyLinkedPairs.length
+        changedContactIds.push(
+          ...newlyLinkedPairs.map((pair) => pair.contactId),
+        )
+
+        const pairsToSync = recoverUnsyncedPairs
+          ? await this.findUnsyncedContactTagPairs({
+              contactIds: contacts.map((contact) => contact.id),
+              tagIds: tags.map((tag) => tag.id),
+            })
+          : newlyLinkedPairs
+        await this.afterBulkAttachChunk(workspaceId, pairsToSync)
+      }
+    } finally {
+      await publishContactTagsChanged({
+        workspaceId,
+        contactIds: changedContactIds,
+      })
     }
 
     await this.invalidateCacheTags(tagCacheTags(workspaceId))
@@ -1005,6 +1047,156 @@ class TagService extends BaseService {
     }
 
     return { attachedPairCount }
+  }
+
+  /**
+   * Links every contact to every tag; the returned pairs are only the ones
+   * inserted now (RETURNING from ON CONFLICT DO NOTHING skips existing rows).
+   */
+  private async insertContactTagLinks(props: {
+    contactIds: string[]
+    tagIds: string[]
+  }): Promise<TagLinkPair[]> {
+    const links = props.contactIds.flatMap((contactId) =>
+      props.tagIds.map((tagId) => ({ contactId, tagId })),
+    )
+    return await db
+      .insert(contactsToTagsModel)
+      .values(links)
+      .onConflictDoNothing({
+        target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
+      })
+      .returning({
+        contactId: contactsToTagsModel.contactId,
+        tagId: contactsToTagsModel.tagId,
+      })
+  }
+
+  /** Events, channel sync and ads evaluations after one chunk of `attachByNamesToContacts`. */
+  private async afterNamedAttachChunk(props: {
+    workspaceId: string
+    contacts: { id: string }[]
+    allTags: { id: string }[]
+    newlyLinkedPairs: TagLinkPair[]
+    contactInbox?: { id: string; inboxId: string; channel: string | null }
+    emitFor: "all" | "newlyLinked"
+  }): Promise<void> {
+    const { workspaceId, contacts, allTags, newlyLinkedPairs, contactInbox } =
+      props
+    // Emit tag applied for all attempted pairs by default (existing callers
+    // depend on it for manual re-apply triggers). Flow-step callers that
+    // loop through an Add-Tag node pass emitFor:"newlyLinked" so replays
+    // don't re-fire triggers/webhooks for tags already on the contact.
+    const emitPairs =
+      props.emitFor === "all"
+        ? contacts.flatMap((contact) =>
+            allTags.map((tag) => ({ contactId: contact.id, tagId: tag.id })),
+          )
+        : newlyLinkedPairs
+    for (const pair of emitPairs) {
+      try {
+        await emitTagApplied(
+          workspaceId,
+          pair.contactId,
+          pair.tagId,
+          contactInbox?.id,
+        )
+      } catch (error) {
+        logger.error({ err: error }, "Failed to emit tagApplied event:")
+      }
+    }
+    // Channel sync + ads conversion `tagApplied` trigger only for newly
+    // attached pairs (not every attempted pair, unlike the emit loop above).
+    for (const pair of newlyLinkedPairs) {
+      await tagSyncService.enqueueAttach({
+        workspaceId,
+        contactId: pair.contactId,
+        tagId: pair.tagId,
+      })
+    }
+    if (newlyLinkedPairs.length === 0) {
+      return
+    }
+    if (contactInbox) {
+      if (adsConversionService.isEligibleChannel(contactInbox.channel)) {
+        await adsConversionService.enqueueTagAppliedEvaluationsForInbox({
+          workspaceId,
+          channel: contactInbox.channel,
+          inboxId: contactInbox.inboxId,
+          contactInboxId: contactInbox.id,
+          tagIds: newlyLinkedPairs.map((pair) => pair.tagId),
+        })
+      }
+      return
+    }
+    // One batch resolve+enqueue call per chunk instead of one per pair
+    // (HIGH-1).
+    await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+      workspaceId,
+      pairs: newlyLinkedPairs,
+    })
+  }
+
+  /** Channel cleanup and `tagRemoved` events after one chunk of `detachByNamesFromContacts`. */
+  private async afterNamedDetachChunk(props: {
+    workspaceId: string
+    contactIds: string[]
+    tagIds: string[]
+    removed: TagLinkPair[]
+    contactInboxId?: string
+  }): Promise<void> {
+    const { workspaceId, contactIds, tagIds, removed, contactInboxId } = props
+    // Channel cleanup (unassign + delete ContactToTagChannel) runs in the
+    // queue for every requested pair, as before: it is idempotent, and a
+    // retry after a failed enqueue must still reach the pairs the first
+    // attempt already deleted.
+    for (const contactId of contactIds) {
+      for (const tagId of tagIds) {
+        await tagSyncService.enqueueDetach({ workspaceId, contactId, tagId })
+      }
+    }
+
+    // tagRemoved only for pairs the DELETE actually removed, so removing a
+    // tag a contact does not have fires no automation.
+    for (const pair of removed) {
+      try {
+        await emitTagRemoved(
+          workspaceId,
+          pair.contactId,
+          pair.tagId,
+          contactInboxId,
+        )
+      } catch (error) {
+        logger.error({ err: error }, "Failed to emit tagRemoved event:")
+      }
+    }
+  }
+
+  /** Events, ads evaluations and channel sync for the pairs of one `bulkAttachToContacts` chunk. */
+  private async afterBulkAttachChunk(
+    workspaceId: string,
+    pairs: TagLinkPair[],
+  ): Promise<void> {
+    for (const pair of pairs) {
+      try {
+        await emitTagApplied(workspaceId, pair.contactId, pair.tagId)
+      } catch (error) {
+        logger.error({ err: error }, "Failed to emit tagApplied event")
+      }
+    }
+    // One batch resolve+enqueue call per chunk instead of one per pair
+    // (HIGH-1) — bulkAttachToContacts already chunks contacts at 200.
+    await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+      workspaceId,
+      pairs,
+    })
+    await tagSyncService.enqueueAttachMany(
+      pairs.map((pair) => ({
+        workspaceId,
+        contactId: pair.contactId,
+        tagId: pair.tagId,
+      })),
+    )
   }
 
   private async findUnsyncedContactTagPairs(props: {
@@ -1054,13 +1246,16 @@ class TagService extends BaseService {
     workspaceId: string
     contactId: string
     tagIds: string[]
+    /** A member's scope: a contact outside it is not found. Omit for token/system callers. */
+    accessScope?: ContactAccessScope
     tx?: DatabaseClient
   }): Promise<void> {
     const { workspaceId, contactId, tagIds, tx = db } = props
 
-    await findOrFail({
-      table: contactModel,
-      where: { id: contactId, workspaceId },
+    await this.requireContact({
+      workspaceId,
+      contactId,
+      accessScope: props.accessScope,
     })
 
     const removed = await tx
@@ -1072,6 +1267,12 @@ class TagService extends BaseService {
         ),
       )
       .returning({ tagId: contactsToTagsModel.tagId })
+
+    await publishUnlessInTransaction(
+      props.tx,
+      workspaceId,
+      removed.length > 0 ? [contactId] : [],
+    )
 
     for (const pair of removed) {
       emitTagRemoved(workspaceId, contactId, pair.tagId).catch((error) => {
@@ -1088,11 +1289,16 @@ class TagService extends BaseService {
     }
   }
 
+  /**
+   * Resolves `true` when the contact had tags that are now removed. With a
+   * caller-owned `tx` nothing is published here (the transaction has not
+   * committed): the caller publishes through `publishContactTagsChanged` once it has.
+   */
   async detachAllFromContact(props: {
     workspaceId: string
     contactId: string
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<boolean> {
     const { workspaceId, contactId, tx = db } = props
 
     await findOrFail({
@@ -1102,17 +1308,20 @@ class TagService extends BaseService {
 
     const tags = await this.listByContactId({ contactId, tx })
     if (tags.length === 0) {
-      return
+      return false
     }
 
     await tx
       .delete(contactsToTagsModel)
       .where(eq(contactsToTagsModel.contactId, contactId))
 
+    await publishUnlessInTransaction(props.tx, workspaceId, [contactId])
+
     for (const tag of tags) {
       emitTagRemoved(workspaceId, contactId, tag.id) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
         .catch(() => {})
     }
+    return true
   }
 
   /**
@@ -1123,15 +1332,16 @@ class TagService extends BaseService {
    * workspace-scoped `ensureTagChannel` + `ctx.inboxId` lookup first.
    */
   async detachTagFromContactsUnscoped(props: {
+    workspaceId: string
     tagId: string
     contactIds: string[]
     tx?: DatabaseClient
   }): Promise<void> {
-    const { tagId, contactIds, tx = db } = props
+    const { workspaceId, tagId, contactIds, tx = db } = props
     if (contactIds.length === 0) {
       return
     }
-    await tx
+    const removed = await tx
       .delete(contactsToTagsModel)
       .where(
         and(
@@ -1139,6 +1349,12 @@ class TagService extends BaseService {
           inArray(contactsToTagsModel.contactId, contactIds),
         ),
       )
+      .returning({ contactId: contactsToTagsModel.contactId })
+    await publishUnlessInTransaction(
+      props.tx,
+      workspaceId,
+      removed.map((row) => row.contactId),
+    )
   }
 
   /**
@@ -1259,7 +1475,7 @@ class TagService extends BaseService {
       return []
     }
 
-    return await tx
+    const newlyLinked = await tx
       .insert(contactsToTagsModel)
       .values(
         existingTags.map((tag) => ({
@@ -1269,6 +1485,12 @@ class TagService extends BaseService {
       )
       .onConflictDoNothing()
       .returning({ tagId: contactsToTagsModel.tagId })
+    await publishUnlessInTransaction(
+      props.tx,
+      workspaceId,
+      newlyLinked.length > 0 ? [contactId] : [],
+    )
+    return newlyLinked
   }
 
   /**
@@ -1282,11 +1504,11 @@ class TagService extends BaseService {
     tagIds: string[]
     tx?: DatabaseClient
   }): Promise<void> {
-    const { contactId, tagIds, tx = db } = props
+    const { workspaceId, contactId, tagIds, tx = db } = props
     if (tagIds.length === 0) {
       return
     }
-    await tx
+    const removed = await tx
       .delete(contactsToTagsModel)
       .where(
         and(
@@ -1294,6 +1516,12 @@ class TagService extends BaseService {
           inArray(contactsToTagsModel.tagId, tagIds),
         ),
       )
+      .returning({ tagId: contactsToTagsModel.tagId })
+    await publishUnlessInTransaction(
+      props.tx,
+      workspaceId,
+      removed.length > 0 ? [contactId] : [],
+    )
   }
 
   /**
@@ -1305,19 +1533,66 @@ class TagService extends BaseService {
    * workspace-scoped `ensureTagChannel` + `ctx.inboxId` lookup first.
    */
   async linkTagToContactsReturningNewUnscoped(props: {
+    workspaceId: string
     tagId: string
     contactIds: string[]
     tx?: DatabaseClient
   }): Promise<{ contactId: string }[]> {
-    const { tagId, contactIds, tx = db } = props
+    const { workspaceId, tagId, contactIds, tx = db } = props
     if (contactIds.length === 0) {
       return []
     }
-    return await tx
+    const newlyLinked = await tx
       .insert(contactsToTagsModel)
       .values(contactIds.map((contactId) => ({ contactId, tagId })))
       .onConflictDoNothing()
       .returning({ contactId: contactsToTagsModel.contactId })
+    await publishUnlessInTransaction(
+      props.tx,
+      workspaceId,
+      newlyLinked.map((row) => row.contactId),
+    )
+    return newlyLinked
+  }
+
+  /**
+   * Same preview, restricted to contacts that have a conversation in the
+   * workspace: exactly the contacts the inbox list already shows (with their
+   * tag preview) to every workspace member. Any other id, including a contact
+   * of another workspace, is absent from the result, so no tag of it is
+   * exposed. The inbox list applies no per-member scope, so neither does this.
+   */
+  async listTagPreviewsForConversationContacts(props: {
+    workspaceId: string
+    contactIds: string[]
+    limit: number
+  }): Promise<Map<string, ContactTagPreview>> {
+    const shown = await db
+      .selectDistinct({ contactId: conversationModel.contactId })
+      .from(conversationModel)
+      .where(
+        and(
+          eq(conversationModel.workspaceId, props.workspaceId),
+          inArray(conversationModel.contactId, props.contactIds),
+        ),
+      )
+    return await tagRepository.listTagPreviewsByContactIds({
+      workspaceId: props.workspaceId,
+      contactIds: shown.map((row) => row.contactId),
+      limit: props.limit,
+    })
+  }
+
+  /**
+   * The first `limit` tags and the total tag count of each contact, for a page
+   * of contacts in a constant two queries. Every requested contact is present.
+   */
+  async listTagPreviewsByContactIds(props: {
+    workspaceId: string
+    contactIds: string[]
+    limit: number
+  }): Promise<Map<string, ContactTagPreview>> {
+    return await tagRepository.listTagPreviewsByContactIds(props)
   }
 
   /**

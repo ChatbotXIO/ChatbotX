@@ -12,11 +12,13 @@ import { contactsExportPublicRouter } from "./public/export"
 import { contactsMessagesPublicRouter } from "./public/messages"
 import { contactsRefreshProfilePublicRouter } from "./public/refresh-profile"
 import { contactsTagsPublicRouter } from "./public/tags"
+import { contactsTouchpointsPublicRouter } from "./public/touchpoints"
 
 export const contactsPublicRouter = {
   ...contactsCrudPublicRouter,
   ...contactsTagsPublicRouter,
   ...contactsAdReferralsPublicRouter,
+  ...contactsTouchpointsPublicRouter,
   ...contactsBroadcastsPublicRouter,
   ...contactsCustomFieldsPublicRouter,
   ...contactsMessagesPublicRouter,

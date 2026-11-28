@@ -237,6 +237,7 @@ export const STEP_PRODUCES_MESSAGE: Record<StepType, boolean> = {
   whatsappFlow: true,
   sendProducts: true,
   sendCollection: true,
+  sendChannelPost: true,
   whatsappLocation: true,
   sendMessengerTemplateMessage: true,
 

@@ -151,7 +151,7 @@
     "clone": "שכפול",
     "remove": "הסרה",
     "restore": "שחזור",
-    "loadMore": "Load more",
+    "loadMore": "טען עוד",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -741,7 +741,8 @@
       "moreOptions": "אפשרויות נוספות",
       "findPlacesNearMe": "מצא מקומות בקרבתי",
       "callPhoneNumber": "התקשרות למספר טלפון",
-      "copyText": "העתקת טקסט"
+      "copyText": "העתקת טקסט",
+      "sendChannelPost": "שליחת פוסט"
     },
     "externalRequest": {
       "errors": {
@@ -1082,6 +1083,32 @@
       "limitHint": "עד {max} תווים אחרי מילוי המשתנים.",
       "fallbackHint": "בערוצים שלא יכולים להעתיק טקסט, איש הקשר מקבל את הטקסט הזה כתשובה.",
       "viewerTitle": "מעתיק את הטקסט הזה"
+    },
+    "sendChannelPost": {
+      "title": "שליחת פוסט",
+      "description": "בחרו אחד מהפוסטים שלכם לשליחה ללקוח.",
+      "inbox": "תיבת דואר נכנס",
+      "inboxPlaceholder": "בחרו תיבת דואר נכנס",
+      "noInboxes": "חברו תיבת Instagram או Messenger כדי לשלוח פוסטים.",
+      "search": "חיפוש פוסטים",
+      "empty": "עדיין אין פוסטים לתיבה הזו.",
+      "loadError": "לא ניתן לטעון את הפוסטים.",
+      "retry": "נסו שוב",
+      "loadMore": "טען עוד",
+      "select": "בחרו פוסט",
+      "unavailable": "הפוסט הזה אינו זמין עוד.",
+      "noCaption": "ללא כיתוב",
+      "openPost": "פתיחת הפוסט",
+      "sendFailed": "לא ניתן היה לשלוח את הפוסט.",
+      "reasons": {
+        "typeNotShareable": "לא ניתן לשלוח כאן סוג פוסט זה",
+        "linkUnavailable": "לפוסט הזה אין קישור לשליחה",
+        "linkTooLong": "הקישור ארוך מדי לשליחה",
+        "shareUnsupported": "הערוץ הזה לא יכול לשלוח פוסטים",
+        "postNotFound": "הפוסט הזה כבר לא קיים",
+        "inboxMismatch": "הפוסט הזה שייך לתיבת דואר נכנס אחרת"
+      },
+      "noMatch": "לא נמצאו פוסטים התואמים לחיפוש שלך."
     }
   },
   "folders": {
@@ -2162,6 +2189,7 @@
     "sendFailed": "השליחה נכשלה",
     "repliedToStory": "הגיב לסטורי שלך",
     "sentAttachments": "נשלחו {count, plural, one {קובץ מצורף אחד} other {# קבצים מצורפים}}",
+    "sentPost": "נשלח פוסט",
     "deleteComment": "מחיקת תגובה",
     "deleteCommentConfirmation": "האם למחוק תגובה זו? גם התשובות שלה יימחקו, הן מתיבת הדואר הנכנס והן מ-Facebook. לא ניתן לבטל פעולה זו.",
     "deleteMessageSuccess": "ההודעה נמחקה",
@@ -2351,7 +2379,8 @@
       "continue": "המשך לשלוח",
       "discard": "מחק הודעות בתור",
       "dismiss": "סגור"
-    }
+    },
+    "sendChannelPostPostRequired": "בחרו פוסט לשליחה."
   },
   "instagram": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Instagram.",
@@ -5189,6 +5218,7 @@
     "locked": {
       "flowBanner": "הזרימה הותקנה מתבנית לצפייה בלבד. אפשר לצפות בה אך לא לערוך אותה.",
       "badge": "לצפייה בלבד",
+      "tagEditorBanner": "זה הותקן מתבנית לצפייה בלבד. ניתן לשנות רק את הצבע.",
       "editorBanner": "הפריט הותקן מתבנית לצפייה בלבד. אפשר לצפות בו אך לא לערוך אותו.",
       "badgeHint": "הותקן מתבנית לצפייה בלבד"
     },
@@ -5884,6 +5914,28 @@
   "contactAdReferrals": {
     "title": "היסטוריית מודעות",
     "empty": "עדיין לא נרשמו לחיצות על מודעות עבור איש קשר זה."
+  },
+  "contactTouchpoints": {
+    "title": "הצטרף דרך",
+    "empty": "עדיין לא נרשמו השתתפויות עבור איש קשר זה.",
+    "kinds": {
+      "postComment": "תגובה לפוסט",
+      "form": "טופס"
+    },
+    "details": {
+      "played": "{count, plural, one {# משחק} other {# משחקים}}",
+      "lastPrize": "הפרס האחרון: {prize}",
+      "score": "ניקוד: {score}",
+      "completed": "הושלם",
+      "inProgress": "בתהליך",
+      "submissions": "{count, plural, one {# שליחה} other {# שליחות}}",
+      "pollChoice": "הצביע עבור {name}",
+      "leads": "{count, plural, one {# ליד} other {# לידים}}",
+      "requests": "{count, plural, one {# בקשה} other {# בקשות}}",
+      "replies": "{count, plural, one {# תגובה} other {# תגובות}}",
+      "visits": "{count, plural, one {# ביקור} other {# ביקורים}}",
+      "clicks": "{count, plural, one {# לחיצה} other {# לחיצות}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "עדיין לא נשלח אל איש הקשר הזה אף שידור.",
@@ -6632,6 +6684,20 @@
       "externalId": "מזהה חיצוני",
       "channelId": "מזהה ערוץ",
       "lineUserId": "LINE User ID"
+    },
+    "channelProfile": {
+      "followsBusiness": "עוקב אחרי העסק",
+      "followerCount": "עוקבים",
+      "yes": "כן",
+      "no": "לא",
+      "messagingWindow": {
+        "label": "חלון הודעות",
+        "open": "פתוח • {time}",
+        "humanAgentOpen": "חלון נציג אנושי • {time}",
+        "closed": "סגור",
+        "tooltip": "מותר להשיב במשך 24 שעות מההודעה האחרונה של הלקוח.",
+        "tooltipHumanAgent": "מותר להשיב במשך 24 שעות מההודעה האחרונה של הלקוח. לאחר מכן נציג אנושי יכול להשיב עד 7 ימים."
+      }
     },
     "flow": {
       "label": "תהליך"
@@ -12613,7 +12679,36 @@
     "label": "מי השיב בשיחה זו",
     "unnamedMember": "חבר",
     "loadMoreFailed": "לא ניתן היה לטעון עוד חברים",
-    "lastMessageBy": "ההודעה האחרונה של {name}"
+    "lastMessageBy": "ההודעה האחרונה של {name}",
+    "overflowCount": "+{overflow}"
+  },
+  "tagColor": {
+    "label": "צבע",
+    "choose": "בחירת צבע",
+    "presetLabel": "בחר את הצבע {color}",
+    "previewLabel": "תצוגה מקדימה של צבע הנושא",
+    "previewPlaceholder": "שם התגית"
+  },
+  "composerTags": {
+    "title": "תגיות",
+    "searchLabel": "חיפוש תגיות",
+    "searchPlaceholder": "חיפוש תגיות",
+    "expand": "הצג הכול",
+    "collapse": "הצג פחות",
+    "loadMore": "טען עוד",
+    "loadError": "לא ניתן לטעון את התגיות.",
+    "empty": "עדיין אין תגיות. צרו תגיות בדף התגיות.",
+    "noMatch": "אין תגיות שתואמות לחיפוש.",
+    "addFailed": "לא ניתן להוסיף את התגית \"{name}\".",
+    "removeFailed": "לא ניתן להסיר את התגית \"{name}\".",
+    "refreshFailed": "לא ניתן לרענן את התגים. טען מחדש כדי לראות את העדכניים.",
+    "disabledNoContact": "לשיחה זו אין איש קשר לתיוג.",
+    "disabledBlocked": "איש הקשר הזה חסום, ולכן אי אפשר לשנות את התגיות שלו.",
+    "disabledNoAccess": "אין לך הרשאה לשנות את התגיות של איש קשר זה."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {תגית נוספת #} other {# תגיות נוספות}}"
   },
   "posts": {
     "title": "פוסטים",

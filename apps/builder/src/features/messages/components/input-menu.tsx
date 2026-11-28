@@ -10,6 +10,7 @@ import type { SavedReplyResource } from "@/features/saved-replies/schema/resourc
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { CreateAppointmentDialogTrigger } from "./create-appointment-trigger"
 import EmojiPicker from "./emoji-picker"
+import { SendChannelPostDialogTrigger } from "./send-channel-post-trigger"
 import { SendProductsDialogTrigger } from "./send-products-trigger"
 
 type InputMenuProps = {
@@ -66,6 +67,10 @@ export const InputMenu = ({
   const canSendProducts =
     channel.success &&
     Boolean(getChannelFlowPolicy(channel.data)?.productMessages)
+  // Same for posts: the channel's policy says whether it can send one.
+  const canSendChannelPost =
+    channel.success &&
+    Boolean(getChannelFlowPolicy(channel.data)?.channelPostShare)
   // The booking link travels in a URL button, not in the text: a channel that
   // cannot send text with buttons would deliver the prompt without the link.
   const canSendBookingLink =
@@ -85,6 +90,12 @@ export const InputMenu = ({
         <SendProductsDialogTrigger
           bypassThreadControlLock={bypassThreadControlLock}
           channel={channel.data}
+          inboxId={contactInbox.inboxId}
+        />
+      )}
+      {!activePost && canSendChannelPost && contactInbox && (
+        <SendChannelPostDialogTrigger
+          bypassThreadControlLock={bypassThreadControlLock}
           inboxId={contactInbox.inboxId}
         />
       )}

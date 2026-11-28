@@ -1,6 +1,7 @@
 import type {
   BroadcastPlanLimitData,
   BroadcastPlanLimitReason,
+  CHANNEL_POST_SHARE_REFUSED_CODE,
   IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE,
   ImagesNotSupportedOnChannelReason,
   PRODUCT_MESSAGE_UNRESOLVABLE_CODE,
@@ -8,6 +9,7 @@ import type {
   RestrictedBroadcastPlanPolicy,
 } from "@chatbotx.io/database/partials"
 import { SdkException } from "@chatbotx.io/sdk"
+import type { ChannelPostShareRefusalReason } from "@chatbotx.io/utils/channel-post"
 import { DrizzleQueryError } from "drizzle-orm"
 
 /**
@@ -618,6 +620,31 @@ export class ProductMessageUnresolvableError extends ChatbotXException {
       reason,
       ...(productIds ? { productIds: productIds.join(",") } : {}),
     }
+  }
+}
+
+const channelPostShareRefusedCode: typeof CHANNEL_POST_SHARE_REFUSED_CODE =
+  "channelPostShareRefused"
+
+/**
+ * The post cannot be sent into this conversation. Permanent for this send (the
+ * post, the inbox or the channel has to change), so it is not worth retrying.
+ * `reason` is one of the typed refusals the composer, the API and a flow run
+ * all report.
+ */
+export class ChannelPostShareRefusedError extends ChatbotXException {
+  readonly reason: ChannelPostShareRefusalReason
+
+  constructor(reason: ChannelPostShareRefusalReason) {
+    // The reason rides in the message too: the inbox composer only receives the
+    // message (not `data`), and the agent there needs to know what to fix.
+    super(
+      `The post cannot be sent: ${reason}`,
+      channelPostShareRefusedCode,
+      422,
+    )
+    this.reason = reason
+    this.data = { reason }
   }
 }
 

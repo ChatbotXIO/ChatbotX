@@ -97,13 +97,16 @@ const keywordsToTwoFlows = {
   ],
 }
 
-const buildPayload = (resources?: Record<string, unknown>) => {
+const buildPayload = (
+  resources?: Record<string, unknown>,
+  tags: Record<string, unknown> = { "500": { name: "vip" } },
+) => {
   const parsed = parseTemplateExport({
     formatVersion: 1,
     exportedAt: new Date().toISOString(),
     source: { workspaceId: "999000", tenantId: "1" },
     manifests: {
-      tags: { "500": { name: "vip" } },
+      tags,
       customFields: { "600": { name: "Age", type: "number" } },
     },
     resources: resources ?? {
@@ -188,6 +191,7 @@ describe.skipIf(!databaseUrl)("template install on a real database", () => {
     seed: { workspaceId: string; installationId: string },
     permissions: { allowEdit: boolean; allowDelete: boolean },
     resources?: Record<string, unknown>,
+    tags?: Record<string, unknown>,
   ) => {
     const claim = await templateInstallService.claim(seed)
     if (!claim) {
@@ -198,7 +202,7 @@ describe.skipIf(!databaseUrl)("template install on a real database", () => {
       workspaceId: seed.workspaceId,
       claimToken: claim.claimToken,
       permissions,
-      payload: buildPayload(resources),
+      payload: buildPayload(resources, tags),
       templateName: "Template",
       createInstallFolder: false,
       sourceVersion: 1,
@@ -357,6 +361,58 @@ describe.skipIf(!databaseUrl)("template install on a real database", () => {
     expect(entries).toContainEqual({ name: "at-root" })
     expect(payload.manifests.folders[folder.id]).toMatchObject({
       name: "Leads",
+    })
+  })
+
+  test("a snapshot carries a tag's color, and nothing for an uncolored tag", async () => {
+    const seed = await seedPendingInstall({
+      allowEdit: true,
+      allowDelete: true,
+    })
+    const tags = await db
+      .insert(tagModel)
+      .values([
+        { workspaceId: seed.workspaceId, name: "colored", color: "#1A2B3C" },
+        { workspaceId: seed.workspaceId, name: "plain" },
+      ])
+      .returning({ id: tagModel.id })
+
+    const { payload } = await buildTemplateSnapshot({
+      workspaceId: seed.workspaceId,
+      tenantId: "1",
+      selection: { tags: { mode: "ids", ids: tags.map((tag) => tag.id) } },
+    })
+
+    const entries = Object.values(payload.manifests.tags)
+    expect(entries).toContainEqual({ name: "colored", color: "#1A2B3C" })
+    expect(entries).toContainEqual({ name: "plain" })
+  })
+
+  test("an install sets a manifest color on the tags it creates, never on one the installer had", async () => {
+    const permissions = { allowEdit: true, allowDelete: true }
+    const seed = await seedPendingInstall(permissions)
+    await db.insert(tagModel).values([
+      { workspaceId: seed.workspaceId, name: "had-none" },
+      { workspaceId: seed.workspaceId, name: "had-red", color: "#FF0000" },
+    ])
+    await runInstall(seed, permissions, undefined, {
+      "1": { name: "new-colored", color: "#00FF00" },
+      "2": { name: "new-plain" },
+      "3": { name: "had-none", color: "#0000FF" },
+      "4": { name: "had-red", color: "#0000FF" },
+    })
+
+    const rows = await db.query.tagModel.findMany({
+      where: { workspaceId: seed.workspaceId },
+      columns: { name: true, color: true },
+    })
+    expect(
+      Object.fromEntries(rows.map((row) => [row.name, row.color])),
+    ).toEqual({
+      "new-colored": "#00FF00",
+      "new-plain": null,
+      "had-none": null,
+      "had-red": "#FF0000",
     })
   })
 

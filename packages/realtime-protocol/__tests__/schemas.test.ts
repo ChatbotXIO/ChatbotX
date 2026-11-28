@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest"
 import {
+  CONTACT_TAGS_CHANGED_MAX_CONTACT_IDS,
+  contactTagsChangedSchema,
   EVENT_DELIVERY,
   messageTranslationUpdatedSchema,
   pipelineItemChangedSchema,
@@ -382,6 +384,39 @@ describe("socialPostChanged event", () => {
     ).toBe(true)
     expect(
       socialPostChangedSchema.safeParse({ socialPostId: "p1" }).success,
+    ).toBe(false)
+  })
+})
+
+describe("contactTagsChanged event", () => {
+  test("is a workspace-broadcast event that needs no route", () => {
+    const parsed = realtimeWorkspaceEventEnvelopeSchema.safeParse({
+      eventType: RealtimeEventType.contactTagsChanged,
+      data: { contactIds: ["1", "2"] },
+    })
+
+    expect(parsed.success).toBe(true)
+    expect(EVENT_DELIVERY[RealtimeEventType.contactTagsChanged]).toBe(
+      "workspace",
+    )
+  })
+
+  test("carries one to 500 contact ids", () => {
+    const ids = (count: number) =>
+      Array.from({ length: count }, (_, index) => String(index + 1))
+
+    expect(contactTagsChangedSchema.safeParse({ contactIds: [] }).success).toBe(
+      false,
+    )
+    expect(
+      contactTagsChangedSchema.safeParse({
+        contactIds: ids(CONTACT_TAGS_CHANGED_MAX_CONTACT_IDS),
+      }).success,
+    ).toBe(true)
+    expect(
+      contactTagsChangedSchema.safeParse({
+        contactIds: ids(CONTACT_TAGS_CHANGED_MAX_CONTACT_IDS + 1),
+      }).success,
     ).toBe(false)
   })
 })

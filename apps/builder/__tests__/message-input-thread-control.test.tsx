@@ -62,6 +62,12 @@ vi.mock("@/features/messages/actions/create-message.action", () => ({
 }))
 vi.mock("@/features/messages/components/input-menu", () => ({
   InputMenu: () => null,
+  SendFlowDialogTrigger: ({ children }: { children?: unknown }) => children,
+}))
+vi.mock("@/features/messages/components/composer-tag-grid", () => ({
+  ComposerTagGrid: ({ contactId }: { contactId: string | null }) => (
+    <div data-testid="tag-grid">{contactId}</div>
+  ),
 }))
 vi.mock("@/features/messages/components/file-upload", () => ({
   FileUploadPreview: () => null,
@@ -104,6 +110,16 @@ const lockedInbox = (id: string) => ({
   threadControlUpdatedAt: new Date(),
 })
 
+const unlockedClosedInbox = (id: string) => ({
+  id,
+  channel: "whatsapp",
+  // Far past the 24h customer-service window.
+  lastIncomingMessageAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
+  threadControlState: null,
+  threadOwnerRole: null,
+  threadControlUpdatedAt: null,
+})
+
 const storeState = {
   appendMessage: vi.fn(),
   updateConversationViaMessage: vi.fn(),
@@ -119,15 +135,23 @@ const storeState = {
   conversations: [
     {
       id: "conv-1",
+      contact: { id: "contact-1", blockedAt: null },
       workspaceId: "ws-1",
       sourceId: null,
       contactInboxes: [lockedInbox("ci-1")],
     },
     {
       id: "conv-2",
+      contact: { id: "contact-2", blockedAt: null },
       workspaceId: "ws-1",
       sourceId: null,
       contactInboxes: [lockedInbox("ci-2")],
+    },
+    {
+      id: "conv-closed",
+      workspaceId: "ws-1",
+      sourceId: null,
+      contactInboxes: [unlockedClosedInbox("ci-3")],
     },
   ],
 }
@@ -179,5 +203,31 @@ describe("MessageInput — conversation-routing lock", () => {
     act(() => root.render(<MessageInput />))
 
     expect(lifecycle.mounts).toEqual(["conv-1"])
+  })
+
+  test("keeps the tag grid above the thread-control lock card", () => {
+    act(() => root.render(<MessageInput />))
+
+    expect(container.querySelector('[data-testid="locked"]')).not.toBeNull()
+    expect(container.querySelector('[data-testid="tag-grid"]')).not.toBeNull()
+  })
+
+  test("switching between locked conversations leaves one grid bound to the new contact", () => {
+    act(() => root.render(<MessageInput />))
+    storeState.activeConversationId = "conv-2"
+    act(() => root.render(<MessageInput />))
+
+    const grids = container.querySelectorAll('[data-testid="tag-grid"]')
+    expect(grids).toHaveLength(1)
+    expect(grids[0]?.textContent).toBe("contact-2")
+  })
+
+  test("keeps the tag grid when the messaging window is closed", () => {
+    storeState.activeConversationId = "conv-closed"
+    act(() => root.render(<MessageInput />))
+
+    expect(container.querySelector('[data-testid="locked"]')).toBeNull()
+    expect(container.textContent).toContain("messagingWindowClosed")
+    expect(container.querySelector('[data-testid="tag-grid"]')).not.toBeNull()
   })
 })

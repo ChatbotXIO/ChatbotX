@@ -1174,6 +1174,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "contacts.listTouchpoints",
+    "path": "/v1/contacts/{identifier}/touchpoints",
+  },
+  {
+    "method": "GET",
     "operationId": "contacts.peekImportHeaders",
     "path": "/v1/contacts/imports/files/{fileId}/headers",
   },
@@ -3988,8 +3993,13 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/tags",
   },
   {
-    "method": "PUT",
+    "method": "PATCH",
     "operationId": "tags.update",
+    "path": "/v1/tags/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "tags.updateLegacy",
     "path": "/v1/tags/{id}",
   },
   {

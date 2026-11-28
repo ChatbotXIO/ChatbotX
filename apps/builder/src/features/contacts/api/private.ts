@@ -1,4 +1,7 @@
-import { contactExportService } from "@chatbotx.io/business"
+import {
+  contactExportService,
+  contactTouchpointService,
+} from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
@@ -6,9 +9,11 @@ import { authorizedAPI } from "@/orpc"
 import { listContactAdReferrals } from "../lib/list-contact-ad-referrals"
 import { listContactBroadcastsPage } from "../lib/list-contact-broadcasts"
 import { listContactExportFiles } from "../lib/list-contact-export-files"
+import { listContactTags } from "../lib/list-contact-tags"
 import {
   buildContactPermissionScope,
   exportFileOwnerFilter,
+  requireContactAccessForMember,
   requireContactPermissionScope,
   requireContactPermissionScopeForMember,
 } from "../permissions"
@@ -28,6 +33,10 @@ import {
   listContactBroadcastsResponse,
 } from "../schema/contact-broadcast"
 import {
+  listContactTagsRequest,
+  listContactTagsResponse,
+} from "../schema/contact-tag"
+import {
   listContactExportFilesRequest,
   listContactExportFilesResponse,
 } from "../schema/export-file"
@@ -41,6 +50,10 @@ import {
   listContactsRequest,
   listContactsTableResponse,
 } from "../schema/query"
+import {
+  listContactTouchpointsRequest,
+  listContactTouchpointsResponse,
+} from "../schema/touchpoint"
 
 export const contactsAuthenticatedAPI = {
   getContactAuthenticatedAPI: authorizedAPI
@@ -66,6 +79,30 @@ export const contactsAuthenticatedAPI = {
       return await getContact({ workspaceId, contactId }, scope)
     }),
 
+  // UI plumbing (AGENTS.md invariant 23 exemption): the inbox panel's Tags
+  // editor reads the contact's tags here, not from `getContact`, so a
+  // `contactTagsChanged` event can refresh just this list. The public
+  // equivalent is `contacts.listTags`.
+  listContactTagsAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/contacts/{contactId}/tags",
+      summary: "List the tags a contact has",
+      tags: ["Contacts"],
+    })
+    .input(listContactTagsRequest)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listContactTagsResponse)
+    .handler(async ({ input, context }) => {
+      await requireContactAccessForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+        workspaceId: input.workspaceId,
+        contactId: input.contactId,
+      })
+      return await listContactTags(input)
+    }),
+
   listContactAdReferralsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
@@ -84,6 +121,33 @@ export const contactsAuthenticatedAPI = {
       return await listContactAdReferrals({
         workspaceId: input.workspaceId,
         contactId: input.contactId,
+        perPage: input.perPage,
+        cursor: input.cursor,
+        accessScope: {
+          restrictToAssignedUserId: scope.restrictToAssignedUserId,
+        },
+      })
+    }),
+
+  listContactTouchpointsAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/contacts/{contactId}/touchpoints",
+      summary: "List the tools a contact opted in through",
+      tags: ["Contacts"],
+    })
+    .input(listContactTouchpointsRequest.and(getContactRequest))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listContactTouchpointsResponse)
+    .handler(async ({ input, context }) => {
+      const scope = requireContactPermissionScopeForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      return await contactTouchpointService.list({
+        workspaceId: input.workspaceId,
+        contactId: input.contactId,
+        kinds: input.kinds,
         perPage: input.perPage,
         cursor: input.cursor,
         accessScope: {

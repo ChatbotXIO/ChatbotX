@@ -469,6 +469,7 @@ describe("flowSpecStepTypes", () => {
         "goto",
         "pipeline",
         "send",
+        "sendChannelPost",
         "sendProducts",
         "sendTemplate",
         "sendViewCatalog",

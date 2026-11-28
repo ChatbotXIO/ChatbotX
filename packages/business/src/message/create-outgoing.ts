@@ -20,7 +20,10 @@ import {
   uploader,
   uploadMultipleFiles,
 } from "@chatbotx.io/filesystem"
-import type { SendProductsContent } from "@chatbotx.io/flow-config"
+import type {
+  SendChannelPostContent,
+  SendProductsContent,
+} from "@chatbotx.io/flow-config"
 import {
   RealtimeEventType,
   routeForConversation,
@@ -41,6 +44,7 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { channelPostShareService } from "../channel-post/share.service"
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { conversationParticipantService } from "../conversation-participant/service"
@@ -63,6 +67,7 @@ import { recordAgentReply } from "../working-hours/agent-reply-metric"
 type CreateOutgoingInput = (
   | { flowId: string; nodeId?: string }
   | { products: SendProductsContent }
+  | { channelPost: SendChannelPostContent }
   | {
       text?: string
       files?: File[]
@@ -430,6 +435,29 @@ export const createOutgoing = async (props: {
         })
       : undefined
 
+  // A post share is a standalone DM, like products.
+  if (
+    "channelPost" in parsedInput &&
+    (parsedInput.replyToMessageId || parsedInput.isPrivateReply)
+  ) {
+    throw validationException(
+      "channelPost",
+      "A post can't be sent as a comment reply",
+    )
+  }
+  // Resolved and checked before any row exists, so a post the channel cannot
+  // send (removed, another inbox's, no link) leaves nothing behind. The worker
+  // checks it again when the queued send runs.
+  const channelPostShare =
+    "channelPost" in parsedInput
+      ? await channelPostShareService.prepareOutgoing({
+          workspaceId: conversation.workspaceId,
+          inboxId: contactInbox.inboxId,
+          channel: contactInbox.channel,
+          channelPostId: parsedInput.channelPost.channelPostId,
+        })
+      : undefined
+
   // Resolved and checked before any row or object exists, so a send the
   // channel cannot deliver is refused instead of silently losing its images.
   // Device files win over media library ids (as the upload branch below
@@ -508,6 +536,7 @@ export const createOutgoing = async (props: {
     withReplyTargetCreatedAt(
       withBypassThreadControlLock(
         productMessage?.contentAttributes ??
+          channelPostShare?.contentAttributes ??
           parsedInput.contentAttributes ??
           (parsedInput.isPrivateReply ? { isPrivateReply: true } : null),
         parsedInput.bypassThreadControlLock,
@@ -524,7 +553,9 @@ export const createOutgoing = async (props: {
       }
     : baseContentAttributes
   const messageInput = {
-    text: productMessage ? productMessage.text : plainText,
+    text: productMessage
+      ? productMessage.text
+      : (channelPostShare?.text ?? plainText),
     messageType: "outgoing" as const,
     workspaceId: conversation.workspaceId,
     conversationId: targetConversation.id,
@@ -610,7 +641,7 @@ export const createOutgoing = async (props: {
           : []),
       ),
     },
-    ...(user && messageInput.text && !productMessage
+    ...(user && messageInput.text && !productMessage && !channelPostShare
       ? [
           {
             jobType: ChatJobAction.checkOutboundAutomatedResponse,

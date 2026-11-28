@@ -70,6 +70,7 @@ import {
 } from "../lib/send-queue"
 import { createMessageWithRoutingBypassRequest } from "../schema/mutation"
 import type { MessageResource } from "../schema/resource"
+import { ComposerTagGrid } from "./composer-tag-grid"
 import { FileUploadPreview } from "./file-upload"
 import { InputMenu, SendFlowDialogTrigger } from "./input-menu"
 import { MediaFilePreview } from "./media-file-preview"
@@ -612,24 +613,38 @@ export const MessageInput = () => {
     return null
   }
 
+  // Tagging does not depend on the send window or thread ownership, so the
+  // grid is shown in every composer state below.
+  const tagGrid = conversation ? (
+    <ComposerTagGrid
+      contactId={conversation.contact?.id ?? null}
+      isContactBlocked={Boolean(conversation.contact?.blockedAt)}
+      key={`tag-grid-${conversation.id}`}
+      workspaceId={conversation.workspaceId}
+    />
+  ) : null
+
   // Another responder owns the WhatsApp thread: replies are paused until an
   // explicit take-over. Placed before the window-closed branches and after
   // every hook, so the form (and its draft) survives the lock.
   if (conversation && threadControl?.isLocked && !routingLockDismissed) {
     return (
-      <ThreadControlLockedComposer
-        channel={threadControl.channel}
-        contactInboxId={threadControl.contactInboxId}
-        conversationId={conversation.id}
-        inboxId={threadControl.inboxId}
-        // Keyed per conversation so a take-over spinner or inline refusal
-        // never carries over when the agent switches conversations.
-        key={conversation.id}
-        onDismiss={() => setRoutingLockDismissed(true)}
-        // BizAI: "Take over" reveals the composer; the real take is on send.
-        revealOnTakeOver={takeOverOnSend}
-        workspaceId={conversation.workspaceId}
-      />
+      <>
+        {tagGrid}
+        <ThreadControlLockedComposer
+          channel={threadControl.channel}
+          contactInboxId={threadControl.contactInboxId}
+          conversationId={conversation.id}
+          inboxId={threadControl.inboxId}
+          // Keyed per conversation so a take-over spinner or inline refusal
+          // never carries over when the agent switches conversations.
+          key={conversation.id}
+          onDismiss={() => setRoutingLockDismissed(true)}
+          // BizAI: "Take over" reveals the composer; the real take is on send.
+          revealOnTakeOver={takeOverOnSend}
+          workspaceId={conversation.workspaceId}
+        />
+      </>
     )
   }
 
@@ -652,6 +667,7 @@ export const MessageInput = () => {
   if (isMetaDmWindowClosed) {
     return (
       <div className="m-3 shrink-0 rounded-xl border pt-2">
+        {tagGrid}
         <div className="flex flex-col items-center justify-center gap-3 px-4 py-6 text-center">
           <p className="text-muted-foreground text-sm">
             {t("messages.humanAgentWindowExpired")}
@@ -665,6 +681,7 @@ export const MessageInput = () => {
   if (isMessagingWindowClosed) {
     return (
       <div className="m-3 shrink-0 rounded-xl border pt-2">
+        {tagGrid}
         <div className="flex flex-col items-center justify-center gap-3 px-4 py-6 text-center">
           <p className="text-muted-foreground text-sm">
             {t("messages.messagingWindowClosed")}
@@ -686,6 +703,7 @@ export const MessageInput = () => {
 
   return (
     <div className="m-3 shrink-0 rounded-xl border pt-2">
+      {tagGrid}
       <Form {...form}>
         <form
           aria-label="Message input form"

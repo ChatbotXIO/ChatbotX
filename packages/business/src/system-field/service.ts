@@ -35,6 +35,7 @@ import {
 } from "../media"
 import { messageService } from "../message/service"
 import { resolveTenantSettings } from "../platform/settings"
+import { publishContactTagsChanged } from "../tag/realtime"
 import { tagService } from "../tag/service"
 import { toPublicStorageUrl } from "../utils"
 import { workspaceService } from "../workspace/service"
@@ -295,6 +296,7 @@ class SystemFieldService extends BaseService {
 
     // Synchronous v1 is bounded to one contact-inbox; move to BullMQ if this
     // path needs to erase very large histories.
+    let removedTags = false
     await db.transaction(async (tx) => {
       // Clearing phone/email intentionally does not emit contactInfoUpdated. If
       // that semantic changes, emit after this transaction commits.
@@ -306,7 +308,7 @@ class SystemFieldService extends BaseService {
         { phoneNumber: null, email: null },
         tx,
       )
-      await tagService.detachAllFromContact({
+      removedTags = await tagService.detachAllFromContact({
         workspaceId: context.payload.workspaceId,
         contactId: context.payload.contactId,
         tx,
@@ -318,6 +320,12 @@ class SystemFieldService extends BaseService {
       })
       await this.deleteById({ id: context.row.id, tx })
     })
+    if (removedTags) {
+      await publishContactTagsChanged({
+        workspaceId: context.payload.workspaceId,
+        contactIds: [context.payload.contactId],
+      })
+    }
   }
 
   private async loadVerifiedMeContext(

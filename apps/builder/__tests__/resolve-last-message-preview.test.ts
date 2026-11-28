@@ -327,3 +327,37 @@ describe("resolveLastMessagePreview — conversation routing rows", () => {
     expect(result).toBe("Conversation context")
   })
 })
+
+describe("resolveLastMessagePreview channel post share", () => {
+  const postMessage = (text: string | null, caption: string | null) =>
+    ({
+      text,
+      contentAttributes: {
+        type: "channel_post",
+        externalPostId: "p1",
+        shareMode: text === null ? "nativeMedia" : "textLink",
+        caption,
+      },
+    }) as never
+
+  test("keeps the sent text for a link share", () => {
+    expect(
+      resolveLastMessagePreview(postMessage("Look: https://x.y", "Cap"), t),
+    ).toBe("Look: https://x.y")
+  })
+
+  test("shows the first non-blank caption line for a native media share", () => {
+    expect(
+      resolveLastMessagePreview(postMessage(null, "\n  \nHello\nWorld"), t),
+    ).toBe("Hello")
+  })
+
+  test.each([
+    [null],
+    ["  \n "],
+  ])("falls back to a label when the caption is %j", (caption) => {
+    expect(resolveLastMessagePreview(postMessage(null, caption), t)).toBe(
+      "Sent a post",
+    )
+  })
+})

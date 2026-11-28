@@ -48,7 +48,10 @@ vi.mock("@/orpc", () => ({ authorizedAPI }))
 vi.mock("@/middlewares/auth", () => ({
   workspaceAuthorizedMidddleware: vi.fn(),
 }))
-vi.mock("@chatbotx.io/business", () => ({ conversationService: {} }))
+vi.mock("@chatbotx.io/business", () => ({
+  conversationService: {},
+  tagService: {},
+}))
 vi.mock("@/lib/public-api/member-scope", () => ({
   assertConversationAccessForCaller: mocks.assertConversationAccessForCaller,
 }))

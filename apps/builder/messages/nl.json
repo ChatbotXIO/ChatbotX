@@ -151,7 +151,7 @@
     "clone": "Klonen",
     "remove": "Verwijderen",
     "restore": "Herstellen",
-    "loadMore": "Load more",
+    "loadMore": "Meer laden",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -1480,6 +1480,20 @@
       "externalId": "Externe ID",
       "channelId": "Kanaal-ID",
       "lineUserId": "LINE User ID"
+    },
+    "channelProfile": {
+      "followsBusiness": "Volgt het bedrijf",
+      "followerCount": "Volgers",
+      "yes": "Ja",
+      "no": "Nee",
+      "messagingWindow": {
+        "label": "Berichtvenster",
+        "open": "Open • {time}",
+        "humanAgentOpen": "Venster menselijke medewerker • {time}",
+        "closed": "Gesloten",
+        "tooltip": "Antwoorden is toegestaan tot 24 uur na het laatste bericht van de klant.",
+        "tooltipHumanAgent": "Antwoorden is toegestaan tot 24 uur na het laatste bericht van de klant. Daarna kan een menselijke medewerker nog tot 7 dagen antwoorden."
+      }
     },
     "flow": {
       "label": "Flow"
@@ -3160,7 +3174,8 @@
       "moreOptions": "Meer opties",
       "findPlacesNearMe": "Plaatsen bij mij in de buurt zoeken",
       "callPhoneNumber": "Telefoonnummer bellen",
-      "copyText": "Tekst kopiëren"
+      "copyText": "Tekst kopiëren",
+      "sendChannelPost": "Bericht versturen"
     },
     "externalRequest": {
       "errors": {
@@ -3501,6 +3516,32 @@
       "limitHint": "Maximaal {max} tekens nadat de variabelen zijn ingevuld.",
       "fallbackHint": "Op kanalen die geen tekst kunnen kopiëren, ontvangt het contact deze tekst als antwoord.",
       "viewerTitle": "Kopieert deze tekst"
+    },
+    "sendChannelPost": {
+      "title": "Een bericht versturen",
+      "description": "Kies een van je berichten om naar de klant te sturen.",
+      "inbox": "Inbox",
+      "inboxPlaceholder": "Selecteer een inbox",
+      "noInboxes": "Koppel een Instagram- of Messenger-inbox om berichten te versturen.",
+      "search": "Berichten zoeken",
+      "empty": "Nog geen berichten voor deze inbox.",
+      "loadError": "De berichten konden niet worden geladen.",
+      "retry": "Opnieuw proberen",
+      "loadMore": "Meer laden",
+      "select": "Selecteer een bericht",
+      "unavailable": "Dit bericht is niet meer beschikbaar.",
+      "noCaption": "Geen bijschrift",
+      "openPost": "Bericht openen",
+      "sendFailed": "Het bericht kon niet worden verstuurd.",
+      "reasons": {
+        "typeNotShareable": "Dit soort bericht kan hier niet worden verstuurd",
+        "linkUnavailable": "Dit bericht heeft geen link om te versturen",
+        "linkTooLong": "De link is te lang om te versturen",
+        "shareUnsupported": "Dit kanaal kan geen berichten versturen",
+        "postNotFound": "Dit bericht bestaat niet meer",
+        "inboxMismatch": "Dit bericht hoort bij een andere inbox"
+      },
+      "noMatch": "Geen berichten komen overeen met je zoekopdracht."
     }
   },
   "folders": {
@@ -4581,6 +4622,7 @@
     "sendFailed": "Verzenden mislukt",
     "repliedToStory": "Heeft op je story gereageerd",
     "sentAttachments": "{count, plural, one {1 bijlage verzonden} other {# bijlagen verzonden}}",
+    "sentPost": "Bericht verzonden",
     "deleteComment": "Opmerking verwijderen",
     "deleteCommentConfirmation": "Weet je zeker dat je deze opmerking wilt verwijderen? De antwoorden worden ook verwijderd, zowel uit je inbox als van Facebook. Deze actie kan niet ongedaan worden gemaakt.",
     "deleteMessageSuccess": "Bericht verwijderd",
@@ -4770,7 +4812,8 @@
       "continue": "Doorgaan met verzenden",
       "discard": "Berichten in de wachtrij verwijderen",
       "dismiss": "Sluiten"
-    }
+    },
+    "sendChannelPostPostRequired": "Kies een bericht om te versturen."
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",
@@ -7608,6 +7651,7 @@
     "locked": {
       "flowBanner": "Deze flow is geïnstalleerd vanuit een alleen-lezen sjabloon. Je kunt hem bekijken maar niet bewerken.",
       "badge": "Alleen weergave",
+      "tagEditorBanner": "Dit is geïnstalleerd vanuit een sjabloon met alleen-lezen. Alleen de kleur kan worden gewijzigd.",
       "editorBanner": "Dit is geïnstalleerd vanuit een sjabloon met alleen-lezentoegang. Je kunt het bekijken, maar niet bewerken.",
       "badgeHint": "Geïnstalleerd vanuit een sjabloon met alleen-lezentoegang"
     },
@@ -8303,6 +8347,28 @@
   "contactAdReferrals": {
     "title": "Advertentiegeschiedenis",
     "empty": "Voor dit contact zijn nog geen advertentieklikken geregistreerd."
+  },
+  "contactTouchpoints": {
+    "title": "Aangemeld via",
+    "empty": "Nog geen deelnames vastgelegd voor dit contact.",
+    "kinds": {
+      "postComment": "Berichtreactie",
+      "form": "Formulier"
+    },
+    "details": {
+      "played": "{count, plural, one {# spel} other {# spellen}}",
+      "lastPrize": "Laatste prijs: {prize}",
+      "score": "Score: {score}",
+      "completed": "Voltooid",
+      "inProgress": "Bezig",
+      "submissions": "{count, plural, one {# inzending} other {# inzendingen}}",
+      "pollChoice": "Stemde op {name}",
+      "leads": "{count, plural, one {# lead} other {# leads}}",
+      "requests": "{count, plural, one {# verzoek} other {# verzoeken}}",
+      "replies": "{count, plural, one {# antwoord} other {# antwoorden}}",
+      "visits": "{count, plural, one {# bezoek} other {# bezoeken}}",
+      "clicks": "{count, plural, one {# klik} other {# klikken}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "Er is nog geen broadcast naar dit contact verzonden.",
@@ -12613,7 +12679,36 @@
     "label": "Wie heeft geantwoord in dit gesprek",
     "unnamedMember": "Lid",
     "loadMoreFailed": "Kan geen leden meer laden",
-    "lastMessageBy": "Laatste bericht van {name}"
+    "lastMessageBy": "Laatste bericht van {name}",
+    "overflowCount": "+{overflow}"
+  },
+  "tagColor": {
+    "label": "Kleur",
+    "choose": "Kies een kleur",
+    "presetLabel": "Kies kleur {color}",
+    "previewLabel": "Voorbeeld van themakleur",
+    "previewPlaceholder": "Tagnaam"
+  },
+  "composerTags": {
+    "title": "Tags",
+    "searchLabel": "Tags zoeken",
+    "searchPlaceholder": "Tags zoeken",
+    "expand": "Alles tonen",
+    "collapse": "Minder tonen",
+    "loadMore": "Meer laden",
+    "loadError": "Tags konden niet worden geladen.",
+    "empty": "Nog geen tags. Maak tags aan op de pagina Tags.",
+    "noMatch": "Geen tags komen overeen met je zoekopdracht.",
+    "addFailed": "De tag \"{name}\" kon niet worden toegevoegd.",
+    "removeFailed": "De tag \"{name}\" kon niet worden verwijderd.",
+    "refreshFailed": "Kan de tags niet vernieuwen. Herlaad om de nieuwste te zien.",
+    "disabledNoContact": "Dit gesprek heeft geen contact om te taggen.",
+    "disabledBlocked": "Dit contact is geblokkeerd, dus de tags kunnen niet worden gewijzigd.",
+    "disabledNoAccess": "Je hebt geen toegang om de tags van dit contact te wijzigen."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {# tag meer} other {# tags meer}}"
   },
   "posts": {
     "title": "Berichten",

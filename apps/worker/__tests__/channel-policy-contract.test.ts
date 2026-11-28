@@ -40,6 +40,7 @@ const MESSAGE_STEP_TYPES = [
   stepTypes.enum.whatsappFlow,
   stepTypes.enum.sendProducts,
   stepTypes.enum.sendCollection,
+  stepTypes.enum.sendChannelPost,
 ] as const satisfies readonly StepType[]
 
 const HANDLED_STEP_TYPES: ReadonlyArray<{
@@ -81,10 +82,16 @@ describe("channel flow policy runtime contract", () => {
     channel,
     steps,
   }) => {
+    const policy = CHANNEL_FLOW_POLICIES[channel]
     const permittedSteps = MESSAGE_STEP_TYPES.filter(
       (stepType) =>
-        CHANNEL_FLOW_POLICIES[channel].steps[stepType] !==
-        stepSupport.unsupported,
+        policy.steps[stepType] !== stepSupport.unsupported &&
+        // A text-link post share is rewritten to a `sendText` by the worker
+        // before dispatch, so the channel never sees the step itself.
+        !(
+          stepType === stepTypes.enum.sendChannelPost &&
+          policy.channelPostShare?.mode === "textLink"
+        ),
     )
 
     expect(steps).toEqual(expect.arrayContaining(permittedSteps))
@@ -106,5 +113,36 @@ describe("channel flow policy runtime contract", () => {
     ).includes("product_message")
 
     expect(rendersProductMessageRow).toBe(declaresProductMessages)
+  })
+})
+
+describe("channel post share runtime contract", () => {
+  test.each(
+    HANDLED_STEP_TYPES,
+  )("$channel handles sendChannelPost if and only if its policy shares posts natively", ({
+    channel,
+    steps,
+  }) => {
+    const mode = CHANNEL_FLOW_POLICIES[channel].channelPostShare?.mode
+
+    expect(steps.includes(stepTypes.enum.sendChannelPost)).toBe(
+      mode === "nativeMedia",
+    )
+  })
+
+  test("a text-link channel can send the rewritten step as text", () => {
+    const textLinkChannels = (
+      Object.keys(CHANNEL_FLOW_POLICIES) as ChannelType[]
+    ).filter(
+      (channel) =>
+        CHANNEL_FLOW_POLICIES[channel].channelPostShare?.mode === "textLink",
+    )
+
+    expect(textLinkChannels.length).toBeGreaterThan(0)
+    for (const channel of textLinkChannels) {
+      expect(CHANNEL_FLOW_POLICIES[channel].steps.sendText).not.toBe(
+        stepSupport.unsupported,
+      )
+    }
   })
 })

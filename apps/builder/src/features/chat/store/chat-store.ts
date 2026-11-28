@@ -9,13 +9,13 @@ import { resolveMessagingWindowOpenedAt } from "@chatbotx.io/sdk"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contact-filter/schema"
 import type { GetContactResponse } from "@/features/contacts/schema/query"
-import type { ContactResource } from "@/features/contacts/schema/resource"
 import { mergeParticipantReply } from "@/features/conversations/lib/merge-participant-reply"
 import {
   type PostDetails,
   supportsPostDetails,
 } from "@/features/conversations/schema/query"
 import type {
+  ConversationContactResource,
   ConversationParticipantResource,
   ConversationResource,
   ListConversationItemResource,
@@ -417,7 +417,10 @@ export type ChatActions = {
   loadActivePost: (workspaceId: string) => Promise<void>
 
   // Contact actions
-  updateContact: (contactId: string, data: Partial<ContactResource>) => void
+  updateContact: (
+    contactId: string,
+    data: Partial<ConversationContactResource>,
+  ) => void
 }
 
 export type ChatStore = ChatState & ChatActions
@@ -1944,7 +1947,10 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         }
       },
 
-      updateContact: (contactId: string, data: Partial<ContactResource>) => {
+      updateContact: (
+        contactId: string,
+        data: Partial<ConversationContactResource>,
+      ) => {
         const { conversations } = get()
         const hasMatch = conversations.some((c) => c.contactId === contactId)
         if (!hasMatch) {

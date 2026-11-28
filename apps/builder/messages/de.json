@@ -151,7 +151,7 @@
     "clone": "Klonen",
     "remove": "Entfernen",
     "restore": "Wiederherstellen",
-    "loadMore": "Load more",
+    "loadMore": "Mehr laden",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -1699,6 +1699,20 @@
       "channelId": "Kanal-ID",
       "lineUserId": "LINE User ID"
     },
+    "channelProfile": {
+      "followsBusiness": "Folgt dem Unternehmen",
+      "followerCount": "Follower",
+      "yes": "Ja",
+      "no": "Nein",
+      "messagingWindow": {
+        "label": "Nachrichtenfenster",
+        "open": "Offen • {time}",
+        "humanAgentOpen": "Mitarbeiter-Fenster • {time}",
+        "closed": "Geschlossen",
+        "tooltip": "Antworten sind 24 Stunden nach der letzten Nachricht des Kunden erlaubt.",
+        "tooltipHumanAgent": "Antworten sind 24 Stunden nach der letzten Nachricht des Kunden erlaubt. Danach kann ein menschlicher Mitarbeiter noch bis zu 7 Tage antworten."
+      }
+    },
     "flow": {
       "label": "Flow"
     },
@@ -3160,7 +3174,8 @@
       "moreOptions": "Weitere Optionen",
       "findPlacesNearMe": "Orte in meiner Nähe finden",
       "callPhoneNumber": "Telefonnummer anrufen",
-      "copyText": "Text kopieren"
+      "copyText": "Text kopieren",
+      "sendChannelPost": "Beitrag senden"
     },
     "externalRequest": {
       "errors": {
@@ -3501,6 +3516,32 @@
       "limitHint": "Bis zu {max} Zeichen nach dem Einsetzen der Variablen.",
       "fallbackHint": "Auf Kanälen, die keinen Text kopieren können, erhält der Kontakt diesen Text stattdessen als Antwort.",
       "viewerTitle": "Kopiert diesen Text"
+    },
+    "sendChannelPost": {
+      "title": "Beitrag senden",
+      "description": "Wähle einen deiner Beiträge, um ihn an den Kunden zu senden.",
+      "inbox": "Posteingang",
+      "inboxPlaceholder": "Posteingang auswählen",
+      "noInboxes": "Verbinde einen Instagram- oder Messenger-Posteingang, um Beiträge zu senden.",
+      "search": "Beiträge suchen",
+      "empty": "Für diesen Posteingang gibt es noch keine Beiträge.",
+      "loadError": "Die Beiträge konnten nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "loadMore": "Mehr laden",
+      "select": "Beitrag auswählen",
+      "unavailable": "Dieser Beitrag ist nicht mehr verfügbar.",
+      "noCaption": "Keine Beschreibung",
+      "openPost": "Beitrag öffnen",
+      "sendFailed": "Der Beitrag konnte nicht gesendet werden.",
+      "reasons": {
+        "typeNotShareable": "Diese Art von Beitrag kann hier nicht gesendet werden",
+        "linkUnavailable": "Dieser Beitrag hat keinen Link zum Senden",
+        "linkTooLong": "Der Link ist zu lang zum Senden",
+        "shareUnsupported": "Dieser Kanal kann keine Beiträge senden",
+        "postNotFound": "Dieser Beitrag existiert nicht mehr",
+        "inboxMismatch": "Dieser Beitrag gehört zu einem anderen Posteingang"
+      },
+      "noMatch": "Keine Beiträge entsprechen deiner Suche."
     }
   },
   "folders": {
@@ -4581,6 +4622,7 @@
     "sendFailed": "Senden fehlgeschlagen",
     "repliedToStory": "Hat auf deine Story geantwortet",
     "sentAttachments": "{count, plural, one {1 Anhang gesendet} other {# Anhänge gesendet}}",
+    "sentPost": "Beitrag gesendet",
     "deleteComment": "Kommentar löschen",
     "deleteCommentConfirmation": "Möchten Sie diesen Kommentar wirklich löschen? Seine Antworten werden ebenfalls gelöscht, sowohl in Ihrem Posteingang als auch auf Facebook. Diese Aktion kann nicht rückgängig gemacht werden.",
     "deleteMessageSuccess": "Nachricht gelöscht",
@@ -4770,7 +4812,8 @@
       "continue": "Weitersenden",
       "discard": "Wartende Nachrichten verwerfen",
       "dismiss": "Schließen"
-    }
+    },
+    "sendChannelPostPostRequired": "Wähle einen Beitrag zum Senden."
   },
   "instagram": {
     "description": "Mit dieser Integration können Sie Instagram-Bots erstellen.",
@@ -7608,6 +7651,7 @@
     "locked": {
       "flowBanner": "Dieser Flow wurde aus einer Vorlage mit reiner Ansicht installiert. Du kannst ihn ansehen, aber nicht bearbeiten.",
       "badge": "Nur Ansicht",
+      "tagEditorBanner": "Dies wurde aus einer schreibgeschützten Vorlage installiert. Nur die Farbe kann geändert werden.",
       "editorBanner": "Dies wurde aus einer Vorlage mit reiner Ansicht installiert. Du kannst es ansehen, aber nicht bearbeiten.",
       "badgeHint": "Aus einer Vorlage mit reiner Ansicht installiert"
     },
@@ -8303,6 +8347,28 @@
   "contactAdReferrals": {
     "title": "Anzeigenverlauf",
     "empty": "Für diesen Kontakt wurden noch keine Anzeigenklicks erfasst."
+  },
+  "contactTouchpoints": {
+    "title": "Angemeldet über",
+    "empty": "Für diesen Kontakt wurden noch keine Anmeldungen erfasst.",
+    "kinds": {
+      "postComment": "Beitragskommentar",
+      "form": "Formular"
+    },
+    "details": {
+      "played": "{count, plural, one {# Spiel} other {# Spiele}}",
+      "lastPrize": "Letzter Preis: {prize}",
+      "score": "Punkte: {score}",
+      "completed": "Abgeschlossen",
+      "inProgress": "In Bearbeitung",
+      "submissions": "{count, plural, one {# Einsendung} other {# Einsendungen}}",
+      "pollChoice": "Abgestimmt für {name}",
+      "leads": "{count, plural, one {# Lead} other {# Leads}}",
+      "requests": "{count, plural, one {# Anfrage} other {# Anfragen}}",
+      "replies": "{count, plural, one {# Antwort} other {# Antworten}}",
+      "visits": "{count, plural, one {# Besuch} other {# Besuche}}",
+      "clicks": "{count, plural, one {# Klick} other {# Klicks}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "An diesen Kontakt wurde noch kein Broadcast gesendet.",
@@ -12613,7 +12679,36 @@
     "label": "Wer in dieser Unterhaltung geantwortet hat",
     "unnamedMember": "Mitglied",
     "loadMoreFailed": "Weitere Mitglieder konnten nicht geladen werden",
-    "lastMessageBy": "Letzte Nachricht von {name}"
+    "lastMessageBy": "Letzte Nachricht von {name}",
+    "overflowCount": "+{overflow}"
+  },
+  "tagColor": {
+    "label": "Farbe",
+    "choose": "Farbe auswählen",
+    "presetLabel": "Farbe {color} wählen",
+    "previewLabel": "Vorschau der Designfarbe",
+    "previewPlaceholder": "Tag-Name"
+  },
+  "composerTags": {
+    "title": "Tags",
+    "searchLabel": "Tags suchen",
+    "searchPlaceholder": "Tags suchen",
+    "expand": "Alle anzeigen",
+    "collapse": "Weniger anzeigen",
+    "loadMore": "Mehr laden",
+    "loadError": "Tags konnten nicht geladen werden.",
+    "empty": "Noch keine Tags. Erstelle Tags auf der Seite „Tags“.",
+    "noMatch": "Kein Tag entspricht deiner Suche.",
+    "addFailed": "Der Tag „{name}“ konnte nicht hinzugefügt werden.",
+    "removeFailed": "Der Tag „{name}“ konnte nicht entfernt werden.",
+    "refreshFailed": "Die Tags konnten nicht aktualisiert werden. Lade neu, um den aktuellen Stand zu sehen.",
+    "disabledNoContact": "Diese Unterhaltung hat keinen Kontakt, der getaggt werden kann.",
+    "disabledBlocked": "Dieser Kontakt ist blockiert, daher können seine Tags nicht geändert werden.",
+    "disabledNoAccess": "Du hast keine Berechtigung, die Tags dieses Kontakts zu ändern."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {# weiterer Tag} other {# weitere Tags}}"
   },
   "posts": {
     "title": "Beiträge",

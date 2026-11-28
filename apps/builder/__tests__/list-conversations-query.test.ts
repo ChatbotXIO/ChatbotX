@@ -44,6 +44,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   resolveContactAvatarUrl: mocks.resolveContactAvatarUrl,
   resolveTenantSettings: mocks.resolveTenantSettings,
+  tagService: { listTagPreviewsByContactIds: vi.fn(async () => new Map()) },
 }))
 vi.mock("@chatbotx.io/business/utils", () => ({
   toPublicStorageUrl: (key: string, base: string) => `${base}/${key}`,

@@ -697,6 +697,7 @@ describe("public API spec — operation naming guard", () => {
   const DEPRECATED_METHOD_FLIP_ALIASES = new Set<string>([
     "ads.updateRuleLegacy",
     "contacts.updateLegacy",
+    "tags.updateLegacy",
   ])
 
   test("every PUT/PATCH addressing a resource by its trailing path id matches its body's required-ness", () => {

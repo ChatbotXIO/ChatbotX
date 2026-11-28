@@ -8,7 +8,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/accordion"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Loader2Icon, PlusIcon } from "lucide-react"
+import { PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { CreateContactAppointmentDialog } from "@/features/appointment-management/components/inbox/create-contact-appointment-dialog"
@@ -20,55 +20,22 @@ import UpdateContactSequenceField, {
   type ContactSequence,
 } from "../contact-sequences/update-contact-sequence-field"
 import { useThreadControl } from "../conversations/hooks/use-thread-control"
-import type { TagResource } from "../tags/schema/resource"
 import { ContactAdReferralsList } from "./components/contact-ad-referrals-list"
 import { ContactAppointmentsList } from "./components/contact-appointments-list"
 import { ContactBroadcastsList } from "./components/contact-broadcasts-list"
 import { ContactThreadControlSection } from "./components/contact-thread-control-section"
+import { ContactTouchpointsList } from "./components/contact-touchpoints-list"
+import { SectionQueryState } from "./components/section-query-state"
 import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
 import { useAutoRefreshContactProfile } from "./hooks/use-auto-refresh-contact-profile"
 import { contactDisplayName } from "./lib/contact-display-name"
+import { contactTagsQueryOptions } from "./lib/contact-tags-query"
 import type { GetContactResponse } from "./schema/query"
 
 type AccordionModule = {
   readonly keyName: string
   readonly content: React.ReactNode
-}
-
-const SectionQueryState = ({
-  isError,
-  isFetching,
-  isPending,
-  onRetry,
-}: {
-  isError: boolean
-  isFetching: boolean
-  isPending: boolean
-  onRetry: () => Promise<unknown>
-}) => {
-  const t = useTranslations()
-
-  if (isPending || isFetching) {
-    return (
-      <div className="flex justify-center px-2 py-4">
-        <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
-
-  if (isError) {
-    return (
-      <div className="flex items-center gap-2 px-2 text-muted-foreground text-sm">
-        <span>{t("messages.errorLoadingData")}</span>
-        <Button onClick={onRetry} size="sm" type="button" variant="ghost">
-          {t("actions.retry")}
-        </Button>
-      </div>
-    )
-  }
-
-  return null
 }
 
 export const ContactInboxPanel = ({
@@ -166,8 +133,8 @@ export const ContactInboxPanel = ({
       return []
     }
 
-    // Conversation routing leads the list, and only exists once routing was
-    // observed on the contact's routing-capable thread.
+    // Conversation routing follows the touchpoints, and only exists once
+    // routing was observed on the contact's routing-capable thread.
     const routingModules: AccordionModule[] =
       threadControl && activeConversationId
         ? [
@@ -184,7 +151,22 @@ export const ContactInboxPanel = ({
           ]
         : []
 
+    // "Opted In through" leads the panel, above conversation routing.
+    const touchpointsModules: AccordionModule[] = [
+      {
+        keyName: t("contactTouchpoints.title"),
+        content: (
+          <ContactTouchpointsList
+            contactId={contactData.id}
+            key={contactData.id}
+            workspaceId={workspaceId}
+          />
+        ),
+      },
+    ]
+
     return [
+      ...touchpointsModules,
       ...routingModules,
       {
         keyName: t("contactAdReferrals.title"),
@@ -218,16 +200,9 @@ export const ContactInboxPanel = ({
       {
         keyName: t("fields.tags.label"),
         content: (
-          <UpdateContactTagField
+          <ContactTagsSection
             contact={contactData}
-            onSuccess={(updatedTags: TagResource[]) => {
-              setContactData((previousContact) =>
-                previousContact
-                  ? { ...previousContact, tags: updatedTags }
-                  : null,
-              )
-            }}
-            tags={contactData.tags}
+            key={contactData.id}
             workspaceId={workspaceId}
           />
         ),
@@ -272,7 +247,6 @@ export const ContactInboxPanel = ({
     contactData,
     workspaceId,
     t,
-    setContactData,
     threadControl,
     activeConversationId,
     canOpenBroadcasts,
@@ -328,6 +302,48 @@ export const ContactInboxPanel = ({
         ))}
       </Accordion>
     </div>
+  )
+}
+
+/**
+ * The Tags editor. It reads the contact's tags from a query of its own that
+ * exists only while this section is open: a `contactTagsChanged` event
+ * refetches it then. The editor sends only its own additions and removals,
+ * so a stale list can never drop another agent's tags.
+ */
+function ContactTagsSection({
+  workspaceId,
+  contact,
+}: {
+  workspaceId: string
+  contact: GetContactResponse
+}) {
+  const queryOptions = contactTagsQueryOptions({
+    workspaceId,
+    contactId: contact.id,
+  })
+  const { data, isError, isFetching, isPending, refetch } =
+    useQuery(queryOptions)
+
+  // The error state only when there is nothing to show: a failed background
+  // refetch keeps the editor on the last known server state.
+  if (data === undefined) {
+    return (
+      <SectionQueryState
+        isError={isError}
+        isFetching={isFetching}
+        isPending={isPending}
+        onRetry={() => refetch()}
+      />
+    )
+  }
+
+  return (
+    <UpdateContactTagField
+      contact={contact}
+      tags={data.data}
+      workspaceId={workspaceId}
+    />
   )
 }
 
