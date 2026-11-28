@@ -1,4 +1,4 @@
-import { INSTAGRAM_BUSINESS_SCOPES } from "../constants"
+import { INSTAGRAM_BUSINESS_SCOPES, INSTAGRAM_FORCE_REAUTH } from "../constants"
 import { InstagramException, rescue } from "../exception"
 import {
   instagramBusinessClient,
@@ -39,6 +39,7 @@ export function generateAuthUrl({
     response_type: "code",
     state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64"),
     scope: INSTAGRAM_BUSINESS_SCOPES.join(","),
+    force_reauth: INSTAGRAM_FORCE_REAUTH,
   })
   return `${INSTAGRAM_OAUTH_AUTHORIZE_URL}?${params.toString()}`
 }

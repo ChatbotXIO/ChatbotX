@@ -74,6 +74,10 @@ export const generateTiktokPublishingAuthUrl = (input: {
     redirect_uri: input.redirectUrl,
     response_type: "code",
     scope: SOCIAL_PROVIDER_CAPABILITIES.tiktok.requiredScopes.join(","),
+    // Always show TikTok's authorization page instead of silently reusing a
+    // signed-in session (TikTok does not document the default), as the inbox
+    // connect does. https://developers.tiktok.com/docs/en/login-kit-web
+    disable_auto_auth: "1",
     state: encodeBase64Url(JSON.stringify(input.stateParams)),
   })
   return `${AUTHORIZE_URL}?${params.toString()}`

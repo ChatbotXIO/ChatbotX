@@ -39,6 +39,24 @@ beforeEach(() => {
   mocks.fetchInstagramAccount.mockResolvedValue(account)
 })
 
+describe("Instagram connection.authorizeUrl", () => {
+  test("forces Instagram to ask for credentials instead of reusing a signed-in session", () => {
+    const url = new URL(
+      integration.connection.authorizeUrl?.({
+        credential,
+        callbackUrl: "https://app.example.test/connections/callback",
+        state: "session-1.abc123",
+      }) as string,
+    )
+
+    expect(url.origin + url.pathname).toBe(
+      "https://www.instagram.com/oauth/authorize",
+    )
+    expect(url.searchParams.get("force_reauth")).toBe("true")
+    expect(url.searchParams.get("state")).toBe("session-1.abc123")
+  })
+})
+
 describe("Instagram connection identity", () => {
   test("stores and verifies the Instagram user id while preserving the legacy page id", async () => {
     const auth = await integration.connection.exchangeCode?.({

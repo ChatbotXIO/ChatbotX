@@ -42,6 +42,7 @@ describe("tiktok publishing connect", () => {
     )
     expect(url.searchParams.get("scope")).toBe("user.info.basic,video.publish")
     expect(url.searchParams.get("client_key")).toBe("ck")
+    expect(url.searchParams.get("disable_auto_auth")).toBe("1")
   })
 
   test("connect reports the granted scopes verbatim so a withheld one is named", async () => {

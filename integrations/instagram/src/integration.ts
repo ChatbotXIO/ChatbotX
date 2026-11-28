@@ -12,7 +12,7 @@ import {
   unsubscribePageFromInstagramWebhook,
 } from "./apis/page"
 import { getPostDetails } from "./apis/post"
-import { INSTAGRAM_BUSINESS_SCOPES } from "./constants"
+import { INSTAGRAM_BUSINESS_SCOPES, INSTAGRAM_FORCE_REAUTH } from "./constants"
 import { InstagramAPIException } from "./exception"
 import { botHandlers } from "./handlers/bot"
 import { commentHandlers } from "./handlers/comment"
@@ -47,6 +47,7 @@ const config: IntegrationDefinition<
         response_type: "code",
         state,
         scope: INSTAGRAM_BUSINESS_SCOPES.join(","),
+        force_reauth: INSTAGRAM_FORCE_REAUTH,
       })
       return `https://www.instagram.com/oauth/authorize?${params.toString()}`
     },
