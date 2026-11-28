@@ -12,6 +12,7 @@ vi.mock("@chatbotx.io/business", () => ({
       mockResolveContactInboxForConversation(...args),
   },
   messageService: {
+    assertManualSendWindowOpen: vi.fn().mockResolvedValue(undefined),
     createOutgoing: (...args: unknown[]) => mockCreateOutgoing(...args),
   },
 }))

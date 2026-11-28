@@ -51,6 +51,7 @@ const conversationService = {
   resolveContactInboxForConversation: vi.fn(),
 }
 const messageService = {
+  assertManualSendWindowOpen: vi.fn().mockResolvedValue(undefined),
   findByIdWithUrls: vi.fn(),
   createOutgoing: vi.fn(),
   resendOutgoing: vi.fn(),
