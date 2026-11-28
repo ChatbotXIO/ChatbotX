@@ -62,6 +62,7 @@ vi.mock("@/features/messages/actions/create-message.action", () => ({
 }))
 vi.mock("@/features/messages/components/input-menu", () => ({
   InputMenu: () => null,
+  SendFlowDialogTrigger: ({ children }: { children?: unknown }) => children,
 }))
 vi.mock("@/features/messages/components/composer-tag-grid", () => ({
   ComposerTagGrid: ({ contactId }: { contactId: string | null }) => (
