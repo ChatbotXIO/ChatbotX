@@ -1,21 +1,19 @@
 "use client"
 
 import {
+  MESSAGING_WINDOW_POLICY,
+  resolveConversationMessagingWindow,
+} from "@chatbotx.io/sdk"
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
+import { channelTypes } from "@chatbotx.io/utils/channel"
 import { TimerIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
-import {
-  formatCountdown,
-  hasHumanAgentPhase,
-  nextWindowBoundary,
-  parseLastIncomingTs,
-  resolveSendWindow,
-  type WindowPhaseKind,
-} from "../../messages/lib/messaging-window"
+import { formatCountdown } from "../../messages/lib/messaging-window"
 import { UNKNOWN_VALUE_PLACEHOLDER } from "../lib/scoped-identity-rows"
 
 const TICK_INTERVAL_MS = 1000
@@ -84,62 +82,69 @@ export const useTickingNow = (
   return now
 }
 
-const openLabelKeyByPhase = {
-  standard: "fields.channelProfile.messagingWindow.open",
+const openLabelKeyByState = {
+  open: "fields.channelProfile.messagingWindow.open",
   humanAgent: "fields.channelProfile.messagingWindow.humanAgentOpen",
-} as const satisfies Record<WindowPhaseKind, string>
+} as const
 
 /**
  * Contact panel row showing the send window as the composer's gate sees it:
  * open (with a live countdown, labelled by phase), closed, unknown, or absent
  * when the channel/conversation has no window. Resolves through the same
- * `resolveSendWindow` the composer uses.
+ * `resolveMessagingWindow` (via `resolveConversationMessagingWindow`) as the
+ * composer, the API's `messagingWindow` field and the server's send gate.
  */
 export const MessagingWindowRow = ({
   channel,
-  isDirect,
+  sourceId,
   lastIncomingMessageAt,
 }: {
   channel: string | null | undefined
-  /** False for post-comment conversations, which are not window-gated. */
-  isDirect: boolean
+  /** Set for post-comment conversations, which are not window-gated. */
+  sourceId: string | null | undefined
   lastIncomingMessageAt: Date | string | null | undefined
 }) => {
   const t = useTranslations()
-  const lastIncomingTs = parseLastIncomingTs(lastIncomingMessageAt)
-  const initialState = resolveSendWindow({
-    channel,
-    isDirect,
-    lastIncomingTs,
-    now: Date.now(),
-  })
+  const resolve = (now: number) =>
+    resolveConversationMessagingWindow({
+      channel: channel ?? "",
+      sourceId,
+      lastIncomingMessageAt,
+      now,
+    })
+  const initialState = resolve(Date.now())
+  const isOpen =
+    initialState.state === "open" || initialState.state === "humanAgent"
   const now = useTickingNow(
-    initialState.kind === "open",
-    `${channel}:${isDirect}:${lastIncomingTs}`,
+    isOpen,
+    `${channel}:${sourceId}:${String(lastIncomingMessageAt)}`,
     // Looked up from just before `now`, so the boundary stays "ahead" (and its
     // timeout armed) until the settle delay after it has passed.
-    nextWindowBoundary({
-      channel,
-      isDirect,
-      lastIncomingTs,
-      now: Date.now() - BOUNDARY_SETTLE_MS,
-    }),
+    resolve(Date.now() - BOUNDARY_SETTLE_MS).changesAt?.getTime() ?? null,
   )
-  const state = resolveSendWindow({ channel, isDirect, lastIncomingTs, now })
+  const windowInfo = resolve(now)
 
-  if (state.kind === "notApplicable") {
+  if (
+    windowInfo.state === "notApplicable" ||
+    windowInfo.state === "unlimited"
+  ) {
     return null
   }
 
   let valueText = UNKNOWN_VALUE_PLACEHOLDER
-  if (state.kind === "open") {
-    valueText = t(openLabelKeyByPhase[state.phase], {
-      time: formatCountdown(state.remainingMs),
+  if (windowInfo.state === "open" || windowInfo.state === "humanAgent") {
+    const remainingMs = (windowInfo.changesAt?.getTime() ?? now) - now
+    valueText = t(openLabelKeyByState[windowInfo.state], {
+      time: formatCountdown(remainingMs),
     })
-  } else if (state.kind === "closed") {
+  } else if (windowInfo.state === "closed") {
     valueText = t("fields.channelProfile.messagingWindow.closed")
   }
-  const tooltipKey = hasHumanAgentPhase(channel)
+  const channelType = channelTypes.safeParse(channel)
+  const hasHumanAgentPhase =
+    channelType.success &&
+    MESSAGING_WINDOW_POLICY[channelType.data]?.humanAgentMs !== undefined
+  const tooltipKey = hasHumanAgentPhase
     ? "fields.channelProfile.messagingWindow.tooltipHumanAgent"
     : "fields.channelProfile.messagingWindow.tooltip"
 
@@ -159,11 +164,11 @@ export const MessagingWindowRow = ({
             </div>
             <div
               className={`inline-flex h-8 flex-1 items-center justify-start truncate rounded-md px-3 text-[12px] tabular-nums ${
-                state.kind === "open"
+                windowInfo.state === "open" || windowInfo.state === "humanAgent"
                   ? "text-emerald-700 dark:text-emerald-400"
                   : "text-muted-foreground"
               }`}
-              data-state={state.kind}
+              data-state={windowInfo.state}
             >
               {valueText}
             </div>

@@ -1,16 +1,15 @@
 // @vitest-environment jsdom
 
 /**
- * C3/C4/C9: the send-window boundaries (24 h and 7 d) through the pure
- * resolver and through the contact-panel row with fake timers, for the Meta
- * DM channels (instagram, messenger) and the single-phase channels
- * (whatsapp, tiktok).
+ * C3/C4/C9: the send-window boundaries through the contact-panel row with
+ * fake timers, for the Meta DM channels (24 h then 7 d: instagram, messenger)
+ * and the single-phase channels (whatsapp 24 h, tiktok 48 h). The resolver
+ * itself is the SDK's `resolveMessagingWindow`, tested in packages/sdk.
  */
 
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { resolveSendWindow } from "@/features/messages/lib/messaging-window"
 
 const translate = (key: string, values?: { time?: string }) =>
   values?.time ? `${key}|${values.time}` : key
@@ -29,78 +28,13 @@ const { MessagingWindowRow } = await import(
 const HOUR_MS = 60 * 60 * 1000
 const DAY_MS = 24 * HOUR_MS
 const WEEK_MS = 7 * DAY_MS
+const TIKTOK_MS = 2 * DAY_MS
+const singlePhaseMs = (channel: string) =>
+  channel === "tiktok" ? TIKTOK_MS : DAY_MS
 const NOW = Date.parse("2026-06-10T12:00:00Z")
 const OPEN = "fields.channelProfile.messagingWindow.open"
 const HUMAN = "fields.channelProfile.messagingWindow.humanAgentOpen"
 const CLOSED = "fields.channelProfile.messagingWindow.closed"
-
-describe("resolveSendWindow at the exact boundaries", () => {
-  const at = (channel: string, elapsed: number) =>
-    resolveSendWindow({
-      channel,
-      isDirect: true,
-      lastIncomingTs: NOW - elapsed,
-      now: NOW,
-    })
-
-  test.each([
-    "instagram",
-    "messenger",
-  ])("%s DM: 24h-1ms / 24h / 24h+1ms / 7d-1ms / 7d / 7d+1ms", (channel) => {
-    expect(at(channel, DAY_MS - 1)).toEqual({
-      kind: "open",
-      phase: "standard",
-      remainingMs: 1,
-    })
-    expect(at(channel, DAY_MS)).toEqual({
-      kind: "open",
-      phase: "standard",
-      remainingMs: 0,
-    })
-    expect(at(channel, DAY_MS + 1)).toEqual({
-      kind: "open",
-      phase: "humanAgent",
-      remainingMs: WEEK_MS - DAY_MS - 1,
-    })
-    expect(at(channel, WEEK_MS - 1)).toEqual({
-      kind: "open",
-      phase: "humanAgent",
-      remainingMs: 1,
-    })
-    expect(at(channel, WEEK_MS)).toEqual({
-      kind: "open",
-      phase: "humanAgent",
-      remainingMs: 0,
-    })
-    expect(at(channel, WEEK_MS + 1)).toEqual({
-      kind: "closed",
-      reason: "humanAgent",
-    })
-  })
-
-  test.each([
-    "whatsapp",
-    "tiktok",
-  ])("%s: open through 24h, closed at 24h+1ms, never a human-agent phase", (channel) => {
-    expect(at(channel, DAY_MS - 1)).toMatchObject({
-      kind: "open",
-      remainingMs: 1,
-    })
-    expect(at(channel, DAY_MS)).toMatchObject({ kind: "open", remainingMs: 0 })
-    expect(at(channel, DAY_MS + 1)).toEqual({
-      kind: "closed",
-      reason: "standard",
-    })
-    expect(at(channel, WEEK_MS)).toEqual({ kind: "closed", reason: "standard" })
-  })
-
-  test("a last incoming message from the future is open with more than the window left", () => {
-    expect(at("whatsapp", -HOUR_MS)).toMatchObject({
-      kind: "open",
-      remainingMs: DAY_MS + HOUR_MS,
-    })
-  })
-})
 
 describe("MessagingWindowRow around the boundaries (fake timers)", () => {
   let container: HTMLDivElement
@@ -128,8 +62,8 @@ describe("MessagingWindowRow around the boundaries (fake timers)", () => {
       root.render(
         <MessagingWindowRow
           channel={channel}
-          isDirect
           lastIncomingMessageAt={new Date(NOW + boundaryInMs - length)}
+          sourceId={null}
         />,
       ),
     )
@@ -162,7 +96,7 @@ describe("MessagingWindowRow around the boundaries (fake timers)", () => {
 
   describe.each(["whatsapp", "tiktok"])("%s at the 24h boundary", (channel) => {
     test("open 00:00:00 exactly at 24h, closed on the next tick, interval cleared", () => {
-      render(channel, 1000, DAY_MS)
+      render(channel, 1000, singlePhaseMs(channel))
 
       advance(1000)
       expect(text()).toBe(`${OPEN}|00:00:00`)
@@ -200,7 +134,7 @@ describe("MessagingWindowRow around the boundaries (fake timers)", () => {
     "tiktok",
     "instagram",
   ])("%s: a mount 1ms before / on / 1ms after the final boundary", (channel) => {
-    const final = channel === "instagram" ? WEEK_MS : DAY_MS
+    const final = channel === "instagram" ? WEEK_MS : singlePhaseMs(channel)
     const phaseOpen = channel === "instagram" ? HUMAN : OPEN
     const cases: [number, string][] = [
       [1, `${phaseOpen}|00:00:00`],

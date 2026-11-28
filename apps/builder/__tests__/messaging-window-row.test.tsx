@@ -43,9 +43,10 @@ describe("MessagingWindowRow", () => {
 
   const render = (props: {
     channel: string
-    isDirect?: boolean
+    sourceId?: string | null
     lastIncomingMessageAt: Date | null
-  }) => act(() => root.render(<MessagingWindowRow isDirect {...props} />))
+  }) =>
+    act(() => root.render(<MessagingWindowRow sourceId={null} {...props} />))
   const valueText = () =>
     container.querySelector("[data-state]")?.textContent ?? null
 
@@ -106,7 +107,7 @@ describe("MessagingWindowRow", () => {
   test("a post-comment conversation of a Meta channel renders nothing", () => {
     render({
       channel: "instagram",
-      isDirect: false,
+      sourceId: "post-1",
       lastIncomingMessageAt: new Date(NOW - HOUR_MS),
     })
     expect(container.innerHTML).toBe("")

@@ -753,10 +753,10 @@ export const ContactDetail = ({
         {activeConversationForCall?.contactInboxes[0] && (
           <MessagingWindowRow
             channel={activeConversationForCall.contactInboxes[0].channel}
-            isDirect={activeConversationForCall.sourceId == null}
             lastIncomingMessageAt={
               activeConversationForCall.contactInboxes[0].lastIncomingMessageAt
             }
+            sourceId={activeConversationForCall.sourceId}
           />
         )}
         {contactFields.map((editable) => {
