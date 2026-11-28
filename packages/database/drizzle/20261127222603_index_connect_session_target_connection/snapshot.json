@@ -1,0 +1,56 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "4d79a895-3fcf-4f6d-bff1-333550dba0cb",
+  "prevIds": [
+    "fd4e3999-5212-4c59-9d92-919626799f69"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ConnectSession",
+        "ConnectSession_targetConnectionId_idx"
+      ],
+      "writes": [
+        "s|idx|public.ConnectSession_targetConnectionId_idx",
+        "n|idx|public.ConnectSession_targetConnectionId_idx",
+        "e|idx|public.ConnectSession_targetConnectionId_idx",
+        "n|rel|public.ConnectSession_targetConnectionId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.ConnectSession",
+        "n|sch|public",
+        "n|col|public.ConnectSession.targetConnectionId"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "ConnectSession",
+        "name": "ConnectSession_targetConnectionId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "targetConnectionId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   disconnectInbox: vi.fn(),
+  recordRefreshedAuth: vi.fn(),
   deleteWhere: vi.fn(),
   deleteTable: vi.fn(),
   selectWhere: vi.fn(),
@@ -88,11 +89,24 @@ vi.mock("../src/connection", () => ({
   saveOrInsertSatellite: mocks.saveOrInsertSatellite,
   resolveOwnerId: mocks.resolveOwnerId,
   authExpiresAtOf: mocks.authExpiresAtOf,
+  recordRefreshedAuth: mocks.recordRefreshedAuth,
 }))
 
 vi.mock("../src/connection/state-service", () => ({
   connectionStateService: {
     disconnectInbox: mocks.disconnectInbox,
+    runDisconnectInTransaction: async (
+      scope: { tx?: unknown; pendingRelease?: unknown },
+      work: (client: unknown, pendingRelease: unknown) => Promise<void>,
+    ) => {
+      if (scope.tx) {
+        await work(scope.tx, scope.pendingRelease)
+        return
+      }
+      await mocks.transaction((client: unknown) =>
+        work(client, { current: null }),
+      )
+    },
     markDegradedByIdentifier: mocks.markDegradedByIdentifier,
     markUnhealthyByIdentifier: mocks.markUnhealthyByIdentifier,
     transition: mocks.connectionTransition,
@@ -489,6 +503,7 @@ describe("integrationThreadsService", () => {
       ownerId: "owner-1",
       workspaceId: "workspace-1",
       tx: expect.anything(),
+      pendingRelease: { current: null },
     })
   })
 

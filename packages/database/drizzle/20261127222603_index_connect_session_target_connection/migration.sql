@@ -1,0 +1,1 @@
+CREATE INDEX "ConnectSession_targetConnectionId_idx" ON "ConnectSession" ("targetConnectionId");

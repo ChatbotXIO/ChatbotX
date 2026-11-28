@@ -370,6 +370,9 @@ export const buildConnectionStoreBindings = (
     identityColumn: "openId",
     onDisconnect: "keep_row",
     duplicateConstraint: "IntegrationTiktok_openId_key",
+    // A reconnect's `extraConfig` clears a stale refresh-cron error through
+    // `saveAuthByForeignKey`, as the threads binding does.
+    configColumns: ["tokenRefreshError"],
   }),
   webchat: makeChannelBinding({
     table: integrationWebchatModel,

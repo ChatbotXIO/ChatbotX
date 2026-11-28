@@ -1,3 +1,4 @@
+import { accessTokenMatches } from "@chatbotx.io/database/auth-cas"
 import {
   and,
   type DatabaseClient,
@@ -10,11 +11,18 @@ import type {
   InstagramPersistentMenu,
   IntegrationUserInfo,
 } from "@chatbotx.io/database/partials"
+import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
+import { coexistService } from "../coexist/service"
 import { recordRefreshedAuth } from "../connection/record-refreshed-auth"
-import { connectionStateService } from "../connection/state-service"
+import {
+  connectionStateService,
+  type DisconnectTransactionScope,
+} from "../connection/state-service"
+import { contactScanService } from "../contact-scan/service"
+import { contactSyncService } from "../contact-sync/service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
 import { assertReferencable } from "../template/installed-resource.service"
@@ -94,6 +102,7 @@ class InstagramIntegrationService extends BaseService {
       .returning({
         igId: integrationInstagramModel.igId,
         type: integrationInstagramModel.type,
+        inboxId: integrationInstagramModel.inboxId,
       })
 
     if (!row) {
@@ -111,6 +120,7 @@ class InstagramIntegrationService extends BaseService {
         provider,
         identifier: row.igId,
         workspaceId: props.workspaceId,
+        inboxId: row.inboxId,
         reason: "token_revoked",
       })
       return
@@ -156,8 +166,10 @@ class InstagramIntegrationService extends BaseService {
      * an older one that happened to write later.
      */
     updatedAt?: Date
+    /** Compare-and-set for the refresh cron; see `accessTokenMatches`. */
+    expectedAccessToken?: string
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<boolean> {
     const client = props.tx ?? db
     const [row] = await client
       .update(integrationInstagramModel)
@@ -174,6 +186,12 @@ class InstagramIntegrationService extends BaseService {
         and(
           eq(integrationInstagramModel.id, props.id),
           eq(integrationInstagramModel.workspaceId, props.workspaceId),
+          props.expectedAccessToken
+            ? accessTokenMatches(
+                integrationInstagramModel.auth,
+                props.expectedAccessToken,
+              )
+            : undefined,
         ),
       )
       .returning({
@@ -181,6 +199,9 @@ class InstagramIntegrationService extends BaseService {
         type: integrationInstagramModel.type,
       })
     if (!row) {
+      if (props.expectedAccessToken) {
+        return false
+      }
       throw notFoundException("Instagram integration not found")
     }
     await recordRefreshedAuth({
@@ -190,6 +211,7 @@ class InstagramIntegrationService extends BaseService {
       auth: props.auth as AuthValue,
       tx: props.tx,
     })
+    return true
   }
 
   /**
@@ -283,6 +305,72 @@ class InstagramIntegrationService extends BaseService {
     await props.tx
       .delete(integrationInstagramModel)
       .where(eq(integrationInstagramModel.id, props.id))
+  }
+
+  /**
+   * Removes an Instagram channel locally: ends its contact import, coexist
+   * history and contact scan, deletes the row and disconnects the inbox, all in
+   * one transaction. The `channels` quota unit is released after the commit
+   * (or handed to the caller's `pendingRelease` when it supplies `tx`).
+   */
+  async disconnectChannel(props: {
+    integration: { id: string; inboxId: string }
+    workspaceId: string
+    ownerId: string
+    tx?: DatabaseClient
+    pendingRelease?: DisconnectTransactionScope["pendingRelease"]
+  }): Promise<void> {
+    const { integration, workspaceId, ownerId } = props
+
+    await connectionStateService.runDisconnectInTransaction(
+      props,
+      async (tx, pendingRelease) => {
+        // The page's open contact-import items end and its owed history sync is
+        // cancelled, so a reconnect never starts one unasked (the integration
+        // row is locked first, the order a handoff takes it in).
+        await contactSyncService.cancelForInbox(
+          {
+            workspaceId,
+            inboxId: integration.inboxId,
+            lock: { channel: "instagram", integrationId: integration.id },
+          },
+          tx,
+        )
+
+        // Both Instagram variants run coexist history (the Facebook-linked one
+        // too, which a contacts import hands off to), so neither is skipped.
+        await coexistService.tearDownForIntegration({
+          workspaceId,
+          integrationId: integration.id,
+          channel: "instagram",
+          currentError: "Integration disconnected",
+          tx,
+        })
+
+        // The contact scan supports both Instagram variants too.
+        await contactScanService.cancelForIntegration({
+          channel: "instagram",
+          integrationId: integration.id,
+          tx,
+        })
+        // Polymorphic FK cleanup: stale MetaCapiEvent rows would keep occupying
+        // the (workspaceId, channel, sourceKey) dedup slot after a reconnect.
+        await metaCapiEventRepository.deleteByIntegration(
+          { workspaceId, channel: "instagram", integrationId: integration.id },
+          tx,
+        )
+
+        await this.disconnect({ id: integration.id, tx })
+
+        await connectionStateService.disconnectInbox({
+          inboxId: integration.inboxId,
+          ownerId,
+          workspaceId,
+          tx,
+          pendingRelease,
+        })
+      },
+    )
   }
 }
 

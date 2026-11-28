@@ -44,13 +44,17 @@ async function refreshOne(integration: {
       if (!refreshedAuth) {
         throw new Error("Instagram refreshAuth returned no auth")
       }
-      return refreshedAuth
+      return {
+        auth: refreshedAuth,
+        expectedAccessToken: auth.tokens?.accessToken,
+      }
     },
-    apply: (newAuth) =>
+    apply: (newAuth, expectedAccessToken) =>
       instagramIntegrationService.updateAuth({
         id: integration.id,
         workspaceId: integration.workspaceId,
         auth: newAuth,
+        expectedAccessToken,
       }),
     markError: (error) =>
       instagramIntegrationService.markTokenRefreshError({

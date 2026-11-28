@@ -424,7 +424,7 @@ describe("tiktok webhook routing", () => {
     expect(tiktokHandleRequest).not.toHaveBeenCalled()
   })
 
-  test("404s when no account is registered for the open id", async () => {
+  test("rejects an unknown open id exactly like a bad signature (no openId oracle)", async () => {
     findIntegrationTiktokByOpenId.mockResolvedValue(undefined)
 
     const response = await handleWebhook(
@@ -435,7 +435,10 @@ describe("tiktok webhook routing", () => {
       ),
     )
 
-    expect(response.status).toBe(404)
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({
+      message: "Invalid or missing webhook signature",
+    })
     expect(tiktokHandleRequest).not.toHaveBeenCalled()
   })
 
@@ -521,7 +524,7 @@ describe("tiktok webhook routing", () => {
     )
 
     expect(await response.text()).toBe("ok")
-    expect(tiktokHandleRequest).not.toHaveBeenCalled()
+    expect(tiktokHandleRequest).toHaveBeenCalledTimes(1)
     expect(findOwnerUserIdByWorkspaceId).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
     })
@@ -560,12 +563,46 @@ describe("tiktok webhook routing", () => {
 
     expect(response.status).toBe(200)
     expect(await response.text()).toBe("ok")
-    expect(tiktokHandleRequest).not.toHaveBeenCalled()
+    expect(tiktokHandleRequest).toHaveBeenCalledTimes(1)
     expect(markLegacyInboxUnhealthy).toHaveBeenCalledWith({
       inboxId: "inbox-1",
       workspaceId: "workspace-1",
       reason: "token_revoked",
     })
+  })
+
+  test("does not change state for an unsigned authorization.removed (F1)", async () => {
+    findIntegrationTiktokByOpenId.mockResolvedValue({
+      auth: {
+        clientId: "id",
+        clientSecret: "secret",
+        redirectUrl: "https://x",
+      },
+      inboxId: "inbox-1",
+      openId: "open-1",
+      workspaceId: "workspace-1",
+    })
+    tiktokHandleRequest.mockRejectedValueOnce(
+      new Error("Invalid or missing webhook signature"),
+    )
+
+    const response = await handleWebhook(
+      "tiktok",
+      asNextRequest(
+        "http://localhost/integrations/tiktok",
+        JSON.stringify({
+          event: "authorization.removed",
+          user_openid: "open-1",
+        }),
+      ),
+    )
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({
+      message: "Invalid or missing webhook signature",
+    })
+    expect(markUnhealthyByIdentifier).not.toHaveBeenCalled()
+    expect(markLegacyInboxUnhealthy).not.toHaveBeenCalled()
   })
 })
 

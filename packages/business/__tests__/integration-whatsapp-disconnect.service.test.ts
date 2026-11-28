@@ -34,7 +34,13 @@ vi.mock("@chatbotx.io/database/repositories", async (importOriginal) => ({
 }))
 
 vi.mock("../src/connection/state-service", () => ({
-  connectionStateService: { disconnectInbox: mocks.disconnectInbox },
+  connectionStateService: {
+    disconnectInbox: mocks.disconnectInbox,
+    runDisconnectInTransaction: async (
+      scope: { tx: unknown; pendingRelease?: unknown },
+      work: (tx: unknown, pendingRelease: unknown) => Promise<void>,
+    ) => await work(scope.tx, scope.pendingRelease),
+  },
 }))
 
 vi.mock("../src/inbox/service", () => ({

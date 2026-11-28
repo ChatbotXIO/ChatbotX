@@ -11,6 +11,7 @@ const tableData = vi.hoisted(
       ["messenger", []],
       ["whatsapp", []],
       ["threads", []],
+      ["line", []],
     ]),
 )
 
@@ -40,6 +41,13 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
+  integrationLineModel: {
+    __channel: "line",
+    id: "id",
+    name: "name",
+    workspaceId: "workspaceId",
+    tokenRefreshError: "tokenRefreshError",
+  },
   integrationZaloModel: {
     __channel: "zalo",
     id: "id",
@@ -159,12 +167,13 @@ describe("integrationService.findTokenRefreshErrorsByWorkspaceId", () => {
     setRows("tiktok", [{ id: "t-1", name: "T", error: "e2" }])
     setRows("whatsapp", [{ id: "w-1", name: "W", error: "e3" }])
     setRows("threads", [{ id: "th-1", name: "TH", error: "e4" }])
+    setRows("line", [{ id: "l-1", name: "L", error: "e5" }])
 
     const result =
       await integrationService.findTokenRefreshErrorsByWorkspaceId("ws-1")
 
     expect(result.map((row) => row.channel).sort()).toEqual(
-      ["threads", "tiktok", "whatsapp", "zalo"].sort(),
+      ["line", "threads", "tiktok", "whatsapp", "zalo"].sort(),
     )
   })
 })

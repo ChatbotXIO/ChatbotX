@@ -126,6 +126,7 @@ vi.mock("@chatbotx.io/business/workspace", () => ({
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
+  createPendingRelease: () => ({ current: null }),
   authExpiresAtOf: (auth: {
     authType: string
     tokens?: { expiresAt?: string }
@@ -2059,6 +2060,50 @@ describe("ConnectionService.completeAuthorization", () => {
         sourceId: "page-1",
         workspaceId: "ws-2",
         status: "connected",
+      },
+    ])
+    await connectionService.completeAuthorization({
+      sessionId: "session-1",
+      nonce: "nonce-abc",
+      code: "auth-code",
+      callbackUrl: "https://app.example.test/callback",
+      credential: {},
+    })
+    expect(mocks.attachAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: [
+          expect.objectContaining({
+            id: "page-1",
+            selectable: false,
+            alreadyConnected: "other_workspace",
+          }),
+        ],
+      }),
+    )
+  })
+
+  it("marks a keep_row candidate held by another workspace's disconnected connection as other_workspace (F4)", async () => {
+    mocks.findByNonce.mockResolvedValue({
+      id: "session-1",
+      workspaceId: "ws-1",
+      provider: "tiktok",
+      purpose: "connect",
+      actorUserId: "user-1",
+      status: "pending",
+    })
+    mocks.storeAuthorization.mockResolvedValueOnce({
+      id: "session-1",
+      workspaceId: "ws-1",
+      provider: "tiktok",
+      purpose: "connect",
+      actorUserId: "user-1",
+      status: "authorized",
+    })
+    mocks.findByProviderAndSourceIdsAnyWorkspace.mockResolvedValue([
+      {
+        sourceId: "page-1",
+        workspaceId: "ws-2",
+        status: "disconnected",
       },
     ])
     await connectionService.completeAuthorization({

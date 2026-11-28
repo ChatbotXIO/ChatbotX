@@ -17,12 +17,12 @@ const mocks = vi.hoisted(() => {
 
   return {
     auditRecord: vi.fn().mockResolvedValue(undefined),
-    dbTransaction: vi.fn(async (callback: (tx: unknown) => Promise<void>) =>
-      callback(tx),
-    ),
     coexistTearDownForIntegration: vi.fn().mockResolvedValue(undefined),
     contactScanCancel: vi.fn().mockResolvedValue(undefined),
     contactSyncCancelForInbox: vi.fn().mockResolvedValue(undefined),
+    dbTransaction: vi.fn(async (callback: (tx: unknown) => Promise<void>) =>
+      callback(tx),
+    ),
     connectionStateDisconnect: vi.fn().mockResolvedValue(undefined),
     findOrFail: vi.fn(),
     instagramExists: vi.fn().mockResolvedValue(false),
@@ -45,6 +45,7 @@ const mocks = vi.hoisted(() => {
       }) => Promise.resolve(props.tx.delete()),
     ),
     instagramDisconnect: vi.fn().mockResolvedValue(undefined),
+    instagramDisconnectChannel: vi.fn().mockResolvedValue(undefined),
     instagramFacebookDisconnect: vi.fn().mockResolvedValue(undefined),
     subscribePageToAppWebhook: vi.fn().mockResolvedValue(undefined),
     tx,
@@ -58,8 +59,10 @@ vi.mock("@chatbotx.io/business/audit", () => ({
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
+  createPendingRelease: () => ({ current: null }),
   connectionStateService: {
     disconnectInbox: mocks.connectionStateDisconnect,
+    releasePendingQuota: vi.fn().mockResolvedValue(undefined),
   },
 }))
 
@@ -73,6 +76,7 @@ vi.mock("@chatbotx.io/business", () => ({
     existsForPage: mocks.instagramExists,
     findByIdForWorkspace: mocks.findOrFail,
     disconnect: mocks.instagramServiceDisconnect,
+    disconnectChannel: mocks.instagramDisconnectChannel,
   },
   messengerIntegrationService: {
     existsForPage: mocks.messengerExists,
@@ -219,6 +223,7 @@ describe("Meta disconnect actions", () => {
       ownerId: "owner-1",
       workspaceId: "workspace-1",
       tx: mocks.tx,
+      pendingRelease: { current: null },
     })
   })
 
@@ -249,12 +254,7 @@ describe("Meta disconnect actions", () => {
     })
 
     expect(mocks.instagramFacebookDisconnect).not.toHaveBeenCalled()
-    expect(mocks.connectionStateDisconnect).toHaveBeenCalledWith({
-      inboxId: "inbox-2",
-      ownerId: "owner-1",
-      workspaceId: "workspace-1",
-      tx: mocks.tx,
-    })
+    expect(mocks.instagramDisconnectChannel).toHaveBeenCalledTimes(1)
   })
 
   test("facebook-backed Instagram disconnect calls app unsubscribe when no Messenger sibling exists", async () => {
@@ -268,40 +268,13 @@ describe("Meta disconnect actions", () => {
     expect(mocks.instagramFacebookDisconnect).toHaveBeenCalledWith(
       instagramFacebookRow.auth,
     )
-    // The contact scan supports both Instagram variants, so a Facebook-backed
-    // one is cancelled too.
-    expect(mocks.contactScanCancel).toHaveBeenCalledWith({
-      channel: "instagram",
-      integrationId: "instagram-1",
-      tx: mocks.tx,
-    })
-    // So are the page's open contact-import items and owed history sync, with
-    // the integration row locked first (the order a handoff takes it in).
-    expect(mocks.contactSyncCancelForInbox).toHaveBeenCalledWith(
-      {
-        workspaceId: "workspace-1",
-        inboxId: "inbox-2",
-        lock: { channel: "instagram", integrationId: "instagram-1" },
-      },
-      mocks.tx,
-    )
-    // A contact import hands off to coexist on both variants, so the
-    // Facebook-linked one is torn down too.
-    expect(mocks.coexistTearDownForIntegration).toHaveBeenCalledWith({
+    // The local teardown (contact scan, contact import, coexist, CAPI rows,
+    // inbox disconnect) lives in the service, in one transaction it owns.
+    expect(mocks.instagramDisconnectChannel).toHaveBeenCalledWith({
+      integration: instagramFacebookRow,
       workspaceId: "workspace-1",
-      integrationId: "instagram-1",
-      channel: "instagram",
-      currentError: "Integration disconnected",
-      tx: mocks.tx,
+      ownerId: "owner-1",
     })
-    expect(mocks.metaCapiDeleteByIntegration).toHaveBeenCalledWith(
-      {
-        workspaceId: "workspace-1",
-        channel: "instagram",
-        integrationId: "instagram-1",
-      },
-      mocks.tx,
-    )
     expect(mocks.auditRecord).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       action: "disconnect",
@@ -328,6 +301,7 @@ describe("Meta disconnect actions", () => {
       ownerId: "owner-1",
       workspaceId: "workspace-1",
       tx: mocks.tx,
+      pendingRelease: { current: null },
     })
     expect(mocks.auditRecord).toHaveBeenCalled()
   })
@@ -351,6 +325,7 @@ describe("Meta disconnect actions", () => {
       ownerId: "owner-1",
       workspaceId: "workspace-1",
       tx: mocks.tx,
+      pendingRelease: { current: null },
     })
     expect(mocks.auditRecord).toHaveBeenCalled()
   })

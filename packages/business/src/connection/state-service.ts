@@ -72,11 +72,32 @@ export type ConnectionQuotaConsumption =
 /** A `channels` quota release a `transition` call decided on but has not yet executed — see `transition`'s `pendingRelease` handshake and `releasePendingQuota`. */
 export type PendingQuotaRelease = { ownerId: string; workspaceId: string }
 
+/** Where a deferred release is parked until the owning transaction commits. */
+export type PendingQuotaReleaseRef = { current: PendingQuotaRelease | null }
+
+/** A fresh, empty {@link PendingQuotaReleaseRef}. */
+export const createPendingRelease = (): PendingQuotaReleaseRef => ({
+  current: null,
+})
+
 type DisconnectInboxInput = {
   inboxId: string
   workspaceId: string
   ownerId: string
   tx?: DatabaseClient
+  /**
+   * With `tx`: receives the `channels` release instead of it running inline,
+   * so the caller can run it (`releasePendingQuota`) once its own transaction
+   * has committed. Without it, a caller-owned `tx` that later rolls back would
+   * have already given the unit back.
+   */
+  pendingRelease?: PendingQuotaReleaseRef
+}
+
+/** `tx` / `pendingRelease` a disconnect path accepts when a caller owns the transaction. */
+export type DisconnectTransactionScope = {
+  tx?: DatabaseClient
+  pendingRelease?: PendingQuotaReleaseRef
 }
 
 /** What the deletion log snapshots about a channel at the moment a user removes it. */
@@ -197,10 +218,33 @@ class ConnectionStateService extends BaseService {
         event: "user.disconnect",
         ownerId: input.ownerId,
         tx: input.tx,
+        pendingRelease: input.pendingRelease,
       })
       return
     }
     await this.disconnectLegacyInbox(input)
+  }
+
+  /**
+   * Runs `work` in the caller's transaction, or in a new one it owns. When it
+   * owns the transaction it releases the deferred `channels` unit only after
+   * the commit. When the caller supplies `tx`, the caller's `pendingRelease`
+   * (if any) receives the release and the caller runs `releasePendingQuota`.
+   */
+  async runDisconnectInTransaction(
+    scope: DisconnectTransactionScope,
+    work: (
+      client: DatabaseClient,
+      pendingRelease: PendingQuotaReleaseRef | undefined,
+    ) => Promise<void>,
+  ): Promise<void> {
+    if (scope.tx) {
+      await work(scope.tx, scope.pendingRelease)
+      return
+    }
+    const pendingRelease = createPendingRelease()
+    await db.transaction((client) => work(client, pendingRelease))
+    await this.releasePendingQuota(pendingRelease.current)
   }
 
   /**
@@ -305,9 +349,10 @@ class ConnectionStateService extends BaseService {
    * the satellite row, call this to re-consume `channels` quota (the
    * `connect.completed` edge, same event a fresh connect uses) and mirror
    * `Inbox.status` back to `connected` — the FSM handles reviving from
-   * `needs_reauth`/`disconnected`/`paused` alike. No-ops for a row not yet
-   * backfilled into `Connection` (nothing to mirror/consume through yet);
-   * the reconnect flow's own satellite write already restored its auth.
+   * `needs_reauth`/`disconnected`/`paused` alike. A row not yet backfilled
+   * into `Connection` only gets its `Inbox.status` restored (no quota to
+   * consume); the reconnect flow's own satellite write already restored its
+   * auth.
    */
   async reconnectInbox(input: {
     inboxId: string
@@ -329,6 +374,7 @@ class ConnectionStateService extends BaseService {
       input.tx,
     )
     if (!connection) {
+      await this.reconnectOrphanInbox(input)
       return
     }
     if (connection.workspaceId !== input.workspaceId) {
@@ -364,6 +410,79 @@ class ConnectionStateService extends BaseService {
         workspaceId: input.workspaceId,
       })
       throw err
+    }
+  }
+
+  /**
+   * `reconnectInbox` for an orphan channel (satellite row and inbox, no
+   * `Connection`): the fresh token is already saved, so restore `Inbox.status`
+   * too, or the user reconnects and the channel stays disconnected.
+   *
+   * Quota depends on how the inbox got here. `token_revoked` (see
+   * `markLegacyInboxUnhealthy`) never released its unit, so the mirror alone is
+   * right. Every other disconnect reason went through `inboxService.disconnect`,
+   * which released the unit: reviving without consuming one again would bypass
+   * the channel limit, so those go through the limit-checked resume. A `null`
+   * reason (an inbox disconnected before the column existed) counts as released
+   * too: consuming one unit too many is corrected by the reconcile, while
+   * reviving for free would let the owner (or a reseller pool) exceed its limit.
+   */
+  private async reconnectOrphanInbox(input: {
+    inboxId: string
+    workspaceId: string
+    tx?: DatabaseClient
+    quotaConsumption?: ConnectionQuotaConsumption
+    ownerId?: string
+  }): Promise<void> {
+    const inbox = await inboxRepository.findById({
+      id: input.inboxId,
+      tx: input.tx,
+    })
+    if (inbox && inbox.workspaceId !== input.workspaceId) {
+      throw new ConnectionNotFoundException(input.inboxId)
+    }
+
+    const quotaReleased =
+      inbox?.status === inboxStatuses.enum.disconnected &&
+      inbox.disconnectReason !== "token_revoked"
+    if (quotaReleased) {
+      const ownerId =
+        input.ownerId ??
+        (await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+          workspaceId: input.workspaceId,
+        }))
+      if (!ownerId) {
+        throw new ConnectionNotFoundException(input.inboxId)
+      }
+      await inboxService.resumeTenantSuspended({
+        inboxId: input.inboxId,
+        workspaceId: input.workspaceId,
+        ownerId,
+        tx: input.tx,
+      })
+      if (input.quotaConsumption) {
+        // Lets a caller that owns `tx` hand the unit back if its COMMIT fails.
+        Object.assign(input.quotaConsumption, {
+          consumed: true,
+          workspaceId: input.workspaceId,
+          workspaceUsageIncremented: true,
+        })
+      }
+      return
+    }
+
+    const mirror = (tx: DatabaseClient) =>
+      this.mirrorInboxStatus({
+        inboxId: input.inboxId,
+        workspaceId: input.workspaceId,
+        to: "connected",
+        reason: null,
+        tx,
+      })
+    if (input.tx) {
+      await mirror(input.tx)
+    } else {
+      await db.transaction(mirror)
     }
   }
 
@@ -490,7 +609,7 @@ class ConnectionStateService extends BaseService {
      * this transition keeps releasing immediately once its own DB work
      * resolves.
      */
-    pendingRelease?: { current: PendingQuotaRelease | null }
+    pendingRelease?: PendingQuotaReleaseRef
   }): Promise<ConnectionModel> {
     const quotaConsumption: ConnectionQuotaConsumption =
       input.quotaConsumption ?? {
@@ -783,13 +902,12 @@ class ConnectionStateService extends BaseService {
     lastError?: string
     callerTransaction?: {
       tx: DatabaseClient
-      pendingRelease: { current: PendingQuotaRelease | null }
+      pendingRelease: PendingQuotaReleaseRef
     }
   }): Promise<{ outcome: ProviderEventOrder; connection: ConnectionModel }> {
     const strategy = PROVIDER_ACCOUNT_EVENT_STRATEGY[input.event]
-    const pendingRelease = input.callerTransaction?.pendingRelease ?? {
-      current: null,
-    }
+    const pendingRelease =
+      input.callerTransaction?.pendingRelease ?? createPendingRelease()
 
     const run = async (tx: DatabaseClient) => {
       const existing = await connectionRepository.findByIdForUpdateById(
@@ -957,15 +1075,37 @@ class ConnectionStateService extends BaseService {
     reason?: ConnectionStatusReason
     ownerId?: string
     workspaceId?: string
+    /**
+     * The channel's inbox, when the caller has the legacy satellite row. A
+     * channel with no `Connection` row (an orphan) then still has its
+     * `Inbox.status` set to `needs_reauth` instead of staying `connected`.
+     */
+    inboxId?: string
   }): Promise<ConnectionModel | null> {
     const existing = await this.findConnectionByIdentifier(input)
     if (!existing) {
+      if (input.inboxId && input.workspaceId) {
+        await this.markLegacyInboxUnhealthy({
+          inboxId: input.inboxId,
+          workspaceId: input.workspaceId,
+          reason: input.reason,
+        })
+      }
       return null
     }
+    // Refresh crons and token-revoked handlers carry no owner. Without one,
+    // `transition` cannot release the `channels` unit, so a later reconnect
+    // consumes a second one and can hit the plan limit. Resolve it from the
+    // connection's own workspace, as `reconnectInbox` does.
+    const ownerId =
+      input.ownerId ??
+      (await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+        workspaceId: existing.workspaceId,
+      }))
     return await this.markUnhealthy({
       connectionId: existing.id,
       reason: input.reason,
-      ownerId: input.ownerId,
+      ownerId,
     })
   }
 

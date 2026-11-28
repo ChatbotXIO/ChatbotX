@@ -15,14 +15,12 @@ import {
 const mocks = vi.hoisted(() => ({
   disconnect: vi.fn(),
   findIntegration: vi.fn(),
-  transaction: vi.fn(async () => undefined),
+  disconnectChannel: vi.fn(async () => undefined),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  coexistService: {},
-  contactScanService: {},
-  contactSyncService: {},
   instagramIntegrationService: {
+    disconnectChannel: mocks.disconnectChannel,
     findByIdForWorkspace: mocks.findIntegration,
   },
   messengerIntegrationService: { existsForPage: vi.fn(async () => false) },
@@ -31,17 +29,8 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/business/audit", () => ({
   auditService: { record: vi.fn() },
 }))
-vi.mock("@chatbotx.io/business/connection", () => ({
-  connectionStateService: {},
-}))
 vi.mock("@chatbotx.io/business/errors", () => ({
   notFoundException: (message: string) => new Error(message),
-}))
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: mocks.transaction },
-}))
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  metaCapiEventRepository: {},
 }))
 vi.mock("@/integration", () => ({
   integrations: {
@@ -116,13 +105,13 @@ describe.each(
 
     await run()
 
-    expect(mocks.transaction).toHaveBeenCalledTimes(1)
+    expect(mocks.disconnectChannel).toHaveBeenCalledTimes(1)
   })
 
   test("keeps the channel and surfaces a rate limit", async () => {
     metaRejects({ code: 4, message: "(#4) Application request limit reached" })
 
     await expect(run()).rejects.toThrow("request limit")
-    expect(mocks.transaction).not.toHaveBeenCalled()
+    expect(mocks.disconnectChannel).not.toHaveBeenCalled()
   })
 })

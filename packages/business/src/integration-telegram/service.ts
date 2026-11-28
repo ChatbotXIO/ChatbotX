@@ -14,7 +14,10 @@ import {
   upsertConnectionRow,
   withQuotaCompensation,
 } from "../connection"
-import { connectionStateService } from "../connection/state-service"
+import {
+  connectionStateService,
+  type DisconnectTransactionScope,
+} from "../connection/state-service"
 import { inboxService } from "../inbox/service"
 import { dispatchStagedInstalls } from "../template/installation-dispatch"
 import { type WorkspaceQuotaConsumption, workspaceService } from "../workspace"
@@ -271,31 +274,30 @@ class TelegramIntegrationService extends BaseService {
     inboxId: string
     ownerId: string
     tx?: DatabaseClient
+    pendingRelease?: DisconnectTransactionScope["pendingRelease"]
   }): Promise<void> {
-    const { workspaceId, id, inboxId, ownerId, tx } = input
+    const { workspaceId, id, inboxId, ownerId } = input
 
-    const run = async (client: DatabaseClient) => {
-      await client
-        .delete(integrationTelegramModel)
-        .where(
-          and(
-            eq(integrationTelegramModel.id, id),
-            eq(integrationTelegramModel.workspaceId, workspaceId),
-          ),
-        )
-      await connectionStateService.disconnectInbox({
-        inboxId,
-        workspaceId,
-        ownerId,
-        tx: client,
-      })
-    }
-
-    if (tx) {
-      await run(tx)
-      return
-    }
-    await db.transaction(run)
+    await connectionStateService.runDisconnectInTransaction(
+      input,
+      async (client, pendingRelease) => {
+        await client
+          .delete(integrationTelegramModel)
+          .where(
+            and(
+              eq(integrationTelegramModel.id, id),
+              eq(integrationTelegramModel.workspaceId, workspaceId),
+            ),
+          )
+        await connectionStateService.disconnectInbox({
+          inboxId,
+          workspaceId,
+          ownerId,
+          tx: client,
+          pendingRelease,
+        })
+      },
+    )
   }
 }
 

@@ -1,3 +1,4 @@
+import { accessTokenMatches } from "@chatbotx.io/database/auth-cas"
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import {
   and,
@@ -30,7 +31,10 @@ import {
   upsertConnectionRow,
   withQuotaCompensation,
 } from "../connection"
-import { connectionStateService } from "../connection/state-service"
+import {
+  connectionStateService,
+  type DisconnectTransactionScope,
+} from "../connection/state-service"
 import {
   ChatbotXException,
   channelDuplicatedException,
@@ -141,7 +145,12 @@ class TiktokIntegrationService extends BaseService {
     id: string
     workspaceId: string
     auth: Record<string, unknown>
-  }): Promise<void> {
+    /**
+     * Compare-and-set for the refresh paths: the write lands only while this is
+     * still the stored access token. Returns `false` when it was skipped.
+     */
+    expectedAccessToken?: string
+  }): Promise<boolean> {
     const [row] = await db
       .update(integrationTiktokModel)
       .set({ auth: props.auth, tokenRefreshError: null })
@@ -149,11 +158,20 @@ class TiktokIntegrationService extends BaseService {
         and(
           eq(integrationTiktokModel.id, props.id),
           eq(integrationTiktokModel.workspaceId, props.workspaceId),
+          props.expectedAccessToken
+            ? accessTokenMatches(
+                integrationTiktokModel.auth,
+                props.expectedAccessToken,
+              )
+            : undefined,
         ),
       )
       .returning({ openId: integrationTiktokModel.openId })
 
     if (!row) {
+      if (props.expectedAccessToken) {
+        return false
+      }
       throw notFoundException("TikTok integration not found")
     }
 
@@ -163,6 +181,7 @@ class TiktokIntegrationService extends BaseService {
       sourceId: row.openId,
       auth: props.auth as AuthValue,
     })
+    return true
   }
 
   /**
@@ -394,6 +413,7 @@ class TiktokIntegrationService extends BaseService {
       )
       .returning({
         openId: integrationTiktokModel.openId,
+        inboxId: integrationTiktokModel.inboxId,
       })
 
     if (!row) {
@@ -409,6 +429,7 @@ class TiktokIntegrationService extends BaseService {
         provider: "tiktok",
         identifier: row.openId,
         workspaceId: props.workspaceId,
+        inboxId: row.inboxId,
         reason: "token_revoked",
       })
       return
@@ -617,7 +638,9 @@ class TiktokIntegrationService extends BaseService {
             kind: "channel",
             descriptor: { sourceId: openId, displayName },
             auth: auth as AuthValue,
-            extraConfig: {},
+            // A fresh token clears the last refresh-cron error (needs
+            // `tokenRefreshError` in the tiktok store binding).
+            extraConfig: { tokenRefreshError: null },
             existing,
             store: CONNECTION_STORE_BINDINGS.tiktok as NonNullable<
               (typeof CONNECTION_STORE_BINDINGS)["tiktok"]
@@ -668,31 +691,30 @@ class TiktokIntegrationService extends BaseService {
     inboxId: string
     ownerId: string
     tx?: DatabaseClient
+    pendingRelease?: DisconnectTransactionScope["pendingRelease"]
   }): Promise<void> {
-    const { workspaceId, id, inboxId, ownerId, tx } = input
+    const { workspaceId, id, inboxId, ownerId } = input
 
-    const run = async (client: DatabaseClient) => {
-      await client
-        .delete(integrationTiktokModel)
-        .where(
-          and(
-            eq(integrationTiktokModel.id, id),
-            eq(integrationTiktokModel.workspaceId, workspaceId),
-          ),
-        )
-      await connectionStateService.disconnectInbox({
-        inboxId,
-        workspaceId,
-        ownerId,
-        tx: client,
-      })
-    }
-
-    if (tx) {
-      await run(tx)
-      return
-    }
-    await db.transaction(run)
+    await connectionStateService.runDisconnectInTransaction(
+      input,
+      async (client, pendingRelease) => {
+        await client
+          .delete(integrationTiktokModel)
+          .where(
+            and(
+              eq(integrationTiktokModel.id, id),
+              eq(integrationTiktokModel.workspaceId, workspaceId),
+            ),
+          )
+        await connectionStateService.disconnectInbox({
+          inboxId,
+          workspaceId,
+          ownerId,
+          tx: client,
+          pendingRelease,
+        })
+      },
+    )
   }
 }
 

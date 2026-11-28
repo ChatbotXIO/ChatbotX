@@ -1,3 +1,4 @@
+import { accessTokenMatches } from "@chatbotx.io/database/auth-cas"
 import {
   and,
   type DatabaseClient,
@@ -16,12 +17,16 @@ import {
   authExpiresAtOf,
   CONNECTION_STORE_BINDINGS,
   type ConnectionQuotaConsumption,
+  recordRefreshedAuth,
   resolveOwnerId,
   saveOrInsertSatellite,
   upsertConnectionRow,
   withQuotaCompensation,
 } from "../connection"
-import { connectionStateService } from "../connection/state-service"
+import {
+  connectionStateService,
+  type DisconnectTransactionScope,
+} from "../connection/state-service"
 import { ChatbotXException, channelDuplicatedException } from "../errors"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
@@ -118,7 +123,10 @@ class IntegrationThreadsService extends BaseService {
           eq(integrationThreadsModel.workspaceId, props.workspaceId),
         ),
       )
-      .returning({ threadsUserId: integrationThreadsModel.threadsUserId })
+      .returning({
+        threadsUserId: integrationThreadsModel.threadsUserId,
+        inboxId: integrationThreadsModel.inboxId,
+      })
     if (!updated) {
       logger.warn(
         { integrationId: props.id, workspaceId: props.workspaceId },
@@ -131,6 +139,7 @@ class IntegrationThreadsService extends BaseService {
         provider: "threads",
         identifier: updated.threadsUserId,
         workspaceId: props.workspaceId,
+        inboxId: updated.inboxId,
         reason: "token_revoked",
       })
       return
@@ -445,51 +454,63 @@ class IntegrationThreadsService extends BaseService {
         and(
           eq(integrationThreadsModel.id, props.id),
           eq(integrationThreadsModel.workspaceId, props.workspaceId),
-          sql`${integrationThreadsModel.auth} -> 'tokens' ->> 'accessToken' = ${props.expectedCurrentAccessToken}`,
+          accessTokenMatches(
+            integrationThreadsModel.auth,
+            props.expectedCurrentAccessToken,
+          ),
         ),
       )
-      .returning({ id: integrationThreadsModel.id })
+      .returning({ threadsUserId: integrationThreadsModel.threadsUserId })
 
-    return rows.length > 0
+    const [row] = rows
+    if (!row) {
+      return false
+    }
+    // Mirror the refreshed token onto the `Connection` row, as every other
+    // channel's refresh does; otherwise a `degraded` connection stays so
+    // after a successful refresh.
+    await recordRefreshedAuth({
+      workspaceId: props.workspaceId,
+      provider: "threads",
+      sourceId: row.threadsUserId,
+      auth: props.auth as AuthValue,
+    })
+    return true
   }
 
   async disconnect(props: {
     workspaceId: string
     id: string
     tx?: DatabaseClient
+    pendingRelease?: DisconnectTransactionScope["pendingRelease"]
   }): Promise<void> {
-    if (!props.tx) {
-      await db.transaction(async (tx) => {
-        await this.disconnect({
-          ...props,
-          tx,
+    await connectionStateService.runDisconnectInTransaction(
+      props,
+      async (client, pendingRelease) => {
+        const [integration, workspace] = await Promise.all([
+          client.query.integrationThreadsModel.findFirst({
+            where: { id: props.id, workspaceId: props.workspaceId },
+          }),
+          workspaceService.findById({ id: props.workspaceId, tx: client }),
+        ])
+
+        if (!integration) {
+          throw new Error("Integration Threads not found")
+        }
+
+        await client
+          .delete(integrationThreadsModel)
+          .where(eq(integrationThreadsModel.id, integration.id))
+
+        await connectionStateService.disconnectInbox({
+          inboxId: integration.inboxId,
+          workspaceId: props.workspaceId,
+          ownerId: workspace.ownerId,
+          tx: client,
+          pendingRelease,
         })
-      })
-      return
-    }
-
-    const client = props.tx
-    const [integration, workspace] = await Promise.all([
-      client.query.integrationThreadsModel.findFirst({
-        where: { id: props.id, workspaceId: props.workspaceId },
-      }),
-      workspaceService.findById({ id: props.workspaceId, tx: client }),
-    ])
-
-    if (!integration) {
-      throw new Error("Integration Threads not found")
-    }
-
-    await client
-      .delete(integrationThreadsModel)
-      .where(eq(integrationThreadsModel.id, integration.id))
-
-    await connectionStateService.disconnectInbox({
-      inboxId: integration.inboxId,
-      workspaceId: props.workspaceId,
-      ownerId: workspace.ownerId,
-      tx: client,
-    })
+      },
+    )
   }
 }
 

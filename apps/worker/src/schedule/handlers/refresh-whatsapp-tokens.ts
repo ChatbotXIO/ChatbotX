@@ -54,13 +54,17 @@ async function refreshOne(integration: {
       if (!refreshedAuth) {
         throw new Error("WhatsApp refreshAuth returned no auth")
       }
-      return refreshedAuth
+      return {
+        auth: refreshedAuth,
+        expectedAccessToken: auth.tokens?.accessToken,
+      }
     },
-    apply: (newAuth) =>
+    apply: (newAuth, expectedAccessToken) =>
       integrationWhatsappService.updateAuth({
         id: integration.id,
         workspaceId: integration.workspaceId,
         auth: newAuth,
+        expectedAccessToken,
       }),
     markError: (error) =>
       integrationWhatsappService.markTokenRefreshError({
@@ -88,6 +92,22 @@ async function logWabaRefreshError(
     error,
     `[refreshWhatsappTokens] wabaId=${integration.wabaId} failed`,
   )
+  // The WABA credential has no banner of its own: record the failure on the
+  // representative number so the user sees it and a revoked token marks the
+  // channel unhealthy like the per-number refresh does.
+  try {
+    await integrationWhatsappService.markTokenRefreshError({
+      id: integration.id,
+      workspaceId: integration.workspaceId,
+      error: error instanceof Error ? error.message : String(error),
+      isRevoked: isRevokedTokenError(error),
+    })
+  } catch (markError) {
+    logger.error(
+      markError,
+      `[refreshWhatsappTokens] wabaId=${integration.wabaId} could not record the refresh error`,
+    )
+  }
   try {
     await logProviderError({
       provider: "whatsapp",

@@ -105,13 +105,13 @@ describe("reconnectZaloHandler — Part 1: transaction atomicity", () => {
         workspaceId: WORKSPACE_ID,
       }),
     )
-    // Positional call: (id, auth, name, tx) — the 4th positional arg is the tx.
-    expect(updateAuth).toHaveBeenCalledWith(
-      INTEGRATION_ID,
-      expect.objectContaining({ oaId: "oa-1" }),
-      "My OA",
-      SENTINEL_TX,
-    )
+    expect(updateAuth).toHaveBeenCalledWith({
+      id: INTEGRATION_ID,
+      workspaceId: WORKSPACE_ID,
+      auth: expect.objectContaining({ oaId: "oa-1" }),
+      name: "My OA",
+      tx: SENTINEL_TX,
+    })
   })
 
   test("propagates a commitReconnect failure (e.g. channelLimitReached from the inbox re-check) as a failed reconnect", async () => {
@@ -128,12 +128,13 @@ describe("reconnectZaloHandler — Part 1: transaction atomicity", () => {
 
     expect(result).toEqual({ status: "error", reason: "failed" })
     expect(commitReconnect).toHaveBeenCalledTimes(1)
-    expect(updateAuth).toHaveBeenCalledWith(
-      INTEGRATION_ID,
-      expect.objectContaining({ oaId: "oa-1" }),
-      "My OA",
-      SENTINEL_TX,
-    )
+    expect(updateAuth).toHaveBeenCalledWith({
+      id: INTEGRATION_ID,
+      workspaceId: WORKSPACE_ID,
+      auth: expect.objectContaining({ oaId: "oa-1" }),
+      name: "My OA",
+      tx: SENTINEL_TX,
+    })
   })
 })
 

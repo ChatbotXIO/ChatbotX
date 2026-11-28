@@ -5,7 +5,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { findOrFail } from "@chatbotx.io/database/client"
 import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { isRevokedTokenError } from "@chatbotx.io/integration-whatsapp"
@@ -46,14 +46,11 @@ export const disconnectWhatsappAction = workspaceActionClientAllowExpired
         }
       }
 
-      await db.transaction((tx) =>
-        integrationWhatsappService.disconnect({
-          integrationWhatsapp,
-          ownerId: workspace.ownerId,
-          workspaceId,
-          tx,
-        }),
-      )
+      await integrationWhatsappService.disconnect({
+        integrationWhatsapp,
+        ownerId: workspace.ownerId,
+        workspaceId,
+      })
 
       await auditService.record({
         action: "disconnect",

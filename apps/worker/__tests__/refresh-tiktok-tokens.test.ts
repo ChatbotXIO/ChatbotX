@@ -113,6 +113,7 @@ describe("refreshTiktokTokens", () => {
     expect(mocks.updateAuth).toHaveBeenCalledWith({
       id: "tiktok-1",
       workspaceId: "ws-1",
+      expectedAccessToken: "old-token",
       auth: expect.objectContaining({
         // TikTok rotates refresh tokens: the returned one must be stored.
         tokens: expect.objectContaining({

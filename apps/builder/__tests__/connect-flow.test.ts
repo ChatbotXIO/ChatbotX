@@ -170,3 +170,22 @@ describe("startConnect — self serve", () => {
     })
   })
 })
+
+describe("startReconnect — facebookAds (F20)", () => {
+  test("rejects facebookAds with connectionNotOAuth instead of minting a session nothing ever completes", async () => {
+    const { startReconnect } = await import(
+      "@/features/connections/lib/connect-flow"
+    )
+
+    await expect(
+      startReconnect({
+        connection: { provider: "facebookAds", id: "conn-1" } as never,
+        workspaceId: "ws-1",
+        redirectUrl: undefined,
+        ownerId: "owner-1",
+        actor: { actorUserId: "user-1" },
+      }),
+    ).rejects.toMatchObject({ code: "connectionNotOAuth" })
+    expect(mocks.reconnect).not.toHaveBeenCalled()
+  })
+})

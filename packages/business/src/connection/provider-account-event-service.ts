@@ -12,10 +12,7 @@ import {
   PROVIDER_ACCOUNT_EVENT_STRATEGY,
   type ProviderEventOrder,
 } from "./provider-account-events"
-import {
-  connectionStateService,
-  type PendingQuotaRelease,
-} from "./state-service"
+import { connectionStateService, createPendingRelease } from "./state-service"
 
 /** What a provider reported about the account behind a connection. */
 export type ProviderAccountEventRequest = {
@@ -59,9 +56,7 @@ class ProviderAccountEventService {
     }
 
     const revoked = request.event === "revoked"
-    const pendingRelease: { current: PendingQuotaRelease | null } = {
-      current: null,
-    }
+    const pendingRelease = createPendingRelease()
     const outcome = await this.runAtomically(async (tx) => {
       // Integration row first, then the connection row, as a reconnect takes
       // them (`commitReconnect`: write auth, then restore the connection). The

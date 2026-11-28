@@ -619,24 +619,53 @@ class InboxService extends BaseService {
       throw channelLimitReachedException()
     }
 
-    await client
-      .update(inboxModel)
-      .set({
-        status: inboxStatuses.enum.connected,
-        disconnectedAt: null,
-        disconnectReason: null,
-      })
-      .where(
-        and(
-          eq(inboxModel.id, props.inboxId),
-          eq(inboxModel.workspaceId, props.workspaceId),
-        ),
+    try {
+      await client
+        .update(inboxModel)
+        .set({
+          status: inboxStatuses.enum.connected,
+          disconnectedAt: null,
+          disconnectReason: null,
+        })
+        .where(
+          and(
+            eq(inboxModel.id, props.inboxId),
+            eq(inboxModel.workspaceId, props.workspaceId),
+          ),
+        )
+      await releaseParkedChannelPostSync(
+        { inboxId: props.inboxId, workspaceId: props.workspaceId },
+        client,
       )
-    await releaseParkedChannelPostSync(
-      { inboxId: props.inboxId, workspaceId: props.workspaceId },
-      client,
-    )
+      if (props.tx) {
+        // On the caller's transaction, so a rollback undoes the usage row with
+        // it and the caller's compensation (`rollback`) only corrects Redis. A
+        // failed write has already aborted that transaction, so it is not
+        // swallowed: the catch below gives the quota unit back.
+        await workspaceUsageService.increment(
+          props.workspaceId,
+          "channels",
+          1,
+          props.tx,
+        )
+      }
+    } catch (err) {
+      // The unit was consumed above; the inbox never came back, so give it
+      // back instead of leaking one until the nightly reconcile.
+      await quotaEnforcementService
+        .release({ userId: props.ownerId, metric: "channels" })
+        .catch((releaseErr) => {
+          logger.error(
+            { err: releaseErr, inboxId: props.inboxId },
+            "inbox resume: could not release channel quota after a failed resume",
+          )
+        })
+      throw err
+    }
 
+    if (props.tx) {
+      return
+    }
     // Display-only breakdown, mirroring `create`'s increment. Never let a
     // failure here affect the authoritative quota unit already consumed above.
     await workspaceUsageService

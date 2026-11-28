@@ -9,6 +9,7 @@ import {
   type ConnectionAdapter,
   type ConnectionTeardownResult,
   connectionStateService,
+  createPendingRelease,
 } from "@chatbotx.io/business/connection"
 import { toPublicErrorMessage } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
@@ -194,6 +195,7 @@ export const disconnectMessengerConnection = async (input: {
     auth,
   })
 
+  const pendingRelease = createPendingRelease()
   await db.transaction(async (tx) => {
     await teardown.withinTransaction(tx)
 
@@ -202,8 +204,10 @@ export const disconnectMessengerConnection = async (input: {
       ownerId,
       workspaceId,
       tx,
+      pendingRelease,
     })
   })
+  await connectionStateService.releasePendingQuota(pendingRelease.current)
 }
 
 /**

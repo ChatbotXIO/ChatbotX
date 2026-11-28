@@ -157,6 +157,11 @@ export const startReconnect = async (input: {
   ownerId: string
   actor: ConnectFlowActor
 }): Promise<{ session: ConnectSessionModel }> => {
+  // Same reason as `startConnect`: Facebook Ads only completes through the
+  // legacy Messenger callback, so a session minted here would never finish.
+  if (input.connection.provider === "facebookAds") {
+    throw connectionNotOAuthException(input.connection.provider)
+  }
   const resolved = await resolveOAuthCredential({
     provider: input.connection.provider,
     ownerId: input.ownerId,

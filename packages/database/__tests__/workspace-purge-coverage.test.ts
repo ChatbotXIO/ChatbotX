@@ -85,7 +85,6 @@ const LEGACY_UNINDEXED_FKS = [
   "Broadcast:integrationWhatsappId",
   "Broadcast:integrationMessengerId",
   "CoexistSyncRun:requestedByUserId",
-  "ConnectSession:targetConnectionId",
   "ConnectSession:actorUserId",
   "ConnectSession:actorTokenId",
   "Connection:createdBy",

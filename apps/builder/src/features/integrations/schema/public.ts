@@ -12,6 +12,7 @@ export const tokenRefreshErrorChannel = z.enum([
   "messenger",
   "whatsapp",
   "threads",
+  "line",
 ])
 
 export const tokenRefreshErrorResource = z.object({

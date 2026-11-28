@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   deleteByIntegration: vi.fn(),
   disconnectInbox: vi.fn(),
+  releasePendingQuota: vi.fn(),
   existsForPage: vi.fn(),
   findByInboxId: vi.fn(),
   isDisconnectSafeError: vi.fn(),
@@ -28,7 +29,11 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
-  connectionStateService: { disconnectInbox: mocks.disconnectInbox },
+  createPendingRelease: () => ({ current: null }),
+  connectionStateService: {
+    disconnectInbox: mocks.disconnectInbox,
+    releasePendingQuota: mocks.releasePendingQuota,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -134,7 +139,9 @@ describe("disconnectMessengerConnection", () => {
       ownerId: BASE_INPUT.ownerId,
       workspaceId: BASE_INPUT.workspaceId,
       tx: mocks.tx,
+      pendingRelease: { current: null },
     })
+    expect(mocks.releasePendingQuota).toHaveBeenCalledWith(null)
   })
 
   test("rolls back: a failing write inside the transaction rejects the whole call and later steps never run", async () => {
@@ -188,6 +195,7 @@ describe("disconnectMessengerConnection", () => {
       ownerId: BASE_INPUT.ownerId,
       workspaceId: BASE_INPUT.workspaceId,
       tx: mocks.tx,
+      pendingRelease: { current: null },
     })
   })
 

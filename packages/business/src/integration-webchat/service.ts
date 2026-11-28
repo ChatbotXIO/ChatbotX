@@ -36,7 +36,10 @@ import {
   upsertConnectionRow,
   withQuotaCompensation,
 } from "../connection"
-import { connectionStateService } from "../connection/state-service"
+import {
+  connectionStateService,
+  createPendingRelease,
+} from "../connection/state-service"
 import { finalizeContactProfile } from "../contact-locale"
 import { channelLimitReachedException, notFoundException } from "../errors"
 import { flowService } from "../flow/service"
@@ -269,6 +272,8 @@ class IntegrationWebchatService extends BaseService {
       workspaceService.findById({ id: input.workspaceId }),
     ])
 
+    // `withDeleteGuard` may re-run its body, so each run overwrites the handle.
+    const pendingRelease = createPendingRelease()
     await withDeleteGuard(
       {
         workspaceId: input.workspaceId,
@@ -277,6 +282,7 @@ class IntegrationWebchatService extends BaseService {
         ],
       },
       async (tx) => {
+        pendingRelease.current = null
         await this.deleteInTx(tx, {
           workspaceId: input.workspaceId,
           ids: [integrationWebchat.id],
@@ -287,9 +293,11 @@ class IntegrationWebchatService extends BaseService {
           ownerId: workspace.ownerId,
           workspaceId: input.workspaceId,
           tx,
+          pendingRelease,
         })
       },
     )
+    await connectionStateService.releasePendingQuota(pendingRelease.current)
 
     await this.audit(
       "disconnect",

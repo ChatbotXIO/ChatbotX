@@ -91,6 +91,18 @@ vi.mock("../src/connection", () => ({
 vi.mock("../src/connection/state-service", () => ({
   connectionStateService: {
     disconnectInbox: mocks.mockDisconnect,
+    runDisconnectInTransaction: async (
+      scope: { tx?: unknown; pendingRelease?: unknown },
+      work: (client: unknown, pendingRelease: unknown) => Promise<void>,
+    ) => {
+      if (scope.tx) {
+        await work(scope.tx, scope.pendingRelease)
+        return
+      }
+      await mocks.mockTransaction((client: unknown) =>
+        work(client, { current: null }),
+      )
+    },
     markDegradedByIdentifier: mocks.mockMarkDegradedByIdentifier,
     markUnhealthyByIdentifier: mocks.mockMarkUnhealthyByIdentifier,
   },
@@ -408,7 +420,11 @@ describe("zaloIntegrationService.updateAuth", () => {
 
   test("rejects with notFoundException when the update matches zero rows", async () => {
     await expect(
-      zaloIntegrationService.updateAuth("integration-1", { token: "x" }),
+      zaloIntegrationService.updateAuth({
+        id: "integration-1",
+        workspaceId: "ws-1",
+        auth: { token: "x" },
+      }),
     ).rejects.toMatchObject({ code: "notFound" })
   })
 })

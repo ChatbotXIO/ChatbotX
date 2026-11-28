@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
+  createPendingRelease: () => ({ current: null }),
   authExpiresAtOf: vi.fn(() => null),
   connectionStateService: {
     markUnhealthy: vi.fn(),

@@ -54,17 +54,25 @@ async function refreshOne(integration: {
       const newTokens = await refreshAccessToken(auth, auth.tokens.refreshToken)
 
       return {
-        ...auth,
-        tokens: {
-          ...auth.tokens,
-          accessToken: newTokens.access_token,
-          refreshToken: newTokens.refresh_token,
-          expiresAt: calculateExpiresAt(newTokens.expires_in),
+        auth: {
+          ...auth,
+          tokens: {
+            ...auth.tokens,
+            accessToken: newTokens.access_token,
+            refreshToken: newTokens.refresh_token,
+            expiresAt: calculateExpiresAt(newTokens.expires_in),
+          },
         },
+        expectedAccessToken: auth.tokens?.accessToken,
       }
     },
-    apply: (newAuth) =>
-      zaloIntegrationService.updateAuth(integration.id, newAuth),
+    apply: (newAuth, expectedAccessToken) =>
+      zaloIntegrationService.updateAuth({
+        id: integration.id,
+        workspaceId: integration.workspaceId,
+        auth: newAuth,
+        expectedAccessToken,
+      }),
     markError: (error) =>
       zaloIntegrationService.markTokenRefreshError({
         id: integration.id,

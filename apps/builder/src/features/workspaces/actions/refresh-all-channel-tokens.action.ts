@@ -113,7 +113,13 @@ type RefreshGuardConfig<TIntegration, TAuth> = {
   /** Post-fetch skip check (missing refresh token, manual-auth row, ...). */
   shouldSkip?: (auth: TAuth) => boolean
   refresh: (auth: TAuth) => Promise<TAuth>
-  updateAuth: (id: string, workspaceId: string, auth: TAuth) => Promise<unknown>
+  updateAuth: (
+    id: string,
+    workspaceId: string,
+    auth: TAuth,
+    /** The access token the refresh started from (compare-and-set). */
+    expectedAccessToken?: string,
+  ) => Promise<unknown>
   markTokenRefreshError: (params: {
     id: string
     workspaceId: string
@@ -170,7 +176,19 @@ async function refreshGuarded<TIntegration, TAuth>(
       }
 
       const newAuth = await config.refresh(auth)
-      await config.updateAuth(id, workspaceId, newAuth)
+      const expectedAccessToken = (
+        auth as { tokens?: { accessToken?: string } }
+      ).tokens?.accessToken
+      const written = await config.updateAuth(
+        id,
+        workspaceId,
+        newAuth,
+        expectedAccessToken,
+      )
+      if (written === false) {
+        // A reconnect replaced the auth meanwhile; nothing was refreshed.
+        return { result: "skipped" as const }
+      }
       await auditService.record({
         workspaceId,
         action: "refresh",
@@ -252,8 +270,13 @@ const refreshZaloIntegrations = (workspaceIds: string[]) =>
         },
       }
     },
-    updateAuth: (id, _workspaceId, auth) =>
-      zaloIntegrationService.updateAuth(id, auth),
+    updateAuth: (id, workspaceId, auth, expectedAccessToken) =>
+      zaloIntegrationService.updateAuth({
+        id,
+        workspaceId,
+        auth,
+        expectedAccessToken,
+      }),
     markTokenRefreshError: (params) =>
       zaloIntegrationService.markTokenRefreshError(params),
     isRevokedTokenError: isZaloRevokedTokenError,
@@ -271,8 +294,13 @@ const refreshTiktokIntegrations = (workspaceIds: string[]) =>
     getAuth: (integration) => integration.auth as TiktokAuthValue,
     shouldSkip: (auth) => !auth.tokens.refreshToken,
     refresh: (auth) => refreshTiktokAuth(auth),
-    updateAuth: (id, workspaceId, auth) =>
-      tiktokIntegrationService.updateAuth({ id, workspaceId, auth }),
+    updateAuth: (id, workspaceId, auth, expectedAccessToken) =>
+      tiktokIntegrationService.updateAuth({
+        id,
+        workspaceId,
+        auth,
+        expectedAccessToken,
+      }),
     markTokenRefreshError: (params) =>
       tiktokIntegrationService.markTokenRefreshError(params),
     isRevokedTokenError: isTiktokRevokedTokenError,

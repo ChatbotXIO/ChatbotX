@@ -223,15 +223,19 @@ class IntegrationApiService extends BaseService {
   }
 
   async disconnect(input: DisconnectIntegrationApiInput): Promise<void> {
-    await db.transaction(async (tx) => {
-      await integrationApiRepository.deleteById(input.id, tx)
-      await connectionStateService.disconnectInbox({
-        inboxId: input.inboxId,
-        ownerId: input.ownerId,
-        workspaceId: input.workspaceId,
-        tx,
-      })
-    })
+    await connectionStateService.runDisconnectInTransaction(
+      {},
+      async (tx, pendingRelease) => {
+        await integrationApiRepository.deleteById(input.id, tx)
+        await connectionStateService.disconnectInbox({
+          inboxId: input.inboxId,
+          ownerId: input.ownerId,
+          workspaceId: input.workspaceId,
+          tx,
+          pendingRelease,
+        })
+      },
+    )
 
     await this.audit("delete", `revoked an API key (#${input.id})`)
   }

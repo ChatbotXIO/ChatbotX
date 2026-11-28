@@ -765,12 +765,13 @@ describe("reconnectZaloHandler", () => {
         }),
       }),
     )
-    expect(mockUpdateZaloIntegrationAuth).toHaveBeenCalledWith(
-      "iz-1",
-      freshAuthValue,
-      "OA One",
-      expect.anything(),
-    )
+    expect(mockUpdateZaloIntegrationAuth).toHaveBeenCalledWith({
+      id: "iz-1",
+      workspaceId: "ws-1",
+      auth: freshAuthValue,
+      name: "OA One",
+      tx: expect.anything(),
+    })
   })
 
   test("mirrors the Connection row's Inbox back to connected after a successful reconnect", async () => {
