@@ -1,5 +1,19 @@
-import { and, type DatabaseClient, db, eq, isNull, lt, or } from "../../client"
-import { type ChannelType, inboxStatuses } from "../../partials"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  eq,
+  inArray,
+  isNull,
+  lt,
+  or,
+} from "../../client"
+import {
+  type ChannelType,
+  type ConnectionStatus,
+  type IntegrationType,
+  inboxStatuses,
+} from "../../partials"
 import { THREAD_CONTROL_SEEN_REFRESH_MS } from "../../partials/thread-control"
 import { connectionModel, inboxModel, workspaceModel } from "../../schema"
 import type { InboxModel } from "../../types"
@@ -24,7 +38,58 @@ export type InboxIdentity = {
   status: string
 }
 
+/** What occupies one workspace Inbox from the `Connection` side: the row bound to it through `Connection.inboxId`. */
+export type InboxConnectionOccupancy = {
+  sourceId: string
+  inboxId: string
+  connection: {
+    provider: IntegrationType
+    sourceId: string
+    status: ConnectionStatus
+  } | null
+}
+
 export const inboxRepository = {
+  /**
+   * The workspace's inboxes for `channel` among `sourceIds`, each with the
+   * `Connection` bound to it (any provider, any source id; `Connection.inboxId`
+   * is unique) — one query for a whole candidate list. A new connect reuses
+   * such an inbox, so what already occupies it decides whether the connect can
+   * succeed.
+   */
+  async listConnectionOccupancyByChannelSources(
+    input: {
+      workspaceId: string
+      channel: ChannelType
+      sourceIds: readonly string[]
+    },
+    tx: DatabaseClient = db,
+  ): Promise<InboxConnectionOccupancy[]> {
+    if (input.sourceIds.length === 0) {
+      return []
+    }
+    // A left join with no match nulls the whole nested `connection` object.
+    return await tx
+      .select({
+        sourceId: inboxModel.sourceId,
+        inboxId: inboxModel.id,
+        connection: {
+          provider: connectionModel.provider,
+          sourceId: connectionModel.sourceId,
+          status: connectionModel.status,
+        },
+      })
+      .from(inboxModel)
+      .leftJoin(connectionModel, eq(connectionModel.inboxId, inboxModel.id))
+      .where(
+        and(
+          eq(inboxModel.workspaceId, input.workspaceId),
+          eq(inboxModel.channel, input.channel),
+          inArray(inboxModel.sourceId, [...input.sourceIds]),
+        ),
+      )
+  },
+
   /**
    * The workspace's inboxes among `ids`, as the lean identity a template
    * manifest needs (never credentials or integration rows).

@@ -1,2 +1,2 @@
 export type { InboxChannelOption } from "./repository"
-export { inboxRepository } from "./repository"
+export { type InboxConnectionOccupancy, inboxRepository } from "./repository"

@@ -8,12 +8,15 @@ import {
 } from "@chatbotx.io/business/connect-session"
 import {
   authExpiresAtOf,
+  type ConnectionIdentityHolder,
+  type ConnectionInboxSatellite,
   type ConnectionQuotaConsumption,
   connectionStateService,
   isActiveConnectionStatus,
   resolveForeignKey,
   resolveOwnerId,
   saveOrInsertSatellite,
+  toChannelType,
   withQuotaCompensation,
 } from "@chatbotx.io/business/connection"
 import {
@@ -41,7 +44,8 @@ import type {
 } from "@chatbotx.io/database/partials"
 import {
   connectionRepository,
-  integrationInstagramRepository,
+  type InboxConnectionOccupancy,
+  inboxRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
   ConnectionModel,
@@ -340,6 +344,99 @@ const sessionAuthorizationRecord = (
   connectSessionId: session.id,
 })
 
+type AlreadyConnectedScope = NonNullable<
+  ConnectionCandidate["alreadyConnected"]
+>
+
+/**
+ * Connect revives a satellite row in place only through this workspace's
+ * same-provider `Connection` for the account, and only when that Connection's
+ * foreign key already points at the row's inbox (`saveOrInsertSatellite`).
+ */
+const canReviveInPlace = (
+  ownConnection: ConnectionModel | undefined,
+  inboxId: string,
+): boolean =>
+  ownConnection !== undefined && resolveForeignKey(ownConnection) === inboxId
+
+/**
+ * Whether the satellite row holding an account blocks connecting it from
+ * `workspaceId`. The row reserves the account through a global unique index
+ * whatever its `Connection` status is, so connect can only succeed by
+ * reviving that exact row: a holder in another workspace always blocks, and a
+ * holder here blocks unless it is the binding's own slice AND it can be
+ * revived in place. This also covers an account connected through a sibling
+ * provider that shares the satellite table (Instagram's two logins): its row
+ * is outside this binding's slice, so it blocks in the workspace that owns it.
+ */
+const reservedIdentityScope = (input: {
+  holder: ConnectionIdentityHolder | undefined
+  ownConnection: ConnectionModel | undefined
+  workspaceId: string
+}): AlreadyConnectedScope | null => {
+  const { holder, ownConnection, workspaceId } = input
+  if (!holder) {
+    return null
+  }
+  if (holder.workspaceId !== workspaceId) {
+    return "other_workspace"
+  }
+  const isRevivable =
+    holder.matchesBinding && canReviveInPlace(ownConnection, holder.inboxId)
+  return isRevivable ? null : "this_workspace"
+}
+
+/** What already sits on the Inbox a connect of one account would reuse. */
+type InboxOccupancy = {
+  inboxId: string
+  connection: InboxConnectionOccupancy["connection"]
+  satellite: ConnectionInboxSatellite | undefined
+}
+
+/**
+ * Connect reuses this workspace's Inbox for (channel, account), so an Inbox
+ * already occupied in a way the write path cannot take over makes the connect
+ * fail. Ordered checks, first match wins; `null` leaves the account selectable:
+ *
+ * 1. no Inbox, or an empty one: connect creates / reuses it.
+ * 2. a satellite on the Inbox: only this account's own-slice row, revived in
+ *    place through this workspace's Connection, can be updated; any other
+ *    satellite blocks the new row (`inboxId` is unique).
+ * 3. no Connection on the Inbox: selectable.
+ * 4. this provider's Connection: for this account it is the revive path, for
+ *    another account the Inbox is taken.
+ * 5. a sibling provider's Connection: only a `disconnected` one is taken over,
+ *    and only when this workspace has no same-provider Connection for the
+ *    account (that one is revived instead and would collide on `inboxId`),
+ *    mirroring `findReplaceableInboxConnection`.
+ */
+const inboxOccupancyScope = (input: {
+  occupancy: InboxOccupancy | undefined
+  ownConnection: ConnectionModel | undefined
+  provider: IntegrationType
+  sourceId: string
+}): AlreadyConnectedScope | null => {
+  const { occupancy, ownConnection, provider, sourceId } = input
+  if (!occupancy) {
+    return null
+  }
+  const { connection, inboxId, satellite } = occupancy
+  if (satellite) {
+    const isOwnRow = satellite.identity === sourceId && satellite.matchesBinding
+    return isOwnRow && canReviveInPlace(ownConnection, inboxId)
+      ? null
+      : "this_workspace"
+  }
+  if (!connection) {
+    return null
+  }
+  if (connection.provider === provider) {
+    return connection.sourceId === sourceId ? null : "this_workspace"
+  }
+  const isTakeover = connection.status === "disconnected" && !ownConnection
+  return isTakeover ? null : "this_workspace"
+}
+
 /**
  * Lists connectable candidates for an already-obtained `auth` and
  * persists them as the session's `awaiting_selection` targets. Split out
@@ -414,44 +511,56 @@ export const listAndAttachCandidates = async (
   const sourceIds = candidates
     .filter((candidate) => !candidate.alreadyConnected)
     .map((candidate) => candidate.sourceId)
-  const existingConnections =
-    await connectionRepository.findByProviderAndSourceIdsAnyWorkspace({
-      provider: session.provider,
-      sourceIds,
-    })
-  const existingBySourceId = new Map<string, ConnectionModel>()
+  const [existingConnections, identityHolders, inboxConnections, satellites] =
+    await Promise.all([
+      connectionRepository.findByProviderAndSourceIdsAnyWorkspace({
+        provider: session.provider,
+        sourceIds,
+      }),
+      adapter.store?.findIdentityHolders?.(sourceIds) ?? [],
+      adapter.provider.kind === "channel"
+        ? inboxRepository.listConnectionOccupancyByChannelSources({
+            workspaceId: session.workspaceId,
+            channel: toChannelType(session.provider),
+            sourceIds,
+          })
+        : [],
+      adapter.store?.findInboxSatellites?.({
+        workspaceId: session.workspaceId,
+        sourceIds,
+      }) ?? [],
+    ])
+  const satelliteByInboxId = new Map(
+    satellites.map((satellite) => [satellite.inboxId, satellite]),
+  )
+  const occupancyBySourceId = new Map<string, InboxOccupancy>(
+    inboxConnections.map((row) => [
+      row.sourceId,
+      {
+        inboxId: row.inboxId,
+        connection: row.connection,
+        satellite: satelliteByInboxId.get(row.inboxId),
+      },
+    ]),
+  )
+  // One satellite row per account (unique index), so one holder per sourceId.
+  const holderBySourceId = new Map(
+    identityHolders.map((holder) => [holder.sourceId, holder]),
+  )
+  const activeConnectionBySourceId = new Map<string, ConnectionModel>()
+  const ownConnectionBySourceId = new Map<string, ConnectionModel>()
   for (const existing of existingConnections) {
-    if (!existingBySourceId.has(existing.sourceId)) {
-      existingBySourceId.set(existing.sourceId, existing)
+    if (
+      isActiveConnectionStatus(existing.status) &&
+      !activeConnectionBySourceId.has(existing.sourceId)
+    ) {
+      activeConnectionBySourceId.set(existing.sourceId, existing)
+    }
+    if (existing.workspaceId === session.workspaceId) {
+      ownConnectionBySourceId.set(existing.sourceId, existing)
     }
   }
 
-  // `instagram` (native login) and `instagramFacebook` (linked via Facebook)
-  // share one physical `IntegrationInstagram.igId` identity column but are
-  // stored under distinct `Connection.provider` values, so the
-  // provider-scoped lookup above can never see a sourceId already connected
-  // under the sibling provider — even once every legacy row has been
-  // backfilled into `Connection`. Cross-check the shared satellite column
-  // directly so the picker still greys out an account connected via the
-  // other login path. A satellite row surviving a `needs_reauth`/`paused`
-  // connection must NOT grey out the candidate — only an ACTIVE sibling
-  // connection does (`findActiveWorkspacesByIgIds` joins through to the
-  // real `Connection` status so a needs_reauth/paused row stays selectable
-  // for reconnect).
-  const crossProviderWorkspaceByIgId = new Map<string, string>()
-  if (
-    (session.provider === "instagram" ||
-      session.provider === "instagramFacebook") &&
-    sourceIds.length > 0
-  ) {
-    const rows =
-      await integrationInstagramRepository.findActiveWorkspacesByIgIds({
-        igIds: sourceIds,
-      })
-    for (const row of rows) {
-      crossProviderWorkspaceByIgId.set(row.igId, row.workspaceId)
-    }
-  }
   const targets = candidates.map((candidate) => {
     const base = {
       id: candidate.sourceId,
@@ -465,24 +574,41 @@ export const listAndAttachCandidates = async (
         alreadyConnected: candidate.alreadyConnected,
       }
     }
-    const existing = existingBySourceId.get(candidate.sourceId)
-    const crossProviderWorkspaceId = crossProviderWorkspaceByIgId.get(
-      candidate.sourceId,
-    )
-    if (
-      (existing && isActiveConnectionStatus(existing.status)) ||
-      crossProviderWorkspaceId
-    ) {
-      const connectedWorkspaceId =
-        existing?.workspaceId ?? crossProviderWorkspaceId
-      const scope: "this_workspace" | "other_workspace" =
-        connectedWorkspaceId === session.workspaceId
+    const activeConnection = activeConnectionBySourceId.get(candidate.sourceId)
+    if (activeConnection) {
+      const connectedScope: AlreadyConnectedScope =
+        activeConnection.workspaceId === session.workspaceId
           ? "this_workspace"
           : "other_workspace"
       return {
         ...base,
         selectable: false,
-        alreadyConnected: scope,
+        alreadyConnected: connectedScope,
+      }
+    }
+    const reservedScope = reservedIdentityScope({
+      holder: holderBySourceId.get(candidate.sourceId),
+      ownConnection: ownConnectionBySourceId.get(candidate.sourceId),
+      workspaceId: session.workspaceId,
+    })
+    if (reservedScope) {
+      return {
+        ...base,
+        selectable: false,
+        alreadyConnected: reservedScope,
+      }
+    }
+    const occupancyScope = inboxOccupancyScope({
+      occupancy: occupancyBySourceId.get(candidate.sourceId),
+      ownConnection: ownConnectionBySourceId.get(candidate.sourceId),
+      provider: session.provider,
+      sourceId: candidate.sourceId,
+    })
+    if (occupancyScope) {
+      return {
+        ...base,
+        selectable: false,
+        alreadyConnected: occupancyScope,
       }
     }
     if (candidate.unavailableReason) {

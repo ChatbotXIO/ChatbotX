@@ -61,6 +61,45 @@ describe("CONNECTION_STORE_BINDINGS", () => {
     vi.clearAllMocks()
   })
 
+  it("exposes findIdentityHolders only on bindings with a global unique identity index", () => {
+    const withUniqueIdentity = [
+      "instagram",
+      "instagramFacebook",
+      "line",
+      "messenger",
+      "telegram",
+      "threads",
+      "tiktok",
+      "whatsapp",
+    ] as const
+    const withoutUniqueIdentity = [
+      "api",
+      "claude",
+      "smtp",
+      "webchat",
+      "zalo",
+    ] as const
+    for (const provider of withUniqueIdentity) {
+      expect(bindingOrThrow(provider).findIdentityHolders).toBeTypeOf(
+        "function",
+      )
+    }
+    for (const provider of withoutUniqueIdentity) {
+      expect(bindingOrThrow(provider).findIdentityHolders).toBeUndefined()
+    }
+  })
+
+  it("resolves findIdentityHolders to an empty list without querying for empty input", async () => {
+    const fixture = makeTx()
+    await expect(
+      bindingOrThrow("messenger").findIdentityHolders?.(
+        [],
+        fixture.tx as never,
+      ),
+    ).resolves.toEqual([])
+    expect(fixture.select).not.toHaveBeenCalled()
+  })
+
   it("loads, updates, and deletes a channel row by inbox foreign key, scoped by workspaceId", async () => {
     const binding = bindingOrThrow("messenger")
     const fixture = makeTx()
