@@ -10,13 +10,17 @@ import type { IntegrationZaloModel } from "@chatbotx.io/database/types"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
 import {
+  accessTokenMatches,
   CONNECTION_STORE_BINDINGS,
   type ConnectionQuotaConsumption,
   recordRefreshedAuth,
   upsertConnectionRow,
   withQuotaCompensation,
 } from "../connection"
-import { connectionStateService } from "../connection/state-service"
+import {
+  connectionStateService,
+  type DisconnectTransactionScope,
+} from "../connection/state-service"
 import { channelDuplicatedException, notFoundException } from "../errors"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
@@ -101,17 +105,29 @@ class ZaloIntegrationService extends BaseService {
     auth: Record<string, unknown>,
     name?: string,
     tx?: DatabaseClient,
-  ): Promise<void> {
+    /** Compare-and-set for the refresh cron; see `accessTokenMatches`. */
+    expectedAccessToken?: string,
+  ): Promise<boolean> {
     const client = tx ?? db
     const [row] = await client
       .update(integrationZaloModel)
       .set({ auth, tokenRefreshError: null, ...(name ? { name } : {}) })
-      .where(eq(integrationZaloModel.id, id))
+      .where(
+        and(
+          eq(integrationZaloModel.id, id),
+          expectedAccessToken
+            ? accessTokenMatches(integrationZaloModel.auth, expectedAccessToken)
+            : undefined,
+        ),
+      )
       .returning({
         oaId: integrationZaloModel.oaId,
         workspaceId: integrationZaloModel.workspaceId,
       })
     if (!row) {
+      if (expectedAccessToken) {
+        return false
+      }
       throw notFoundException("Zalo integration not found")
     }
     await recordRefreshedAuth({
@@ -121,6 +137,7 @@ class ZaloIntegrationService extends BaseService {
       auth: auth as AuthValue,
       tx,
     })
+    return true
   }
 
   async markTokenRefreshError(props: {
@@ -138,7 +155,10 @@ class ZaloIntegrationService extends BaseService {
           eq(integrationZaloModel.workspaceId, props.workspaceId),
         ),
       )
-      .returning({ oaId: integrationZaloModel.oaId })
+      .returning({
+        oaId: integrationZaloModel.oaId,
+        inboxId: integrationZaloModel.inboxId,
+      })
 
     if (!row) {
       logger.warn(
@@ -153,6 +173,7 @@ class ZaloIntegrationService extends BaseService {
         provider: "zalo",
         identifier: row.oaId,
         workspaceId: props.workspaceId,
+        inboxId: row.inboxId,
         reason: "token_revoked",
       })
       return
@@ -301,40 +322,39 @@ class ZaloIntegrationService extends BaseService {
     inboxId: string
     ownerId: string
     tx?: DatabaseClient
+    pendingRelease?: DisconnectTransactionScope["pendingRelease"]
   }): Promise<void> {
-    const { workspaceId, id, inboxId, ownerId, tx } = input
+    const { workspaceId, id, inboxId, ownerId } = input
 
-    const run = async (client: DatabaseClient) => {
-      // Polymorphic FK cleanup — no DB-level cascade for TagChannel.integrationId
-      await client
-        .delete(tagChannelModel)
-        .where(
-          and(
-            eq(tagChannelModel.channelType, channelTypes.enum.zalo),
-            eq(tagChannelModel.integrationId, id),
-          ),
-        )
-      await client
-        .delete(integrationZaloModel)
-        .where(
-          and(
-            eq(integrationZaloModel.id, id),
-            eq(integrationZaloModel.workspaceId, workspaceId),
-          ),
-        )
-      await connectionStateService.disconnectInbox({
-        inboxId,
-        workspaceId,
-        ownerId,
-        tx: client,
-      })
-    }
-
-    if (tx) {
-      await run(tx)
-      return
-    }
-    await db.transaction(run)
+    await connectionStateService.runDisconnectInTransaction(
+      input,
+      async (client, pendingRelease) => {
+        // Polymorphic FK cleanup — no DB-level cascade for TagChannel.integrationId
+        await client
+          .delete(tagChannelModel)
+          .where(
+            and(
+              eq(tagChannelModel.channelType, channelTypes.enum.zalo),
+              eq(tagChannelModel.integrationId, id),
+            ),
+          )
+        await client
+          .delete(integrationZaloModel)
+          .where(
+            and(
+              eq(integrationZaloModel.id, id),
+              eq(integrationZaloModel.workspaceId, workspaceId),
+            ),
+          )
+        await connectionStateService.disconnectInbox({
+          inboxId,
+          workspaceId,
+          ownerId,
+          tx: client,
+          pendingRelease,
+        })
+      },
+    )
   }
 
   /**

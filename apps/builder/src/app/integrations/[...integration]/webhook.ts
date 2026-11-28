@@ -210,6 +210,8 @@ const WEBHOOK_PUBLIC_ERROR_HEADERS = {
   "Content-Type": "application/json",
 } as const
 
+const TIKTOK_SIGNATURE_REJECTED_MESSAGE = "Invalid or missing webhook signature"
+
 const jsonError = (message: string, status: number) =>
   new Response(JSON.stringify({ message }), {
     status,
@@ -633,7 +635,9 @@ const handleTiktokWebhook = async (req: NextRequest, credentialId?: string) => {
     openId: userOpenId,
   })
   if (!integrationTiktok) {
-    return jsonError("TikTok account not found", 404)
+    // Same status and body as a failed signature check: an unsigned caller
+    // must not be able to tell which `openId` values exist.
+    return jsonError(TIKTOK_SIGNATURE_REJECTED_MESSAGE, 400)
   }
 
   const workspaceOwnerId =
@@ -654,7 +658,41 @@ const handleTiktokWebhook = async (req: NextRequest, credentialId?: string) => {
     return notConfigured()
   }
 
+  const auth = integrationTiktok.auth as TiktokAuthValue
+
+  // Reconstruct request because req.text() already consumed the body.
+  const reqWithBody = new Request(
+    normalizeCredentialScopedWebhookUrl(req.url, credentialId),
+    {
+      method: req.method,
+      headers: req.headers,
+      body: bodyText,
+    },
+  )
+
+  const tiktokConfig: TiktokConfig = {
+    clientId: auth.clientId,
+    clientSecret: auth.clientSecret,
+    redirectUrl: auth.redirectUrl,
+    openId: integrationTiktok.openId,
+  }
+
   if (eventType === "authorization.removed") {
+    // The signature must pass before this event may change any state;
+    // `handleRequest` verifies it and has no side effect for this event.
+    try {
+      await integration.handleRequest({
+        config: tiktokConfig,
+        req: reqWithBody,
+        queue: createRouteScopedQueue(undefined),
+      })
+    } catch (e: unknown) {
+      logger.warn(
+        { err: e, integrationType: "tiktok" },
+        "TikTok authorization.removed rejected before state change",
+      )
+      return jsonError(TIKTOK_SIGNATURE_REJECTED_MESSAGE, 400)
+    }
     const connection = await connectionStateService.markUnhealthyByIdentifier({
       provider: "tiktok",
       identifier: userOpenId,
@@ -685,25 +723,6 @@ const handleTiktokWebhook = async (req: NextRequest, credentialId?: string) => {
       "TikTok authorization removed — connection marked unhealthy",
     )
     return new Response("ok")
-  }
-
-  const auth = integrationTiktok.auth as TiktokAuthValue
-
-  // Reconstruct request because req.text() already consumed the body.
-  const reqWithBody = new Request(
-    normalizeCredentialScopedWebhookUrl(req.url, credentialId),
-    {
-      method: req.method,
-      headers: req.headers,
-      body: bodyText,
-    },
-  )
-
-  const tiktokConfig: TiktokConfig = {
-    clientId: auth.clientId,
-    clientSecret: auth.clientSecret,
-    redirectUrl: auth.redirectUrl,
-    openId: integrationTiktok.openId,
   }
 
   try {

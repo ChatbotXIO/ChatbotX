@@ -97,7 +97,21 @@ vi.mock("../src/inbox/service", () => ({
 }))
 
 vi.mock("../src/connection/state-service", () => ({
-  connectionStateService: { disconnectInbox: mockDisconnect },
+  connectionStateService: {
+    disconnectInbox: mockDisconnect,
+    runDisconnectInTransaction: async (
+      scope: { tx?: unknown; pendingRelease?: unknown },
+      work: (client: unknown, pendingRelease: unknown) => Promise<void>,
+    ) => {
+      if (scope.tx) {
+        await work(scope.tx, scope.pendingRelease)
+        return
+      }
+      await mockTransaction((client: unknown) =>
+        work(client, { current: null }),
+      )
+    },
+  },
 }))
 
 vi.mock("../src/audit/dispatcher", () => ({

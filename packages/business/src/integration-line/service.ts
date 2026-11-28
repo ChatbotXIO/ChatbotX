@@ -29,7 +29,10 @@ import {
   upsertConnectionRow,
   withQuotaCompensation,
 } from "../connection"
-import { connectionStateService } from "../connection/state-service"
+import {
+  connectionStateService,
+  type DisconnectTransactionScope,
+} from "../connection/state-service"
 import {
   ChatbotXException,
   channelDuplicatedException,
@@ -323,31 +326,30 @@ class LineIntegrationService extends BaseService {
     inboxId: string
     ownerId: string
     tx?: DatabaseClient
+    pendingRelease?: DisconnectTransactionScope["pendingRelease"]
   }): Promise<void> {
-    const { workspaceId, id, inboxId, ownerId, tx } = input
+    const { workspaceId, id, inboxId, ownerId } = input
 
-    const run = async (client: DatabaseClient) => {
-      await client
-        .delete(integrationLineModel)
-        .where(
-          and(
-            eq(integrationLineModel.id, id),
-            eq(integrationLineModel.workspaceId, workspaceId),
-          ),
-        )
-      await connectionStateService.disconnectInbox({
-        inboxId,
-        workspaceId,
-        ownerId,
-        tx: client,
-      })
-    }
-
-    if (tx) {
-      await run(tx)
-      return
-    }
-    await db.transaction(run)
+    await connectionStateService.runDisconnectInTransaction(
+      input,
+      async (client, pendingRelease) => {
+        await client
+          .delete(integrationLineModel)
+          .where(
+            and(
+              eq(integrationLineModel.id, id),
+              eq(integrationLineModel.workspaceId, workspaceId),
+            ),
+          )
+        await connectionStateService.disconnectInbox({
+          inboxId,
+          workspaceId,
+          ownerId,
+          tx: client,
+          pendingRelease,
+        })
+      },
+    )
   }
 
   findById(props: { id: string; workspaceId: string }) {
@@ -409,7 +411,10 @@ class LineIntegrationService extends BaseService {
           eq(integrationLineModel.workspaceId, props.workspaceId),
         ),
       )
-      .returning({ channelId: integrationLineModel.channelId })
+      .returning({
+        channelId: integrationLineModel.channelId,
+        inboxId: integrationLineModel.inboxId,
+      })
 
     if (!row) {
       logger.warn(
@@ -424,6 +429,7 @@ class LineIntegrationService extends BaseService {
         provider: "line",
         identifier: row.channelId,
         workspaceId: props.workspaceId,
+        inboxId: row.inboxId,
         reason: "token_revoked",
       })
       return

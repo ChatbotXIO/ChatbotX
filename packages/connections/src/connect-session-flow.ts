@@ -109,6 +109,18 @@ const isUserActor = (
 ): actor is { actorUserId: string; actorTokenId?: never } =>
   actor.actorUserId !== undefined
 
+/**
+ * Providers whose satellite row survives a disconnect (`onDisconnect:
+ * "keep_row"`) and whose identity column is globally unique. Keep in step with
+ * `CONNECTION_STORE_BINDINGS`.
+ */
+const KEEP_ROW_GLOBALLY_UNIQUE_PROVIDERS: ReadonlySet<string> = new Set([
+  "telegram",
+  "tiktok",
+  "whatsapp",
+  "line",
+])
+
 export const actorRefOf = (actor: ConnectSessionActor): ConnectSessionActor =>
   isUserActor(actor)
     ? { actorUserId: actor.actorUserId }
@@ -469,8 +481,17 @@ export const listAndAttachCandidates = async (
     const crossProviderWorkspaceId = crossProviderWorkspaceByIgId.get(
       candidate.sourceId,
     )
+    // `keep_row` channels leave their satellite row behind on disconnect, and
+    // its identity column is unique across ALL workspaces. A disconnected
+    // connection in ANOTHER workspace therefore still owns the target: offering
+    // it would end in a unique violation reported as "duplicated".
+    const heldByOtherWorkspaceSatellite =
+      existing !== undefined &&
+      existing.workspaceId !== session.workspaceId &&
+      KEEP_ROW_GLOBALLY_UNIQUE_PROVIDERS.has(session.provider)
     if (
       (existing && isActiveConnectionStatus(existing.status)) ||
+      heldByOtherWorkspaceSatellite ||
       crossProviderWorkspaceId
     ) {
       const connectedWorkspaceId =

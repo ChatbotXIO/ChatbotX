@@ -1,6 +1,9 @@
 import { db } from "@chatbotx.io/database/client"
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import { connectionStateService } from "../state-service"
+import {
+  connectionStateService,
+  type PendingQuotaRelease,
+} from "../state-service"
 
 const NO_OWNER_ID_MESSAGE = /no ownerId/
 
@@ -663,6 +666,16 @@ describe("ConnectionStateService.commitReconnect", () => {
 
     expect(writeAuth).toHaveBeenCalledWith({})
     expect(mocks.update).not.toHaveBeenCalled()
+    // K1: the orphan's inbox is restored to connected, without quota.
+    expect(mocks.mirrorInbox).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        values: expect.objectContaining({ status: "connected" }),
+      }),
+      expect.anything(),
+    )
+    expect(mocks.tryConsume).not.toHaveBeenCalled()
   })
 
   test("propagates a reconnectInbox failure (e.g. a channel-limit re-check) so the caller's transaction rolls back the auth write too", async () => {
@@ -820,6 +833,32 @@ describe("ConnectionStateService.disconnectInbox", () => {
       }),
       expect.anything(),
     )
+  })
+
+  test("with a caller tx and pendingRelease, defers the channel quota release to the caller (F14)", async () => {
+    const connection = baseConnection({ status: "connected" })
+    mocks.findByInboxId.mockResolvedValue(connection)
+    mocks.findById.mockResolvedValue(connection)
+    mocks.update.mockResolvedValue(baseConnection({ status: "disconnected" }))
+    const pendingRelease: { current: PendingQuotaRelease | null } = {
+      current: null,
+    }
+
+    await connectionStateService.disconnectInbox({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      ownerId: "owner-1",
+      tx: {} as never,
+      pendingRelease,
+    })
+
+    expect(mocks.release).not.toHaveBeenCalled()
+    expect(pendingRelease.current).toEqual({
+      ownerId: "owner-1",
+      workspaceId: "ws-1",
+    })
+    await connectionStateService.releasePendingQuota(pendingRelease.current)
+    expect(mocks.release).toHaveBeenCalledTimes(1)
   })
 
   test("uses the inbox-only legacy path before Connection backfill", async () => {
@@ -1311,6 +1350,50 @@ describe("ConnectionStateService.markUnhealthyByIdentifier", () => {
 
     expect(result).toBeNull()
     expect(mocks.findByProviderAndSourceIdAnyWorkspace).not.toHaveBeenCalled()
+  })
+
+  test("marks the legacy inbox unhealthy when no Connection row exists and an inboxId is given (K2)", async () => {
+    mocks.findByProviderSourceId.mockResolvedValue(undefined)
+
+    const result = await connectionStateService.markUnhealthyByIdentifier({
+      provider: "messenger",
+      identifier: "page-orphan",
+      workspaceId: "ws-1",
+      inboxId: "inbox-orphan",
+    })
+
+    expect(result).toBeNull()
+    expect(mocks.mirrorInbox).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-orphan",
+        workspaceId: "ws-1",
+        values: expect.objectContaining({ status: "disconnected" }),
+      }),
+      expect.anything(),
+    )
+    expect(mocks.release).not.toHaveBeenCalled()
+  })
+
+  test("resolves the owner from the connection's workspace when the caller supplies none, so the channel quota is released (F2)", async () => {
+    mocks.findByProviderAndSourceIdAnyWorkspace.mockResolvedValue(
+      baseConnection({ id: "conn-4", status: "connected" }),
+    )
+    mocks.findById.mockResolvedValue(
+      baseConnection({ id: "conn-4", status: "connected" }),
+    )
+    mocks.update.mockResolvedValue(
+      baseConnection({ id: "conn-4", status: "needs_reauth" }),
+    )
+
+    await connectionStateService.markUnhealthyByIdentifier({
+      provider: "messenger",
+      identifier: "page-1",
+    })
+
+    expect(mocks.findOwnerUserIdByWorkspaceId).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+    })
+    expect(mocks.release).toHaveBeenCalledTimes(1)
   })
 })
 

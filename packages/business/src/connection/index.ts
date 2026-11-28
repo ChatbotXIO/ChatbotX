@@ -1,4 +1,5 @@
 export * from "./adapter"
+export * from "./auth-cas"
 export * from "./auth-expiry"
 export * from "./credential-providers"
 export * from "./provider-account-event-service"

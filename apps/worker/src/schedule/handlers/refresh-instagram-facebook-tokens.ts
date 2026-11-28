@@ -18,6 +18,9 @@ async function refreshOne(integration: {
     return
   }
 
+  // The token this refresh started from; the write only lands while it is current.
+  let expectedAccessToken: string | undefined
+
   await refreshWithErrorHandling<InstagramAuthValue>({
     id: integration.id,
     workspaceId: integration.workspaceId,
@@ -38,6 +41,7 @@ async function refreshOne(integration: {
       }
 
       const auth = current.auth as InstagramAuthValue
+      expectedAccessToken = auth.tokens?.accessToken
       const refreshedAuth = await integrationInstagramFacebook.refreshAuth?.({
         auth,
       })
@@ -51,6 +55,7 @@ async function refreshOne(integration: {
         id: integration.id,
         workspaceId: integration.workspaceId,
         auth: newAuth,
+        expectedAccessToken,
       }),
     markError: (error) =>
       instagramIntegrationService.markTokenRefreshError({

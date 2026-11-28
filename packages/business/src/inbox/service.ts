@@ -619,23 +619,37 @@ class InboxService extends BaseService {
       throw channelLimitReachedException()
     }
 
-    await client
-      .update(inboxModel)
-      .set({
-        status: inboxStatuses.enum.connected,
-        disconnectedAt: null,
-        disconnectReason: null,
-      })
-      .where(
-        and(
-          eq(inboxModel.id, props.inboxId),
-          eq(inboxModel.workspaceId, props.workspaceId),
-        ),
+    try {
+      await client
+        .update(inboxModel)
+        .set({
+          status: inboxStatuses.enum.connected,
+          disconnectedAt: null,
+          disconnectReason: null,
+        })
+        .where(
+          and(
+            eq(inboxModel.id, props.inboxId),
+            eq(inboxModel.workspaceId, props.workspaceId),
+          ),
+        )
+      await releaseParkedChannelPostSync(
+        { inboxId: props.inboxId, workspaceId: props.workspaceId },
+        client,
       )
-    await releaseParkedChannelPostSync(
-      { inboxId: props.inboxId, workspaceId: props.workspaceId },
-      client,
-    )
+    } catch (err) {
+      // The unit was consumed above; the inbox never came back, so give it
+      // back instead of leaking one until the nightly reconcile.
+      await quotaEnforcementService
+        .release({ userId: props.ownerId, metric: "channels" })
+        .catch((releaseErr) => {
+          logger.error(
+            { err: releaseErr, inboxId: props.inboxId },
+            "inbox resume: could not release channel quota after a failed resume",
+          )
+        })
+      throw err
+    }
 
     // Display-only breakdown, mirroring `create`'s increment. Never let a
     // failure here affect the authoritative quota unit already consumed above.

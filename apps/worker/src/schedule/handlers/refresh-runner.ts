@@ -32,8 +32,10 @@ export type RefreshWithErrorHandlingInput<TAuth> = {
   // Performs the lookup and the provider's refresh call. Return `undefined`
   // to skip this integration silently (no audit record, no error).
   refresh: () => Promise<TAuth | undefined>
-  // Persists the refreshed auth returned by `refresh`.
-  apply: (newAuth: TAuth) => Promise<void>
+  // Persists the refreshed auth returned by `refresh`. Return `false` when the
+  // write was skipped because a reconnect replaced the auth meanwhile: nothing
+  // was refreshed, so no audit record is written.
+  apply: (newAuth: TAuth) => Promise<unknown>
   markError: (error: unknown) => Promise<void>
   auditDetail: string
   // Invoked when `distributedLock.runExclusive` itself rejects (e.g. a
@@ -75,7 +77,9 @@ export async function refreshWithErrorHandling<TAuth>(
           return
         }
 
-        await apply(newAuth)
+        if ((await apply(newAuth)) === false) {
+          return
+        }
 
         await auditService.record({
           action: "refresh",

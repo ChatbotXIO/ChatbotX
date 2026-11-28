@@ -128,7 +128,9 @@ const providerCases: ProviderCase[] = [
         { id: "messenger-2", workspaceId: "ws-2" },
       ])
       mocks.findMessengerByIdForWorkspace.mockImplementation(
-        async ({ id }: { id: string }) => ({ auth: { id } }),
+        async ({ id }: { id: string }) => ({
+          auth: { id, tokens: { accessToken: "current-token" } },
+        }),
       )
     },
     refreshMock: mocks.refreshMessengerAuth,
@@ -145,7 +147,9 @@ const providerCases: ProviderCase[] = [
         { id: "instagram-2", workspaceId: "ws-2" },
       ])
       mocks.findInstagramByIdForWorkspace.mockImplementation(
-        async ({ id }: { id: string }) => ({ auth: { id } }),
+        async ({ id }: { id: string }) => ({
+          auth: { id, tokens: { accessToken: "current-token" } },
+        }),
       )
     },
     refreshMock: mocks.refreshInstagramAuth,
@@ -162,7 +166,9 @@ const providerCases: ProviderCase[] = [
         { id: "instagram-facebook-2", workspaceId: "ws-2" },
       ])
       mocks.findInstagramByIdForWorkspace.mockImplementation(
-        async ({ id }: { id: string }) => ({ auth: { id } }),
+        async ({ id }: { id: string }) => ({
+          auth: { id, tokens: { accessToken: "current-token" } },
+        }),
       )
     },
     refreshMock: mocks.refreshInstagramFacebookAuth,
@@ -291,5 +297,17 @@ describe.each(providerCases)("$name token refresh", ({
 
     expect(markErrorMock).not.toHaveBeenCalled()
     expect(updateAuthMock).toHaveBeenCalledTimes(1)
+  })
+
+  test(`${name}: writes only while the token it started from is current, and records no refresh when a reconnect won (F9)`, async () => {
+    seedTwoRows()
+    updateAuthMock.mockResolvedValue(false)
+
+    await run()
+
+    const expected = name === "Zalo" ? "a" : "current-token"
+    const call = updateAuthMock.mock.calls[0] ?? []
+    expect(JSON.stringify(call)).toContain(expected)
+    expect(mocks.auditRecord).not.toHaveBeenCalled()
   })
 })

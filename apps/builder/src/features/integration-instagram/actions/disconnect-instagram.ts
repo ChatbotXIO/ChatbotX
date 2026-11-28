@@ -7,7 +7,10 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import { connectionStateService } from "@chatbotx.io/business/connection"
+import {
+  connectionStateService,
+  type PendingQuotaRelease,
+} from "@chatbotx.io/business/connection"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
@@ -69,6 +72,9 @@ export const disconnectInstagram = async (ctx: {
     }
   }
 
+  const pendingRelease: { current: PendingQuotaRelease | null } = {
+    current: null,
+  }
   await db.transaction(async (tx) => {
     // The page's open contact-import items end and its owed history sync is
     // cancelled, so a reconnect never starts one unasked (the integration row is
@@ -119,8 +125,10 @@ export const disconnectInstagram = async (ctx: {
       ownerId: workspace.ownerId,
       workspaceId: ctx.workspaceId,
       tx,
+      pendingRelease,
     })
   })
+  await connectionStateService.releasePendingQuota(pendingRelease.current)
 
   await auditService.record({
     workspaceId: ctx.workspaceId,

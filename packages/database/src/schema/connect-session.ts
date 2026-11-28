@@ -104,6 +104,12 @@ export const connectSessionModel = pgTable(
       "btree",
       table.workspaceId.asc().nullsLast(),
     ),
+    // The FK cascades from `Connection`; unindexed, every Connection delete
+    // (workspace purge included) scans this table.
+    index("ConnectSession_targetConnectionId_idx").using(
+      "btree",
+      table.targetConnectionId.asc().nullsLast(),
+    ),
     index("ConnectSession_expiresAt_idx").using(
       "btree",
       table.expiresAt.asc().nullsLast(),

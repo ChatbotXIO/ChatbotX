@@ -18,6 +18,9 @@ async function refreshOne(integration: {
   id: string
   workspaceId: string
 }): Promise<void> {
+  // The token this refresh started from; the write only lands while it is current.
+  let expectedAccessToken: string | undefined
+
   await refreshWithErrorHandling<ZaloAuthValue>({
     id: integration.id,
     workspaceId: integration.workspaceId,
@@ -51,6 +54,7 @@ async function refreshOne(integration: {
         return
       }
 
+      expectedAccessToken = auth.tokens?.accessToken
       const newTokens = await refreshAccessToken(auth, auth.tokens.refreshToken)
 
       return {
@@ -64,7 +68,13 @@ async function refreshOne(integration: {
       }
     },
     apply: (newAuth) =>
-      zaloIntegrationService.updateAuth(integration.id, newAuth),
+      zaloIntegrationService.updateAuth(
+        integration.id,
+        newAuth,
+        undefined,
+        undefined,
+        expectedAccessToken,
+      ),
     markError: (error) =>
       zaloIntegrationService.markTokenRefreshError({
         id: integration.id,

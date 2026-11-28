@@ -77,6 +77,19 @@ type DisconnectInboxInput = {
   workspaceId: string
   ownerId: string
   tx?: DatabaseClient
+  /**
+   * With `tx`: receives the `channels` release instead of it running inline,
+   * so the caller can run it (`releasePendingQuota`) once its own transaction
+   * has committed. Without it, a caller-owned `tx` that later rolls back would
+   * have already given the unit back.
+   */
+  pendingRelease?: { current: PendingQuotaRelease | null }
+}
+
+/** `tx` / `pendingRelease` a disconnect path accepts when a caller owns the transaction. */
+export type DisconnectTransactionScope = {
+  tx?: DatabaseClient
+  pendingRelease?: { current: PendingQuotaRelease | null }
 }
 
 /** What the deletion log snapshots about a channel at the moment a user removes it. */
@@ -197,10 +210,35 @@ class ConnectionStateService extends BaseService {
         event: "user.disconnect",
         ownerId: input.ownerId,
         tx: input.tx,
+        pendingRelease: input.pendingRelease,
       })
       return
     }
     await this.disconnectLegacyInbox(input)
+  }
+
+  /**
+   * Runs `work` in the caller's transaction, or in a new one it owns. When it
+   * owns the transaction it releases the deferred `channels` unit only after
+   * the commit. When the caller supplies `tx`, the caller's `pendingRelease`
+   * (if any) receives the release and the caller runs `releasePendingQuota`.
+   */
+  async runDisconnectInTransaction(
+    scope: DisconnectTransactionScope,
+    work: (
+      client: DatabaseClient,
+      pendingRelease: { current: PendingQuotaRelease | null } | undefined,
+    ) => Promise<void>,
+  ): Promise<void> {
+    if (scope.tx) {
+      await work(scope.tx, scope.pendingRelease)
+      return
+    }
+    const pendingRelease: { current: PendingQuotaRelease | null } = {
+      current: null,
+    }
+    await db.transaction((client) => work(client, pendingRelease))
+    await this.releasePendingQuota(pendingRelease.current)
   }
 
   /**
@@ -305,9 +343,10 @@ class ConnectionStateService extends BaseService {
    * the satellite row, call this to re-consume `channels` quota (the
    * `connect.completed` edge, same event a fresh connect uses) and mirror
    * `Inbox.status` back to `connected` — the FSM handles reviving from
-   * `needs_reauth`/`disconnected`/`paused` alike. No-ops for a row not yet
-   * backfilled into `Connection` (nothing to mirror/consume through yet);
-   * the reconnect flow's own satellite write already restored its auth.
+   * `needs_reauth`/`disconnected`/`paused` alike. A row not yet backfilled
+   * into `Connection` only gets its `Inbox.status` restored (no quota to
+   * consume); the reconnect flow's own satellite write already restored its
+   * auth.
    */
   async reconnectInbox(input: {
     inboxId: string
@@ -329,6 +368,24 @@ class ConnectionStateService extends BaseService {
       input.tx,
     )
     if (!connection) {
+      // An orphan channel (satellite row and inbox, no `Connection`): the
+      // fresh token is already saved, so restore `Inbox.status` too, or the
+      // user reconnects and the channel stays disconnected. No quota here —
+      // like `markLegacyInboxUnhealthy`, this row was never counted through
+      // the Connection domain.
+      const mirror = (tx: DatabaseClient) =>
+        this.mirrorInboxStatus({
+          inboxId: input.inboxId,
+          workspaceId: input.workspaceId,
+          to: "connected",
+          reason: null,
+          tx,
+        })
+      if (input.tx) {
+        await mirror(input.tx)
+      } else {
+        await db.transaction(mirror)
+      }
       return
     }
     if (connection.workspaceId !== input.workspaceId) {
@@ -957,15 +1014,37 @@ class ConnectionStateService extends BaseService {
     reason?: ConnectionStatusReason
     ownerId?: string
     workspaceId?: string
+    /**
+     * The channel's inbox, when the caller has the legacy satellite row. A
+     * channel with no `Connection` row (an orphan) then still has its
+     * `Inbox.status` set to `needs_reauth` instead of staying `connected`.
+     */
+    inboxId?: string
   }): Promise<ConnectionModel | null> {
     const existing = await this.findConnectionByIdentifier(input)
     if (!existing) {
+      if (input.inboxId && input.workspaceId) {
+        await this.markLegacyInboxUnhealthy({
+          inboxId: input.inboxId,
+          workspaceId: input.workspaceId,
+          reason: input.reason,
+        })
+      }
       return null
     }
+    // Refresh crons and token-revoked handlers carry no owner. Without one,
+    // `transition` cannot release the `channels` unit, so a later reconnect
+    // consumes a second one and can hit the plan limit. Resolve it from the
+    // connection's own workspace, as `reconnectInbox` does.
+    const ownerId =
+      input.ownerId ??
+      (await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+        workspaceId: existing.workspaceId,
+      }))
     return await this.markUnhealthy({
       connectionId: existing.id,
       reason: input.reason,
-      ownerId: input.ownerId,
+      ownerId,
     })
   }
 

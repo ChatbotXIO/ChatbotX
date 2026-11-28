@@ -19,7 +19,10 @@ import {
   upsertConnectionRow,
   withQuotaCompensation,
 } from "../connection"
-import { connectionStateService } from "../connection/state-service"
+import {
+  connectionStateService,
+  type DisconnectTransactionScope,
+} from "../connection/state-service"
 import { ChatbotXException } from "../errors"
 import { inboxService } from "../inbox/service"
 import { toResource } from "./resource"
@@ -425,32 +428,31 @@ class IntegrationSmtpService extends BaseService {
     inboxId: string
     ownerId: string
     tx?: DatabaseClient
+    pendingRelease?: DisconnectTransactionScope["pendingRelease"]
   }): Promise<void> {
-    const { workspaceId, id, inboxId, ownerId, tx } = input
+    const { workspaceId, id, inboxId, ownerId } = input
 
-    const run = async (client: DatabaseClient) => {
-      await client
-        .delete(integrationSmtpModel)
-        .where(
-          and(
-            eq(integrationSmtpModel.id, id),
-            eq(integrationSmtpModel.workspaceId, workspaceId),
-          ),
-        )
+    await connectionStateService.runDisconnectInTransaction(
+      input,
+      async (client, pendingRelease) => {
+        await client
+          .delete(integrationSmtpModel)
+          .where(
+            and(
+              eq(integrationSmtpModel.id, id),
+              eq(integrationSmtpModel.workspaceId, workspaceId),
+            ),
+          )
 
-      await connectionStateService.disconnectInbox({
-        inboxId,
-        ownerId,
-        workspaceId,
-        tx: client,
-      })
-    }
-
-    if (tx) {
-      await run(tx)
-    } else {
-      await db.transaction(run)
-    }
+        await connectionStateService.disconnectInbox({
+          inboxId,
+          ownerId,
+          workspaceId,
+          tx: client,
+          pendingRelease,
+        })
+      },
+    )
 
     await this.audit("disconnect", `disconnected the SMTP channel (#${id})`)
   }

@@ -20,6 +20,7 @@ import {
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
+import { accessTokenMatches } from "../connection/auth-cas"
 import { recordRefreshedAuth } from "../connection/record-refreshed-auth"
 import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
@@ -71,8 +72,13 @@ class MessengerIntegrationService extends BaseService {
      * an older one that happened to write later.
      */
     updatedAt?: Date
+    /**
+     * Compare-and-set for the refresh cron: write only while the stored access
+     * token is still this one. Returns `false` when a reconnect got there first.
+     */
+    expectedAccessToken?: string
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<boolean> {
     const client = props.tx ?? db
     const [row] = await client
       .update(integrationMessengerModel)
@@ -87,10 +93,19 @@ class MessengerIntegrationService extends BaseService {
         and(
           eq(integrationMessengerModel.id, props.id),
           eq(integrationMessengerModel.workspaceId, props.workspaceId),
+          props.expectedAccessToken
+            ? accessTokenMatches(
+                integrationMessengerModel.auth,
+                props.expectedAccessToken,
+              )
+            : undefined,
         ),
       )
       .returning({ pageId: integrationMessengerModel.pageId })
     if (!row) {
+      if (props.expectedAccessToken) {
+        return false
+      }
       throw notFoundException("Messenger integration not found")
     }
     await recordRefreshedAuth({
@@ -100,6 +115,7 @@ class MessengerIntegrationService extends BaseService {
       auth: props.auth as AuthValue,
       tx: props.tx,
     })
+    return true
   }
 
   /**
@@ -167,7 +183,10 @@ class MessengerIntegrationService extends BaseService {
           eq(integrationMessengerModel.workspaceId, props.workspaceId),
         ),
       )
-      .returning({ pageId: integrationMessengerModel.pageId })
+      .returning({
+        pageId: integrationMessengerModel.pageId,
+        inboxId: integrationMessengerModel.inboxId,
+      })
 
     if (!row) {
       logger.warn(
@@ -182,6 +201,7 @@ class MessengerIntegrationService extends BaseService {
         provider: "messenger",
         identifier: row.pageId,
         workspaceId: props.workspaceId,
+        inboxId: row.inboxId,
         reason: "token_revoked",
       })
       return

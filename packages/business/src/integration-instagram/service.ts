@@ -13,6 +13,7 @@ import type {
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
+import { accessTokenMatches } from "../connection/auth-cas"
 import { recordRefreshedAuth } from "../connection/record-refreshed-auth"
 import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
@@ -94,6 +95,7 @@ class InstagramIntegrationService extends BaseService {
       .returning({
         igId: integrationInstagramModel.igId,
         type: integrationInstagramModel.type,
+        inboxId: integrationInstagramModel.inboxId,
       })
 
     if (!row) {
@@ -111,6 +113,7 @@ class InstagramIntegrationService extends BaseService {
         provider,
         identifier: row.igId,
         workspaceId: props.workspaceId,
+        inboxId: row.inboxId,
         reason: "token_revoked",
       })
       return
@@ -156,8 +159,10 @@ class InstagramIntegrationService extends BaseService {
      * an older one that happened to write later.
      */
     updatedAt?: Date
+    /** Compare-and-set for the refresh cron; see `accessTokenMatches`. */
+    expectedAccessToken?: string
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<boolean> {
     const client = props.tx ?? db
     const [row] = await client
       .update(integrationInstagramModel)
@@ -174,6 +179,12 @@ class InstagramIntegrationService extends BaseService {
         and(
           eq(integrationInstagramModel.id, props.id),
           eq(integrationInstagramModel.workspaceId, props.workspaceId),
+          props.expectedAccessToken
+            ? accessTokenMatches(
+                integrationInstagramModel.auth,
+                props.expectedAccessToken,
+              )
+            : undefined,
         ),
       )
       .returning({
@@ -181,6 +192,9 @@ class InstagramIntegrationService extends BaseService {
         type: integrationInstagramModel.type,
       })
     if (!row) {
+      if (props.expectedAccessToken) {
+        return false
+      }
       throw notFoundException("Instagram integration not found")
     }
     await recordRefreshedAuth({
@@ -190,6 +204,7 @@ class InstagramIntegrationService extends BaseService {
       auth: props.auth as AuthValue,
       tx: props.tx,
     })
+    return true
   }
 
   /**

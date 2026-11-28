@@ -314,13 +314,24 @@ class IntegrationWhatsappRepository {
    * workspace so a forged integration id can never touch another tenant's row.
    */
   async updateAuth(
-    input: WorkspaceIntegrationRef & { auth: Record<string, unknown> },
+    input: WorkspaceIntegrationRef & {
+      auth: Record<string, unknown>
+      /** Compare-and-set: write only while the stored access token is this one. */
+      expectedAccessToken?: string
+    },
     tx: DatabaseClient = db,
   ): Promise<{ phoneNumberId: string } | undefined> {
     const [row] = await tx
       .update(integrationWhatsappModel)
       .set({ auth: input.auth, tokenRefreshError: null })
-      .where(workspaceIntegrationFilter(input))
+      .where(
+        and(
+          workspaceIntegrationFilter(input),
+          input.expectedAccessToken
+            ? sql`${integrationWhatsappModel.auth} -> 'tokens' ->> 'accessToken' = ${input.expectedAccessToken}`
+            : undefined,
+        ),
+      )
       .returning({ phoneNumberId: integrationWhatsappModel.phoneNumberId })
 
     return row
@@ -329,12 +340,15 @@ class IntegrationWhatsappRepository {
   async markTokenRefreshError(
     input: WorkspaceIntegrationRef & { error: string },
     tx: DatabaseClient = db,
-  ): Promise<{ phoneNumberId: string } | undefined> {
+  ): Promise<{ phoneNumberId: string; inboxId: string } | undefined> {
     const [row] = await tx
       .update(integrationWhatsappModel)
       .set({ tokenRefreshError: input.error })
       .where(workspaceIntegrationFilter(input))
-      .returning({ phoneNumberId: integrationWhatsappModel.phoneNumberId })
+      .returning({
+        phoneNumberId: integrationWhatsappModel.phoneNumberId,
+        inboxId: integrationWhatsappModel.inboxId,
+      })
 
     return row
   }
@@ -674,6 +688,8 @@ class IntegrationWhatsappRepository {
         auth: input.auth,
         hasCapiScope: input.hasCapiScope,
         capiScopeCheckedAt: input.capiScopeCheckedAt,
+        // A new token ends the last refresh failure, so the banner clears.
+        tokenRefreshError: null,
       })
       .where(workspaceIntegrationFilter(input))
       .returning()
