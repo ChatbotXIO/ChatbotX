@@ -77,6 +77,9 @@ vi.mock("../src/working-hours/agent-reply-metric", () => ({
   recordAgentReply: vi.fn(),
 }))
 vi.mock("../src/platform/settings", () => ({ resolveTenantSettings: vi.fn() }))
+vi.mock("../src/message/assert-manual-send-window-open", () => ({
+  assertManualSendWindowOpen: vi.fn(),
+}))
 
 const { messageService } = await import("../src/message/service")
 

@@ -45,6 +45,40 @@ export const googleAdsClickResource = z.object({
   receivedAt: z.string().nullable(),
 })
 
+/**
+ * Whether a manual (Inbox / API) message may be sent on this contact inbox now,
+ * derived server-side from `lastIncomingMessageAt` by `resolveMessagingWindow`
+ * (`@chatbotx.io/sdk`) — the same function the builder UI runs, so every client
+ * agrees with the server's own send gate.
+ */
+export const messagingWindowResource = z.object({
+  state: z
+    .enum([
+      "open",
+      "humanAgent",
+      "closed",
+      "unlimited",
+      "notApplicable",
+      "unknown",
+    ])
+    .describe(
+      "`open`: inside the standard window. `humanAgent`: Messenger/Instagram only, past 24h but within 7 days; sends carry the HUMAN_AGENT tag. `closed`: free-form messages are refused (`messagingWindowClosed`, 409); on WhatsApp send a template with `messages.sendWhatsappTemplate`. `unlimited`: the channel has no window. `notApplicable`: a comment conversation. `unknown`: the contact's last incoming message is not recorded; sending is allowed.",
+    ),
+  changesAt: z
+    .date()
+    .nullable()
+    .describe(
+      "Absolute moment `state` changes next (open to humanAgent or closed); null when it never changes.",
+    ),
+  closesAt: z
+    .date()
+    .nullable()
+    .describe(
+      "Absolute moment the window closes for good; null when it does not close.",
+    ),
+})
+export type MessagingWindowResource = z.infer<typeof messagingWindowResource>
+
 // Conversation-only extension of the shared `contactInboxResource` — kept out
 // of the base resource so contact APIs (including public/workspace-token
 // routes that nest `contactInboxResource`) are unaffected. Both conversation
@@ -68,6 +102,9 @@ export const conversationContactInboxResource = contactInboxResource.extend({
   // Nullish for the same version-skew reason as `adReferral.sourceUrl`.
   googleAdsClick: googleAdsClickResource.nullish(),
   lastMessageAt: z.date().nullable(),
+  messagingWindow: messagingWindowResource.describe(
+    "Messaging window of this contact inbox, computed from `lastIncomingMessageAt`.",
+  ),
   threadControlState: threadControlStates.nullish(),
   threadOwnerRole: z.string().nullish(),
   threadControlUpdatedAt: z.date().nullish(),

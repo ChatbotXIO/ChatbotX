@@ -18,6 +18,7 @@ import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
 import { logger } from "../logger"
 import { inboxTranslationSettingsService } from "../translation/settings-service"
+import { assertManualSendWindowOpen } from "./assert-manual-send-window-open"
 import { createOutgoing } from "./create-outgoing"
 import {
   findByIdWithUrls,
@@ -34,6 +35,7 @@ type FindByProps = {
 }
 
 class MessageService extends BaseService {
+  assertManualSendWindowOpen = assertManualSendWindowOpen
   createOutgoing = createOutgoing
   resendOutgoing = resendOutgoing
   listForConversation = listForConversation

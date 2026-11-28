@@ -60,6 +60,7 @@ const {
 
 const mockSettleEvent = vi.fn().mockResolvedValue(undefined)
 const mockRecordParticipantReply = vi.fn().mockResolvedValue(undefined)
+const mockFindContactInboxById = vi.hoisted(() => vi.fn())
 const mockHardDelete = vi.hoisted(() =>
   vi.fn().mockResolvedValue([{ id: "removed" }]),
 )
@@ -87,6 +88,7 @@ vi.mock("@chatbotx.io/business", () => ({
   messageUsageService: { hasRoom: mockHasRoom },
   contactActivityService: { recordDelivered: mockRecordDelivered },
   contactInboxService: {
+    findByIdForWorkspace: mockFindContactInboxById,
     recordOutboundMessageSent: mockRecordOutboundMessageSent,
     recordSendFailure: mockRecordSendFailure,
   },
@@ -527,6 +529,70 @@ describe("chat send-message handlers", () => {
       expect(mockRunChannelHandler.mock.calls[0]?.[2].data.emailThread).toBe(
         undefined,
       )
+    })
+  })
+
+  describe("manual-send contact inbox refresh", () => {
+    const manualMessage = {
+      id: "msg-1",
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      contentType: "text",
+      messageType: "outgoing",
+      senderType: "user",
+      text: "hello",
+    } as never
+    const DAY_MS = 24 * 60 * 60 * 1000
+    const whatsappInbox = (ageMs: number) =>
+      ({
+        ...contactInbox,
+        channel: "whatsapp",
+        lastIncomingMessageAt: new Date(Date.now() - ageMs),
+      }) as never
+
+    beforeEach(() => {
+      mockFindContactInboxById.mockReset()
+    })
+
+    test("re-reads a closed window and passes the fresh timestamp", async () => {
+      const fresh = new Date()
+      mockFindContactInboxById.mockResolvedValue({
+        lastIncomingMessageAt: fresh,
+      })
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: whatsappInbox(2 * DAY_MS),
+        message: manualMessage,
+        sendFrom: "inbox",
+      })
+
+      expect(mockFindContactInboxById).toHaveBeenCalledOnce()
+      expect(
+        mockRunChannelHandler.mock.calls[0]?.[2].data.contact,
+      ).toMatchObject({ lastIncomingMessageAt: fresh })
+    })
+
+    test("does not re-read an open window", async () => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: whatsappInbox(DAY_MS / 2),
+        message: manualMessage,
+        sendFrom: "inbox",
+      })
+
+      expect(mockFindContactInboxById).not.toHaveBeenCalled()
+    })
+
+    test("does not re-read for automation sends", async () => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: whatsappInbox(2 * DAY_MS),
+        message: manualMessage,
+      })
+
+      expect(mockFindContactInboxById).not.toHaveBeenCalled()
     })
   })
 

@@ -22,7 +22,10 @@ vi.mock("@/features/translation/lib/translate-text", () => ({
 }))
 vi.mock("@chatbotx.io/business", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  messageService: { createOutgoing: mocks.createOutgoing },
+  messageService: {
+    createOutgoing: mocks.createOutgoing,
+    assertManualSendWindowOpen: vi.fn().mockResolvedValue(undefined),
+  },
   conversationService: {
     setTranslationOverride: mocks.setTranslationOverride,
   },

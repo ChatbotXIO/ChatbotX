@@ -14,6 +14,7 @@ import { withMessageTranslations } from "@/features/translation/lib/message-tran
 import { sendOutgoing } from "@/features/translation/lib/send-outgoing"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
+  possibleErrorsOnClosedMessagingWindow,
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
   possibleErrorsOnSendingMessage,
@@ -67,7 +68,7 @@ export const contactsMessagesPublicRouter = {
       path: "/v1/contacts/{identifier}/messages",
       summary: "Send message to contact",
       description:
-        "Delivers a text, media or catalog product message (`products`, on channels with product messages such as WhatsApp; ids from `products.listSendable`). For SMTP, this opens a new email thread; use `messages.create` with `conversationId` to reply in an existing thread. Delivery is asynchronous: if the channel finally rejects the message (after any retries), it is removed from the conversation — reading it by id then returns 404 — and the error is written to the workspace Error Log (`errorLogs.list`). Only messages a member sends from the Inbox are kept with their error.",
+        "Delivers a text, media or catalog product message (`products`, on channels with product messages such as WhatsApp; ids from `products.listSendable`). For SMTP, this opens a new email thread; use `messages.create` with `conversationId` to reply in an existing thread. A send past the channel's messaging window is refused up front with `messagingWindowClosed` (409); on WhatsApp send a template with `messages.sendWhatsappTemplate` instead. Delivery is asynchronous: if the channel finally rejects the message (after any retries), it is removed from the conversation — reading it by id then returns 404 — and the error is written to the workspace Error Log (`errorLogs.list`). Only messages a member sends from the Inbox are kept with their error.",
       successStatus: 204,
       tags: ["Contacts"],
       spec: mcpSpec({
@@ -234,7 +235,10 @@ export const contactsMessagesPublicRouter = {
           ),
       }),
     )
-    .errors(possibleErrorsOnMutatingResource)
+    .errors({
+      ...possibleErrorsOnMutatingResource,
+      ...possibleErrorsOnClosedMessagingWindow,
+    })
     .handler(async ({ context, input }) => {
       const contactId = await contactIdFor(context, input.identifier)
       const autoReply = await automatedResponseService.findByInboundKeyword(
@@ -256,6 +260,13 @@ export const contactsMessagesPublicRouter = {
         ? { flowId: autoReply.flowId, inboxId: input.inboxId }
         : { text: autoReply.text ?? "", inboxId: input.inboxId }
 
+      await messageService.assertManualSendWindowOpen({
+        workspaceId: context.workspace.id,
+        conversation,
+        contactInbox,
+        input: parsedInput,
+        sendFrom: "api",
+      })
       await messageService.createOutgoing({
         conversation,
         contactInbox,
@@ -294,7 +305,10 @@ export const contactsMessagesPublicRouter = {
           ),
       }),
     )
-    .errors(possibleErrorsOnMutatingResource)
+    .errors({
+      ...possibleErrorsOnMutatingResource,
+      ...possibleErrorsOnClosedMessagingWindow,
+    })
     .handler(async ({ context, input }) => {
       const contactId = await contactIdFor(context, input.identifier)
       const { conversation, contactInbox } =
@@ -307,10 +321,18 @@ export const contactsMessagesPublicRouter = {
       await assertMemberMayStartFlow(context, input.flowId)
       const user = resolveSenderForCaller(context)
 
+      const flowInput = { flowId: input.flowId, inboxId: input.inboxId }
+      await messageService.assertManualSendWindowOpen({
+        workspaceId: context.workspace.id,
+        conversation,
+        contactInbox,
+        input: flowInput,
+        sendFrom: "api",
+      })
       await messageService.createOutgoing({
         conversation,
         contactInbox,
-        input: { flowId: input.flowId, inboxId: input.inboxId },
+        input: flowInput,
         ...(user && { user }),
         sendFrom: "api",
       })

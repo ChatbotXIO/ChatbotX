@@ -47,6 +47,7 @@ import {
   type OutgoingSendResult,
   parseSdkError,
   type ResolvedProductMessage,
+  resolveConversationMessagingWindow,
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
 import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
@@ -85,6 +86,38 @@ const isDirectMessage = (
 ): boolean =>
   message.type !== "comment" ||
   message.contentAttributes?.isPrivateReply === true
+
+/**
+ * The queued job carries the contact inbox as it was at enqueue time. For a
+ * manual send whose stale window reads `closed`, re-read it once: an incoming
+ * message may have reopened the window while the job waited. Open or
+ * unlimited windows need no read. Only `lastIncomingMessageAt` is patched.
+ */
+async function refreshManualSendContactInbox(props: {
+  contactInbox: ContactInboxModel
+  sendFrom?: SendFrom
+  workspaceId: string
+}): Promise<ContactInboxModel> {
+  const { contactInbox } = props
+  if (!isManualSend(props.sendFrom)) {
+    return contactInbox
+  }
+  const { state } = resolveConversationMessagingWindow({
+    channel: contactInbox.channel,
+    sourceId: null,
+    lastIncomingMessageAt: contactInbox.lastIncomingMessageAt,
+  })
+  if (state !== "closed") {
+    return contactInbox
+  }
+  const current = await contactInboxService.findByIdForWorkspace({
+    id: contactInbox.id,
+    workspaceId: props.workspaceId,
+  })
+  return current
+    ? { ...contactInbox, lastIncomingMessageAt: current.lastIncomingMessageAt }
+    : contactInbox
+}
 
 // Broadcasts and templates are deliberately NOT excluded: the inbox option
 // means "the bot's own direct messages count as read", and every bot send —
@@ -392,11 +425,16 @@ export async function sendMessageToChannel(
       })
     }
 
+    const dispatchContactInbox = await refreshManualSendContactInbox({
+      contactInbox,
+      sendFrom,
+      workspaceId: conversation.workspaceId,
+    })
     const handlerData = {
       ctx,
       data: {
         contact: {
-          ...contactInbox,
+          ...dispatchContactInbox,
           sourceConversationId: resolveSourceConversationId(
             conversation,
             contactInbox.channel,
@@ -1601,11 +1639,16 @@ export async function sendFlowStepToChannel({
   const dispatchedAt = new Date()
   let result: OutgoingSendResult
   try {
+    const dispatchContactInbox = await refreshManualSendContactInbox({
+      contactInbox,
+      sendFrom,
+      workspaceId: conversation.workspaceId,
+    })
     result = await integration.runChannelHandler("message", "sendFlowStep", {
       ctx,
       data: {
         contact: {
-          ...contactInbox,
+          ...dispatchContactInbox,
           sourceConversationId: resolveSourceConversationId(
             conversation,
             contactInbox.channel,

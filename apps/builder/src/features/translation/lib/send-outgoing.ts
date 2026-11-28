@@ -28,6 +28,14 @@ export async function sendOutgoing<
   user?: Pick<UserModel, "id">
   sendFrom: CreateOutgoingArgs["sendFrom"]
 }) {
+  // Refuse before anything is queued, so API, CLI and MCP callers get the
+  // error now instead of a 202 and a failure in the worker. The worker keeps
+  // its own check: the window can close while the job waits.
+  await messageService.assertManualSendWindowOpen({
+    ...props,
+    input: props.input as { flowId?: string; nodeId?: string },
+  })
+
   const { translate, editedTranslation, ...input } = props.input
   const base = {
     conversation: props.conversation,

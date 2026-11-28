@@ -13,6 +13,7 @@ import {
   type WhatsappOptionListStepSchema,
 } from "@chatbotx.io/flow-config"
 import {
+  assertManualSendWindowOpen,
   contentTypes,
   getWhatsappCallPermissionRequest,
   isMessageProductEntity,
@@ -361,12 +362,32 @@ export const handledOutgoingContentEntities = [
   "product_message",
 ] as const satisfies readonly MessageProductEntity["type"][]
 
+type SendMessageData = Parameters<
+  MessageHandlers<WhatsappAuthValue>["sendMessage"]
+>[0]["data"]
+
+function assertWhatsappManualSendWindowOpen(props: {
+  contact: SendMessageData["contact"]
+  sendFrom: SendMessageData["sendFrom"]
+}): void {
+  assertManualSendWindowOpen({
+    channel: "whatsapp",
+    sendFrom: props.sendFrom,
+    lastIncomingMessageAt: props.contact.lastIncomingMessageAt,
+    code: "whatsapp_messaging_window_closed",
+    message:
+      "Cannot send a free-form WhatsApp message more than 24 hours after the contact's last message; send a template instead",
+  })
+}
+
 export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
   async (props) => {
     const {
       ctx,
-      data: { contact, message, quickReplies },
+      data: { contact, message, quickReplies, sendFrom },
     } = props
+    // Last-line gate: the window can close while the job waits in the queue.
+    assertWhatsappManualSendWindowOpen({ contact, sendFrom })
     const whatsappClient = getWhatsappClient(ctx.auth)
     const messageIds: string[] = []
     let sentCount = 0
@@ -457,8 +478,11 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
   async (props) => {
     const {
       ctx,
-      data: { step, contact },
+      data: { step, contact, sendFrom },
     } = props
+    if (step.stepType !== stepTypes.enum.sendWaTemplateMessage) {
+      assertWhatsappManualSendWindowOpen({ contact, sendFrom })
+    }
     const whatsappClient = getWhatsappClient(ctx.auth)
     const messageIds: string[] = []
     let sentCount = 0

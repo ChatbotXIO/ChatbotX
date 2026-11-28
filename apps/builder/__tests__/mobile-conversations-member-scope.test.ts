@@ -45,6 +45,7 @@ const conversationService = {
   setBotEnabledByIds: vi.fn(),
 }
 const messageService = {
+  assertManualSendWindowOpen: vi.fn().mockResolvedValue(undefined),
   findByIdWithUrls: vi.fn(),
   createOutgoing: vi.fn(),
 }

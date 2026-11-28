@@ -15,12 +15,10 @@ import {
   ChannelError,
   ChannelErrorCategory,
   contentTypes,
-  META_HUMAN_AGENT_WINDOW_MS,
-  META_RESPONSE_WINDOW_MS,
   type MessageHandlers,
-  normalizeLastIncomingMessageAt,
   type OutgoingContact,
   type OutgoingMessage,
+  resolveMessagingWindow,
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
 import { isManualSend, type SendFrom } from "@chatbotx.io/utils/send-from"
@@ -57,43 +55,31 @@ export function resolveMessagingPolicy(props: {
 }): InstagramMessagingPolicy {
   const { contact, sendFrom } = props
 
-  const lastIncomingMessageAt = normalizeLastIncomingMessageAt(
-    contact.lastIncomingMessageAt,
-  )
-
-  let nowMs = Date.now()
-  if (props.now instanceof Date) {
-    nowMs = props.now.getTime()
-  } else if (typeof props.now === "number") {
-    nowMs = props.now
-  }
+  const { state } = resolveMessagingWindow({
+    channel: "instagram",
+    isDirect: true,
+    lastIncomingMessageAt: contact.lastIncomingMessageAt,
+    now: props.now,
+  })
 
   if (!isManualSend(sendFrom)) {
-    if (lastIncomingMessageAt) {
-      const elapsedMs = nowMs - lastIncomingMessageAt.getTime()
-      if (elapsedMs > META_RESPONSE_WINDOW_MS) {
-        throw new ChannelError(
-          "Cannot send an Instagram automated message outside the 24-hour response window",
-          ChannelErrorCategory.PAYLOAD_INVALID,
-          { code: "instagram_response_window_expired" },
-        )
-      }
+    // Automation keeps the strict 24h rule: anything past the standard window
+    // (humanAgent or closed) is refused.
+    if (state === "humanAgent" || state === "closed") {
+      throw new ChannelError(
+        "Cannot send an Instagram automated message outside the 24-hour response window",
+        ChannelErrorCategory.PAYLOAD_INVALID,
+        { code: "instagram_response_window_expired" },
+      )
     }
     return { messagingType: "RESPONSE" }
   }
 
-  if (!lastIncomingMessageAt) {
-    return { messagingType: "RESPONSE" }
-  }
-
-  const elapsedMs = nowMs - lastIncomingMessageAt.getTime()
-
-  if (elapsedMs <= META_RESPONSE_WINDOW_MS) {
-    return { messagingType: "RESPONSE" }
-  }
-
-  if (elapsedMs <= META_HUMAN_AGENT_WINDOW_MS) {
+  if (state === "humanAgent") {
     return { messagingType: "MESSAGE_TAG", tag: "HUMAN_AGENT" }
+  }
+  if (state !== "closed") {
+    return { messagingType: "RESPONSE" }
   }
 
   throw new ChannelError(

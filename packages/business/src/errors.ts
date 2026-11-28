@@ -276,6 +276,14 @@ export class BroadcastValidationException extends ChatbotXException {
 export const notFoundException = (message: string) =>
   new ChatbotXException(message, "notFound", 404)
 
+/** A manual send past the channel's messaging window: nothing was queued. */
+export const messagingWindowClosedException = (channel: string) =>
+  new ChatbotXException(
+    `The ${channel} messaging window is closed: the contact must message first to reopen it.`,
+    "messagingWindowClosed",
+    409,
+  )
+
 export const conflictException = (message: string, code: string) =>
   new ChatbotXException(message, code, 409)
 

@@ -1,6 +1,8 @@
 "use server"
 import { conversationService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { getTranslations } from "next-intl/server"
 import { TranslationNotSentException } from "@/features/translation/lib/errors"
 import { sendOutgoing } from "@/features/translation/lib/send-outgoing"
 import { assertConversationAccessForCaller } from "@/lib/public-api/member-scope"
@@ -63,6 +65,19 @@ export const createMessageAction = workspaceActionClient
             conversationTranslation: error.conversationTranslation,
           },
         }
+      }
+      // The composer shows `serverError` as is: say it in the member's language
+      // (the API keeps the English `messagingWindowClosed` message).
+      if (
+        error instanceof ChatbotXException &&
+        error.code === "messagingWindowClosed"
+      ) {
+        const t = await getTranslations()
+        throw new ChatbotXException(
+          t("messages.messagingWindowClosed"),
+          error.code,
+          error.httpStatusCode,
+        )
       }
       throw error
     }

@@ -187,6 +187,12 @@ vi.mock("../../thread-control/service", () => ({
   },
 }))
 
+// The manual-send window gate imports the flow services at module scope,
+// which pulls the real schema resources into this test's mocked schema.
+vi.mock("../../message/assert-manual-send-window-open", () => ({
+  assertManualSendWindowOpen: vi.fn(),
+}))
+
 vi.mock("../../contact-inbox/service", () => ({
   contactInboxService: {},
 }))
