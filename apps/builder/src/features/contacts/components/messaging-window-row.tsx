@@ -11,6 +11,7 @@ import { useEffect, useState } from "react"
 import {
   formatCountdown,
   hasHumanAgentPhase,
+  nextWindowBoundary,
   parseLastIncomingTs,
   resolveSendWindow,
   type WindowPhaseKind,
@@ -18,13 +19,21 @@ import {
 import { UNKNOWN_VALUE_PLACEHOLDER } from "../lib/scoped-identity-rows"
 
 const TICK_INTERVAL_MS = 1000
+/** The window stays open through its last millisecond, so re-render just after it. */
+const BOUNDARY_SETTLE_MS = 1
 
 /**
  * Wall-clock `now` that re-renders once per second, but only while `active`
  * and the document is visible. Exactly one interval exists at a time and it is
- * cleared on deactivate, hide and unmount.
+ * cleared on deactivate, hide and unmount. When `boundaryTs` is given, a
+ * timeout also re-renders right after that instant so a phase change is not
+ * delayed by up to one tick.
  */
-export const useTickingNow = (active: boolean, resetKey: unknown): number => {
+export const useTickingNow = (
+  active: boolean,
+  resetKey: unknown,
+  boundaryTs: number | null = null,
+): number => {
   const [now, setNow] = useState(() => Date.now())
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: resetKey re-syncs the clock when the inputs change
@@ -56,11 +65,21 @@ export const useTickingNow = (active: boolean, resetKey: unknown): number => {
       start()
     }
     document.addEventListener("visibilitychange", onVisibilityChange)
+    const boundaryTimeout =
+      boundaryTs === null
+        ? null
+        : setTimeout(
+            () => setNow(Date.now()),
+            Math.max(0, boundaryTs + BOUNDARY_SETTLE_MS - Date.now()),
+          )
     return () => {
       stop()
+      if (boundaryTimeout !== null) {
+        clearTimeout(boundaryTimeout)
+      }
       document.removeEventListener("visibilitychange", onVisibilityChange)
     }
-  }, [active, resetKey])
+  }, [active, resetKey, boundaryTs])
 
   return now
 }
@@ -97,6 +116,14 @@ export const MessagingWindowRow = ({
   const now = useTickingNow(
     initialState.kind === "open",
     `${channel}:${isDirect}:${lastIncomingTs}`,
+    // Looked up from just before `now`, so the boundary stays "ahead" (and its
+    // timeout armed) until the settle delay after it has passed.
+    nextWindowBoundary({
+      channel,
+      isDirect,
+      lastIncomingTs,
+      now: Date.now() - BOUNDARY_SETTLE_MS,
+    }),
   )
   const state = resolveSendWindow({ channel, isDirect, lastIncomingTs, now })
 

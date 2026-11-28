@@ -58,7 +58,10 @@ type ShareBuilderInput = {
 }
 
 const ELLIPSIS = "…"
-const LINE_BREAK = /\r?\n/
+/** CRLF, CR, LF and the Unicode line and paragraph separators. */
+const LINE_BREAK = /\r\n|[\r\n\u2028\u2029]/
+/** Whitespace plus the zero-width space, non-joiner, joiner and BOM at either end of a line. */
+const EDGE_BLANK = /^[\s\u200B-\u200D\uFEFF]+|[\s\u200B-\u200D\uFEFF]+$/g
 const NAME_LINK_SEPARATOR = "\n"
 const graphemeSegmenter = new Intl.Segmenter(undefined, {
   granularity: "grapheme",
@@ -66,12 +69,15 @@ const graphemeSegmenter = new Intl.Segmenter(undefined, {
 
 /**
  * The first non-blank line of a caption, trimmed: the name a text share leads
- * with. `null` when the caption holds nothing to show.
+ * with. A line is blank when it holds only whitespace and invisible
+ * zero-width characters, which are also trimmed from both ends of the name;
+ * `\r`, `\n`, `\r\n`, U+2028 and U+2029 all break lines. `null` when the
+ * caption holds nothing to show.
  */
 const captionName = (caption: string | null): string | null => {
   const line = (caption ?? "")
     .split(LINE_BREAK)
-    .map((candidate) => candidate.trim())
+    .map((candidate) => candidate.replace(EDGE_BLANK, ""))
     .find((candidate) => candidate !== "")
   return line ?? null
 }

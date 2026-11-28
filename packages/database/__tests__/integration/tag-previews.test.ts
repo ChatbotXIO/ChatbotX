@@ -26,6 +26,9 @@ import { tagRepository } from "../../src/repositories/tag/repository"
 import * as schema from "../../src/schema"
 import { realDatabaseUrl } from "./database-url"
 
+const CONTACT_PROBE_PATTERN = /"ContactToTag"\."contactId" = \$\d+/
+const TAG_PROBE_PATTERN = /"ContactToTag"\."tagId" = "Tag"\."id"/
+
 const databaseUrl = realDatabaseUrl()
 
 type Fixture = {
@@ -289,7 +292,12 @@ describe.skipIf(!databaseUrl)("tag previews by contact", () => {
 
   describe("listOptions", () => {
     const options = (
-      input: { name?: string | null; page?: number; perPage?: number } = {},
+      input: {
+        name?: string | null
+        page?: number
+        perPage?: number
+        contactId?: string
+      } = {},
     ) =>
       tagRepository.listOptions(
         {
@@ -342,6 +350,86 @@ describe.skipIf(!databaseUrl)("tag previews by contact", () => {
       ).toEqual(["100%"])
     })
 
+    describe("with a contact (applied)", () => {
+      const appliedByName = async (
+        input: Parameters<typeof options>[0],
+      ): Promise<Record<string, boolean | undefined>> =>
+        Object.fromEntries(
+          (await options(input)).data.map((tag) => [tag.name, tag.applied]),
+        )
+
+      test("marks the contact's tags on the page, on a later page too, and no one else's", async () => {
+        const tags = await createTags(fixture.workspaceId, [
+          "a1",
+          "a2",
+          "a3",
+          "a4",
+        ])
+        const [contactId, otherContactId] = fixture.contactIds as [
+          string,
+          string,
+        ]
+        await link(contactId, [tags[0]?.id as string, tags[3]?.id as string])
+        await link(otherContactId, [tags[1]?.id as string])
+
+        expect(await appliedByName({ contactId, page: 1, perPage: 2 })).toEqual(
+          { a1: true, a2: false },
+        )
+        expect(await appliedByName({ contactId, page: 2, perPage: 2 })).toEqual(
+          { a3: false, a4: true },
+        )
+        expect((await options({ contactId, perPage: 2 })).pageCount).toBe(2)
+      })
+
+      test("leaves soft-deleted tags and other workspaces' tags out", async () => {
+        const [kept, gone] = await createTags(fixture.workspaceId, [
+          "kept",
+          "gone",
+        ])
+        const [foreign] = await createTags(fixture.otherWorkspaceId, [
+          "foreign",
+        ])
+        const contactId = fixture.contactIds[0] as string
+        await link(contactId, [
+          kept?.id as string,
+          gone?.id as string,
+          foreign?.id as string,
+        ])
+        await database()
+          .update(schema.tagModel)
+          .set({ deletedAt: new Date() })
+          .where(eq(schema.tagModel.id, gone?.id as string))
+
+        expect(await appliedByName({ contactId })).toEqual({ kept: true })
+      })
+
+      test("a contact with no tags gives applied false, and no contact gives no applied key", async () => {
+        await createTags(fixture.workspaceId, ["solo"])
+
+        expect(
+          await appliedByName({ contactId: fixture.contactIds[2] as string }),
+        ).toEqual({ solo: false })
+        const plain = await options()
+        expect(Object.keys(plain.data[0] as object)).not.toContain("applied")
+      })
+
+      test("is one EXISTS probe of ContactToTag by (contactId, tagId) in the page statement", async () => {
+        const tags = await createTags(fixture.workspaceId, ["a1", "a2"])
+        const contactId = fixture.contactIds[0] as string
+        await link(contactId, [tags[0]?.id as string])
+        statements = []
+
+        await options({ contactId })
+
+        // The page and its count: two statements, whatever the contact has.
+        expect(statements).toHaveLength(2)
+        const [listing] = statements
+        expect(listing).toContain("exists")
+        expect(listing).toMatch(CONTACT_PROBE_PATTERN)
+        expect(listing).toMatch(TAG_PROBE_PATTERN)
+      })
+    })
+
     test("counts no contacts per tag", async () => {
       await createTags(fixture.workspaceId, ["solo"])
       statements = []
@@ -351,6 +439,59 @@ describe.skipIf(!databaseUrl)("tag previews by contact", () => {
       expect(
         statements.some((query) => query.includes("contacts_to_tags")),
       ).toBe(false)
+    })
+  })
+  describe("listAppliedTagIds", () => {
+    const applied = (contactId: string, tagIds: string[]) =>
+      tagRepository.listAppliedTagIds(
+        { contactId, tagIds, workspaceId: fixture.workspaceId },
+        database() as unknown as DatabaseClient,
+      )
+
+    test("returns only the asked tags the contact has", async () => {
+      const [first, second] = fixture.contactIds
+      const tags = await createTags(fixture.workspaceId, ["a", "b", "c"])
+      await link(first, [tags[0].id, tags[1].id])
+      await link(second, [tags[2].id])
+
+      const result = await applied(
+        first,
+        tags.map((tag) => tag.id),
+      )
+
+      expect(result.sort()).toEqual([tags[0].id, tags[1].id].sort())
+      expect(await applied(first, [tags[1].id, tags[2].id])).toEqual([
+        tags[1].id,
+      ])
+    })
+
+    test("ignores soft-deleted tags and tags of another workspace", async () => {
+      const [contactId] = fixture.contactIds
+      const [live, deleted] = await createTags(fixture.workspaceId, [
+        "live",
+        "deleted",
+      ])
+      const [foreign] = await createTags(fixture.otherWorkspaceId, ["foreign"])
+      await link(contactId, [live.id, deleted.id, foreign.id])
+      await database()
+        .update(schema.tagModel)
+        .set({ deletedAt: new Date() })
+        .where(eq(schema.tagModel.id, deleted.id))
+
+      expect(
+        await applied(contactId, [live.id, deleted.id, foreign.id]),
+      ).toEqual([live.id])
+    })
+
+    test("an empty list reads nothing and a duplicate id is reported once", async () => {
+      const [contactId] = fixture.contactIds
+      const [tag] = await createTags(fixture.workspaceId, ["a"])
+      await link(contactId, [tag.id])
+      statements = []
+
+      expect(await applied(contactId, [])).toEqual([])
+      expect(statements).toHaveLength(0)
+      expect(await applied(contactId, [tag.id, tag.id])).toEqual([tag.id])
     })
   })
 })

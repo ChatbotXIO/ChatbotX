@@ -1663,7 +1663,7 @@
     "clone": "Clonează",
     "remove": "Elimină",
     "restore": "Restaurează",
-    "loadMore": "Load more",
+    "loadMore": "Încarcă mai multe",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Culoare",
     "choose": "Alege o culoare",
-    "remove": "Elimină culoarea"
+    "presetLabel": "Alege culoarea {color}",
+    "previewLabel": "Previzualizare culoare temă",
+    "previewPlaceholder": "Numele etichetei"
   },
   "composerTags": {
-    "contactLoadError": "Etichetele acestui contact nu au putut fi încărcate.",
     "title": "Etichete",
     "searchLabel": "Caută etichete",
     "searchPlaceholder": "Caută etichete",
@@ -12700,6 +12701,7 @@
     "noMatch": "Nicio etichetă nu corespunde căutării.",
     "addFailed": "Eticheta „{name}” nu a putut fi adăugată.",
     "removeFailed": "Eticheta „{name}” nu a putut fi eliminată.",
+    "refreshFailed": "Etichetele nu au putut fi reîmprospătate. Reîncarcă pentru a vedea cele mai noi.",
     "disabledNoContact": "Această conversație nu are un contact de etichetat.",
     "disabledBlocked": "Acest contact este blocat, deci etichetele lui nu pot fi modificate.",
     "disabledNoAccess": "Nu ai acces să modifici etichetele acestui contact."

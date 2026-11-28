@@ -8,12 +8,12 @@ import {
   DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { TAG_PRESET_COLORS } from "@chatbotx.io/utils/color"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusIcon } from "lucide-react"
@@ -25,6 +25,18 @@ import { useInvalidateTags } from "@/features/tags/provider/tag-hook"
 import { createTagAction } from "./actions/create-tag-action"
 import { createTagRequest } from "./schema/action"
 import { TagColorField } from "./tag-color-field"
+import {
+  TAG_DIALOG_BODY_CLASS,
+  TAG_DIALOG_CANCEL_CLASS,
+  TAG_DIALOG_CONFIRM_CLASS,
+  TAG_DIALOG_CONTENT_CLASS,
+  TAG_DIALOG_FIELD_CLASS,
+  TAG_DIALOG_FOOTER_CLASS,
+  TAG_DIALOG_FORM_CLASS,
+  TAG_DIALOG_HEADER_CLASS,
+  TAG_DIALOG_INPUT_CLASS,
+  TAG_DIALOG_TITLE_CLASS,
+} from "./tag-dialog-styles"
 
 type CreateTagDialogProps = {
   workspaceId: string
@@ -66,7 +78,7 @@ export const CreateTagDialog = ({
           defaultValues: {
             name: "",
             folderId: null,
-            color: null,
+            color: TAG_PRESET_COLORS[0],
           },
         },
         errorMapProps: {},
@@ -101,27 +113,44 @@ export const CreateTagDialog = ({
           </Button>
         }
       />
-      <DialogContent className="max-h-screen max-w-xl overflow-y-scroll">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className={TAG_DIALOG_CONTENT_CLASS}>
+        <DialogHeader className={TAG_DIALOG_HEADER_CLASS}>
+          <DialogTitle className={TAG_DIALOG_TITLE_CLASS}>
             {t("messages.createFeature", { feature: t("fields.tag.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <Form {...form}>
-          <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-            <InputField label={t("fields.name.label")} name="name" required />
-            <TagColorField />
+          <form
+            className={TAG_DIALOG_FORM_CLASS}
+            onSubmit={handleSubmitWithAction}
+          >
+            <div className={TAG_DIALOG_BODY_CLASS}>
+              <InputField
+                className={TAG_DIALOG_INPUT_CLASS}
+                formItemClassName={TAG_DIALOG_FIELD_CLASS}
+                label={t("fields.name.label")}
+                name="name"
+                required
+              />
+              <TagColorField />
+            </div>
 
-            <DialogFooter>
+            <div className={TAG_DIALOG_FOOTER_CLASS}>
               <DialogClose
                 render={
-                  <Button size="sm" type="button" variant="ghost">
+                  <Button
+                    className={TAG_DIALOG_CANCEL_CLASS}
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
                     {t("actions.cancel")}
                   </Button>
                 }
               />
               <Button
+                className={TAG_DIALOG_CONFIRM_CLASS}
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
@@ -133,7 +162,7 @@ export const CreateTagDialog = ({
                 )}
                 {t("actions.confirm")}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </Form>
       </DialogContent>

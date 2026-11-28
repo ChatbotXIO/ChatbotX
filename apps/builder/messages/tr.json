@@ -151,7 +151,7 @@
     "clone": "Klonla",
     "remove": "Kaldır",
     "restore": "Geri Yükle",
-    "loadMore": "Load more",
+    "loadMore": "Daha fazla yükle",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Renk",
     "choose": "Renk seç",
-    "remove": "Rengi kaldır"
+    "presetLabel": "{color} rengini seç",
+    "previewLabel": "Tema rengi önizlemesi",
+    "previewPlaceholder": "Etiket adı"
   },
   "composerTags": {
-    "contactLoadError": "Bu kişinin etiketleri yüklenemedi.",
     "title": "Etiketler",
     "searchLabel": "Etiket ara",
     "searchPlaceholder": "Etiket ara",
@@ -12700,6 +12701,7 @@
     "noMatch": "Aramanızla eşleşen etiket yok.",
     "addFailed": "\"{name}\" etiketi eklenemedi.",
     "removeFailed": "\"{name}\" etiketi kaldırılamadı.",
+    "refreshFailed": "Etiketler yenilenemedi. En güncel hâli görmek için sayfayı yenileyin.",
     "disabledNoContact": "Bu görüşmede etiketlenecek bir kişi yok.",
     "disabledBlocked": "Bu kişi engellendiği için etiketleri değiştirilemez.",
     "disabledNoAccess": "Bu kişinin etiketlerini değiştirme erişiminiz yok."

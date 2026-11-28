@@ -301,6 +301,32 @@ describe("attachToContact / detachFromContact", () => {
     expect(published()).toEqual([["ws-1", ["c-1"]]])
   })
 
+  test("attachToContact returns the ids of the live tags, already linked included", async () => {
+    state.tags = [{ id: "tag-1" }]
+    insertReturning.mockResolvedValue([])
+
+    const linked = await tagService.attachToContact({
+      workspaceId: "ws-1",
+      contactId: "c-1",
+      tagIds: ["tag-1"],
+    })
+
+    expect(linked).toEqual(["tag-1"])
+  })
+
+  test("attachToContact returns nothing for a tag deleted since it was listed", async () => {
+    state.tags = []
+
+    const linked = await tagService.attachToContact({
+      workspaceId: "ws-1",
+      contactId: "c-1",
+      tagIds: ["tag-1"],
+    })
+
+    expect(linked).toEqual([])
+    expect(published()).toEqual([])
+  })
+
   test("attachToContact publishes nothing when the tag was already on the contact", async () => {
     await tagService.attachToContact({
       workspaceId: "ws-1",
@@ -430,13 +456,13 @@ describe("attachToContact / detachFromContact by id for a member", () => {
     expect(invalidateCacheByTags).not.toHaveBeenCalled()
   })
 
-  test("assertLiveTags passes for live tags and throws not-found when one is gone", async () => {
+  test("requireLiveTags returns the live tags and throws not-found when one is gone", async () => {
     await expect(
-      tagService.assertLiveTags({ workspaceId: "ws-1", tagIds: ["tag-1"] }),
-    ).resolves.toBeUndefined()
+      tagService.requireLiveTags({ workspaceId: "ws-1", tagIds: ["tag-1"] }),
+    ).resolves.toEqual([{ id: "tag-1", name: "alpha" }])
 
     await expect(
-      tagService.assertLiveTags({
+      tagService.requireLiveTags({
         workspaceId: "ws-1",
         tagIds: ["tag-1", "tag-deleted"],
       }),

@@ -155,7 +155,7 @@
     "view": "Visa",
     "viewAnalytics": "Visa analys",
     "wait": "Vänta",
-    "loadMore": "Load more",
+    "loadMore": "Ladda fler",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Färg",
     "choose": "Välj en färg",
-    "remove": "Ta bort färg"
+    "presetLabel": "Välj färgen {color}",
+    "previewLabel": "Förhandsvisning av temafärg",
+    "previewPlaceholder": "Taggnamn"
   },
   "composerTags": {
-    "contactLoadError": "Det gick inte att läsa in den här kontaktens taggar.",
     "title": "Taggar",
     "searchLabel": "Sök taggar",
     "searchPlaceholder": "Sök taggar",
@@ -12700,6 +12701,7 @@
     "noMatch": "Inga taggar matchar sökningen.",
     "addFailed": "Det gick inte att lägga till taggen \"{name}\".",
     "removeFailed": "Det gick inte att ta bort taggen \"{name}\".",
+    "refreshFailed": "Det gick inte att uppdatera taggarna. Ladda om för att se de senaste.",
     "disabledNoContact": "Den här konversationen har ingen kontakt att tagga.",
     "disabledBlocked": "Den här kontakten är blockerad, så dess taggar kan inte ändras.",
     "disabledNoAccess": "Du har inte behörighet att ändra den här kontaktens taggar."

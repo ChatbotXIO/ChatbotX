@@ -5,6 +5,7 @@ import {
   type DatabaseClient,
   db,
   eq,
+  exists,
   ilike,
   isNull,
   lte,
@@ -39,7 +40,8 @@ export type TagOption = {
 
 /** One page of `tagRepository.listOptions`. */
 export type TagOptionPage = {
-  data: TagOption[]
+  /** `applied` is present only when the page was read for a contact. */
+  data: (TagOption & { applied?: boolean })[]
   pageCount: number
 }
 
@@ -52,6 +54,14 @@ export const tagRepository = {
    * Live tags of a workspace by name then id, one page at a time, optionally
    * filtered by a name substring. Unlike the management list it counts no
    * contacts per tag: id, name and color only.
+   *
+   * With `contactId` each row also carries `applied`: whether that contact has
+   * the tag. It is an EXISTS on the page's tags only, probing `ContactToTag`
+   * by its primary key `(contactId, tagId)`. Postgres may plan that EXISTS as
+   * a hashed SubPlan, which reads the contact's links once, so the cost can
+   * grow with the contact's own tag count but never with the workspace's. The
+   * caller checks the contact is reachable; a foreign contact id just yields
+   * `applied: false` rows. Without `contactId` the rows have no `applied` key.
    */
   async listOptions(
     input: {
@@ -59,6 +69,7 @@ export const tagRepository = {
       name?: string | null
       page: number
       perPage: number
+      contactId?: string | null
     },
     tx: DatabaseClient = db,
   ): Promise<TagOptionPage> {
@@ -67,21 +78,76 @@ export const tagRepository = {
       isNull(tagModel.deletedAt),
       input.name ? ilike(tagModel.name, likeContains(input.name)) : undefined,
     )
+    const { contactId } = input
+    const optionColumns = {
+      id: tagModel.id,
+      name: tagModel.name,
+      color: tagModel.color,
+    }
+    const offset = (input.page - 1) * input.perPage
     const [data, totalRows] = await Promise.all([
-      tx
-        .select({
-          id: tagModel.id,
-          name: tagModel.name,
-          color: tagModel.color,
-        })
-        .from(tagModel)
-        .where(where)
-        .orderBy(asc(tagModel.name), asc(tagModel.id))
-        .limit(input.perPage)
-        .offset((input.page - 1) * input.perPage),
+      contactId
+        ? tx
+            .select({
+              ...optionColumns,
+              applied: exists(
+                tx
+                  .select({ one: sql`1` })
+                  .from(contactsToTagsModel)
+                  .where(
+                    and(
+                      eq(contactsToTagsModel.contactId, contactId),
+                      eq(contactsToTagsModel.tagId, tagModel.id),
+                    ),
+                  ),
+              ).mapWith(Boolean),
+            })
+            .from(tagModel)
+            .where(where)
+            .orderBy(asc(tagModel.name), asc(tagModel.id))
+            .limit(input.perPage)
+            .offset(offset)
+        : tx
+            .select(optionColumns)
+            .from(tagModel)
+            .where(where)
+            .orderBy(asc(tagModel.name), asc(tagModel.id))
+            .limit(input.perPage)
+            .offset(offset),
       tx.$count(tagModel, where),
     ])
     return { data, pageCount: Math.ceil(totalRows / input.perPage) }
+  },
+
+  /**
+   * Which of `tagIds` the contact has: a probe of `ContactToTag` by its
+   * primary key `(contactId, tagId)` joined to the live tags of the workspace,
+   * so deleted tags and ids of other workspaces are never reported. One
+   * `= ANY` bind however many ids (the request caps them); an empty list is
+   * answered without a query. The caller checks the contact is
+   * reachable.
+   */
+  async listAppliedTagIds(
+    input: { contactId: string; tagIds: string[]; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<string[]> {
+    const tagIds = [...new Set(input.tagIds)]
+    if (tagIds.length === 0) {
+      return []
+    }
+    const rows = await tx
+      .select({ tagId: contactsToTagsModel.tagId })
+      .from(contactsToTagsModel)
+      .innerJoin(tagModel, eq(tagModel.id, contactsToTagsModel.tagId))
+      .where(
+        and(
+          eq(contactsToTagsModel.contactId, input.contactId),
+          anyOf(contactsToTagsModel.tagId, tagIds),
+          eq(tagModel.workspaceId, input.workspaceId),
+          isNull(tagModel.deletedAt),
+        ),
+      )
+    return rows.map((row) => row.tagId)
   },
 
   /**

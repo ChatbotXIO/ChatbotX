@@ -147,9 +147,31 @@ type SharedQueue = {
    * newer held intent.
    */
   settlements: Map<string, symbol>
+  /** Settle sequence (see `currentTagToggleSettleSequence`) of each tag's latest settlement. */
+  settledAt: Map<string, number>
+  /** Global settle sequence when this entry was created: a check begun earlier outlived a release. */
+  createdAtSequence: number
+  /** Callers waiting for a tag to have nothing in flight and no settlement running. */
+  idleWaiters: Map<string, (() => void)[]>
 }
 
 const sharedQueues = new Map<string, SharedQueue>()
+
+/** Counts every settlement of every contact, so "settled after this point" is comparable across entries. */
+let settleSequence = 0
+
+/** Key of the shared queue of one contact. */
+export const tagToggleQueueKey = (
+  workspaceId: string,
+  contactId: string,
+): string => `${workspaceId}:${contactId}`
+
+/**
+ * Where the settlements are now. A caller that starts a read of the server's
+ * state takes this first, then asks `isTagToggleSettledAfter` with it when
+ * the answer comes: a tag settled since the read began is newer than it.
+ */
+export const currentTagToggleSettleSequence = (): number => settleSequence
 
 export type TagToggleSubscription = {
   queue: TagToggleQueue
@@ -159,14 +181,27 @@ export type TagToggleSubscription = {
   unsubscribe: () => void
 }
 
-/** Drops the entry once no view shows it and nothing is in flight or queued. */
+/** Drops the entry once no view shows it and nothing is in flight, queued or settling. */
 const releaseIfUnused = (key: string, shared: SharedQueue): void => {
   if (
     sharedQueues.get(key) === shared &&
     shared.subscriber === null &&
-    shared.queue.pending().size === 0
+    shared.queue.pending().size === 0 &&
+    shared.settlements.size === 0
   ) {
     sharedQueues.delete(key)
+  }
+}
+
+/** Resolves the callers waiting on a tag once it is idle (nothing queued, no settlement). */
+const resolveIdleWaiters = (shared: SharedQueue, tagId: string): void => {
+  if (shared.queue.pendingIntent(tagId) || shared.settlements.has(tagId)) {
+    return
+  }
+  const waiters = shared.idleWaiters.get(tagId) ?? []
+  shared.idleWaiters.delete(tagId)
+  for (const resolve of waiters) {
+    resolve()
   }
 }
 
@@ -191,6 +226,9 @@ export const subscribeTagToggleQueue = (
       work,
       names: new Map(),
       settlements: new Map(),
+      settledAt: new Map(),
+      idleWaiters: new Map(),
+      createdAtSequence: settleSequence,
       queue: createTagToggleQueue({
         send: (tagId, intent) => created.work.send(tagId, intent),
         onError: (failure) =>
@@ -203,6 +241,8 @@ export const subscribeTagToggleQueue = (
           created.names.delete(tagId)
           const token = Symbol(tagId)
           created.settlements.set(tagId, token)
+          settleSequence += 1
+          created.settledAt.set(tagId, settleSequence)
           if (lastIntentSucceeded) {
             created.subscriber?.onHold(tagId, lastIntent)
           }
@@ -213,8 +253,9 @@ export const subscribeTagToggleQueue = (
                 created.settlements.delete(tagId)
                 created.subscriber?.onRelease(tagId)
               }
+              resolveIdleWaiters(created, tagId)
+              releaseIfUnused(key, created)
             })
-          releaseIfUnused(key, created)
         },
       }),
     }
@@ -242,3 +283,55 @@ export const subscribeTagToggleQueue = (
 
 /** Number of shared queues alive; for tests. */
 export const sharedTagToggleQueueCount = (): number => sharedQueues.size
+
+/** Tags of the contact with a request still in flight or queued (empty when none). */
+export const pendingTagToggleIntents = (
+  key: string,
+): ReadonlyMap<string, TagToggleIntent> =>
+  sharedQueues.get(key)?.queue.pending() ?? new Map()
+
+/**
+ * Whether the tag's latest request of this agent settled after `sequence` was
+ * taken (`currentTagToggleSettleSequence`), so a read of the server begun
+ * before then may predate it.
+ */
+export const isTagToggleSettledAfter = (
+  key: string,
+  tagId: string,
+  sequence: number,
+): boolean => {
+  const shared = sharedQueues.get(key)
+  // Entry already released (unsubscribed): its settlement time is gone, so
+  // answer conservatively with the global sequence; the caller rechecks.
+  if (!shared) {
+    return settleSequence > sequence
+  }
+  // Entry recreated after the check began: the one the check saw is gone and
+  // so are its settlement times.
+  if (sequence < shared.createdAtSequence) {
+    return true
+  }
+  return (shared.settledAt.get(tagId) ?? 0) > sequence
+}
+
+/** Resolves once the tag has nothing in flight or queued and its settlement has finished. */
+export const whenTagToggleIdle = (
+  key: string,
+  tagId: string,
+): Promise<void> => {
+  const shared = sharedQueues.get(key)
+  if (
+    !(
+      shared &&
+      (shared.queue.pendingIntent(tagId) || shared.settlements.has(tagId))
+    )
+  ) {
+    return Promise.resolve()
+  }
+  return new Promise((resolve) => {
+    shared.idleWaiters.set(tagId, [
+      ...(shared.idleWaiters.get(tagId) ?? []),
+      resolve,
+    ])
+  })
+}

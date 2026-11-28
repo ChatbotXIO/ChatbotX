@@ -151,7 +151,7 @@
     "clone": "Cloner",
     "remove": "Retirer",
     "restore": "Restaurer",
-    "loadMore": "Load more",
+    "loadMore": "Charger plus",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Couleur",
     "choose": "Choisir une couleur",
-    "remove": "Retirer la couleur"
+    "presetLabel": "Choisir la couleur {color}",
+    "previewLabel": "Aperçu de la couleur du thème",
+    "previewPlaceholder": "Nom du tag"
   },
   "composerTags": {
-    "contactLoadError": "Impossible de charger les étiquettes de ce contact.",
     "title": "Étiquettes",
     "searchLabel": "Rechercher des étiquettes",
     "searchPlaceholder": "Rechercher des étiquettes",
@@ -12700,6 +12701,7 @@
     "noMatch": "Aucune étiquette ne correspond à votre recherche.",
     "addFailed": "Impossible d'ajouter l'étiquette « {name} ».",
     "removeFailed": "Impossible de retirer l'étiquette « {name} ».",
+    "refreshFailed": "Impossible d’actualiser les tags. Rechargez pour voir les plus récents.",
     "disabledNoContact": "Cette conversation n'a aucun contact à étiqueter.",
     "disabledBlocked": "Ce contact est bloqué, ses étiquettes ne peuvent donc pas être modifiées.",
     "disabledNoAccess": "Vous n'avez pas l'accès nécessaire pour modifier les étiquettes de ce contact."

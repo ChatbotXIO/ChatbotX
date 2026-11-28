@@ -28,6 +28,13 @@ const relativeLuminance = (hex: string): number =>
   0.7152 * linearChannel(channelByte(hex, 3)) +
   0.0722 * linearChannel(channelByte(hex, 5))
 
+/** Relative luminance above which a color is nearly white. */
+const VERY_LIGHT_LUMINANCE = 0.85
+
+/** Whether `#RRGGBB` is so light it needs an outline to read as a shape on a light surface. */
+export const isVeryLightColor = (hex: string): boolean =>
+  HEX_COLOR_PATTERN.test(hex) && relativeLuminance(hex) > VERY_LIGHT_LUMINANCE
+
 /** WCAG contrast ratio between two `#RRGGBB` colors. */
 const contrastRatio = (first: string, second: string): number => {
   const a = relativeLuminance(first)
@@ -50,13 +57,73 @@ export const readableTextColor = (hex: string): string => {
     : READABLE_TEXT_DARK
 }
 
-/** Inline style of a tag chip: its color as background with readable text, or none for an uncolored tag. */
-export const tagChipStyle = (
+/** Fill of a grid cell whose tag has no color. */
+export const TAG_GRID_NEUTRAL_COLOR = "#8C8C8C"
+
+/** Share of the tag color kept in the fill of a cell the contact does not have. */
+export const TAG_GRID_UNAPPLIED_ALPHA = 0.4
+
+/** `#RRGGBB` as `rgba(r, g, b, alpha)`. */
+const hexToRgbaString = (hex: string, alpha: number): string =>
+  `rgba(${channelByte(hex, 1)}, ${channelByte(hex, 3)}, ${channelByte(hex, 5)}, ${alpha})`
+
+/** Muted text, and the dot, on a nearly white cell, where white would vanish. */
+export const TAG_GRID_LIGHT_FILL_TEXT_COLOR = "#667085"
+/** Opaque faded fill of a nearly white tag the contact does not have (40% white disappears into the surface). */
+export const TAG_GRID_LIGHT_FILL_UNAPPLIED_COLOR = "#EAECF0"
+
+export type TagGridCellStyle = {
+  backgroundColor: string
+  color: string
+  /** Color of the applied-tag corner dot. */
+  dotColor: string
+  /** The tag color is nearly white: the cell needs an outline to not read as a hole. */
+  needsOutline: boolean
+}
+
+/**
+ * Inline style of a composer tag-grid cell: the tag color (neutral gray when
+ * it has none) at full strength when the contact has the tag and at 40% alpha
+ * when not, with white text and dot. A nearly white tag, where white would
+ * vanish, gets muted gray text and dot, and an opaque faded fill when not
+ * applied, and asks for an outline.
+ */
+export const tagGridCellStyle = (
   color: string | null | undefined,
-): { backgroundColor: string; color: string } | undefined =>
-  color
-    ? { backgroundColor: color, color: readableTextColor(color) }
-    : undefined
+  isApplied: boolean,
+): TagGridCellStyle => {
+  const base =
+    color && HEX_COLOR_PATTERN.test(color) ? color : TAG_GRID_NEUTRAL_COLOR
+  if (isVeryLightColor(base)) {
+    return {
+      backgroundColor: isApplied ? base : TAG_GRID_LIGHT_FILL_UNAPPLIED_COLOR,
+      color: TAG_GRID_LIGHT_FILL_TEXT_COLOR,
+      dotColor: TAG_GRID_LIGHT_FILL_TEXT_COLOR,
+      needsOutline: true,
+    }
+  }
+  return {
+    backgroundColor: isApplied
+      ? base
+      : hexToRgbaString(base, TAG_GRID_UNAPPLIED_ALPHA),
+    color: READABLE_TEXT_LIGHT,
+    dotColor: READABLE_TEXT_LIGHT,
+    needsOutline: false,
+  }
+}
+
+/** Colors offered as one-click swatches when a tag gets a color (all `#RRGGBB`, upper case). */
+export const TAG_PRESET_COLORS = [
+  "#0E2F44",
+  "#FF7A45",
+  "#FA8C16",
+  "#13C2C2",
+  "#1890FF",
+  "#597EF7",
+  "#9254DE",
+  "#FFC53D",
+  "#1CAE67",
+] as const
 
 /** Share of the tag color kept in the pastel background and border. */
 const BADGE_BACKGROUND_COLOR_SHARE = 0.15

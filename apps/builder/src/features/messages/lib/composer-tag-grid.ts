@@ -7,11 +7,41 @@ export const COMPOSER_TAG_PAGE_SIZE = 50
 /** Wait after the last keystroke before the search is sent. */
 export const COMPOSER_TAG_SEARCH_DEBOUNCE_MS = 300
 
-/** Height of one chip row plus its gap, in px; the collapsed grid shows 3 rows. */
-export const COMPOSER_TAG_ROW_PX = 30
+/** Cell height and the gap between cells and rows, in px (no container padding or background). */
+export const COMPOSER_TAG_CELL_PX = 20
+export const COMPOSER_TAG_GAP_PX = 1
 export const COMPOSER_TAG_COLLAPSED_ROWS = 3
 export const COMPOSER_TAG_COLLAPSED_MAX_PX =
-  COMPOSER_TAG_ROW_PX * COMPOSER_TAG_COLLAPSED_ROWS
+  COMPOSER_TAG_CELL_PX * COMPOSER_TAG_COLLAPSED_ROWS +
+  COMPOSER_TAG_GAP_PX * (COMPOSER_TAG_COLLAPSED_ROWS - 1)
+
+/** Narrowest a cell may get, and the most cells on one row. */
+export const COMPOSER_TAG_MIN_CELL_PX = 88
+export const COMPOSER_TAG_MAX_COLUMNS = 10
+
+/** Cells per row for a container `widthPx` wide. */
+export const composerTagColumns = (widthPx: number): number =>
+  Math.min(
+    COMPOSER_TAG_MAX_COLUMNS,
+    Math.max(1, Math.floor(widthPx / COMPOSER_TAG_MIN_CELL_PX)),
+  )
+
+/**
+ * Splits `items` into rows of `columns`, the shorter remainder row FIRST (23
+ * items at 10 columns: 3, 10, 10) so the full rows sit flush at the bottom.
+ */
+export const chunkRemainderFirst = <T>(
+  items: readonly T[],
+  columns: number,
+): T[][] => {
+  const size = Math.max(1, Math.floor(columns))
+  const remainder = items.length % size
+  const rows: T[][] = remainder > 0 ? [items.slice(0, remainder)] : []
+  for (let start = remainder; start < items.length; start += size) {
+    rows.push(items.slice(start, start + size))
+  }
+  return rows
+}
 
 export const composerTagDisabledReasons = [
   "noContact",
@@ -58,12 +88,13 @@ export const nextTagPageParam = (
  * contact's last read, so the chip reacts at once and never flashes back.
  */
 export const isTagShownApplied = (input: {
+  /** Whether the contact's last read says it has the tag. */
+  applied: boolean
   tagId: string
-  appliedTagIds: ReadonlySet<string>
   unsettled: ReadonlyMap<string, TagToggleIntent>
 }): boolean => {
   const intent = input.unsettled.get(input.tagId)
-  return intent ? intent === "add" : input.appliedTagIds.has(input.tagId)
+  return intent ? intent === "add" : input.applied
 }
 
 /** HTTP statuses that mean "this member cannot read this contact". */

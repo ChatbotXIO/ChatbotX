@@ -4,12 +4,8 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { tagChipStyle } from "@chatbotx.io/utils/color"
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useQuery,
-} from "@tanstack/react-query"
+import { tagGridCellStyle } from "@chatbotx.io/utils/color"
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
 import {
   ChevronDownIcon,
   ChevronUpIcon,
@@ -26,9 +22,12 @@ import { orpc } from "@/lib/orpc/query"
 import { useComposerTagToggle } from "../hooks/use-composer-tag-toggle"
 import {
   COMPOSER_TAG_COLLAPSED_MAX_PX,
+  COMPOSER_TAG_MAX_COLUMNS,
   COMPOSER_TAG_PAGE_SIZE,
   COMPOSER_TAG_SEARCH_DEBOUNCE_MS,
   type ComposerTagDisabledReason,
+  chunkRemainderFirst,
+  composerTagColumns,
   isContactAccessError,
   isTagShownApplied,
   nextTagPageParam,
@@ -71,41 +70,47 @@ function TagChip({
   onToggle,
   onFocus,
 }: TagChipProps) {
-  const color = tag.color
+  const cellStyle = tagGridCellStyle(tag.color, isApplied)
   return (
     <button
       aria-pressed={isApplied}
       className={cn(
-        "relative flex h-7 min-w-0 items-center justify-center rounded-sm px-3 text-center text-xs outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:cursor-not-allowed",
-        !color && "bg-muted text-foreground",
-        !isDisabled && "hover:opacity-80",
-        isDisabled && "opacity-40",
+        "relative min-w-0 flex-1 basis-0 cursor-pointer truncate rounded-[2px] px-2 text-center font-normal text-[10px] normal-case leading-[20px] tracking-normal subpixel-antialiased outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:hover:opacity-70 disabled:cursor-not-allowed",
+        // Nearly white tags would read as holes.
+        cellStyle.needsOutline && "ring-1 ring-black/10 ring-inset",
+        isDisabled && "opacity-50",
         isSettling && "animate-pulse opacity-70",
       )}
       data-applied={isApplied}
       disabled={isDisabled}
       onClick={() => onToggle(tag, isApplied)}
       onFocus={onFocus}
-      style={tagChipStyle(color)}
+      style={{
+        backgroundColor: cellStyle.backgroundColor,
+        color: cellStyle.color,
+      }}
       title={tag.name}
       type="button"
     >
       {isApplied && (
         <span
           aria-hidden
-          className="absolute top-1 left-1 size-1.5 rounded-full bg-current"
+          className="absolute top-[3px] left-[3px] size-1 rounded-full"
           data-applied-dot
+          style={{ backgroundColor: cellStyle.dotColor }}
         />
       )}
-      <span className="min-w-0 truncate">{tag.name}</span>
+      {tag.name}
     </button>
   )
 }
 
 /**
- * Every workspace tag as a filled, equal-width cell above the composer, a corner dot on the ones
- * the open contact has. A click adds or removes the tag at once; the contact
- * is re-read when the request settles (`useComposerTagToggle`).
+ * Every workspace tag as an equal-width cell above the composer: full color and a corner dot on the ones the open contact
+ * has (`applied`, from the options call), 40% color on the rest, laid out in
+ * rows with the short remainder row first. A click adds or
+ * removes the tag at once; the cached pages are patched when the request
+ * settles (`useComposerTagToggle`).
  */
 export function ComposerTagGrid({
   workspaceId,
@@ -117,6 +122,7 @@ export function ComposerTagGrid({
   const [searchText, setSearchText] = useState("")
   const [isExpanded, setIsExpanded] = useState(false)
   const [isOverflowing, setIsOverflowing] = useState(false)
+  const [columns, setColumns] = useState(COMPOSER_TAG_MAX_COLUMNS)
   const gridRef = useRef<HTMLDivElement>(null)
   const search = useDebouncedValue(
     searchText.trim(),
@@ -132,23 +138,19 @@ export function ComposerTagGrid({
         page,
         perPage: COMPOSER_TAG_PAGE_SIZE,
         name: search || undefined,
+        // The server says which of this page's tags the contact has.
+        contactId: contactId ?? undefined,
       }),
     }),
     // Keep the chips on screen while a new search loads.
     placeholderData: keepPreviousData,
   })
 
-  const contactQuery = useQuery(
-    orpc.contactsAPIs.getContactAuthenticatedAPI.queryOptions({
-      input: { workspaceId, contactId: contactId ?? "" },
-      enabled: Boolean(contactId),
-    }),
-  )
-
+  // The options call checks the member can reach the contact: not found or
+  // forbidden means no access. Any other failure is a load error to retry.
   const hasNoContactAccess =
-    contactQuery.isError && isContactAccessError(contactQuery.error)
-  // Any other failure is not a permission verdict: offer a retry.
-  const contactLoadFailed = contactQuery.isError && !hasNoContactAccess
+    tagsQuery.isError && isContactAccessError(tagsQuery.error)
+  const tagsLoadFailed = tagsQuery.isError && !hasNoContactAccess
 
   const disabledReason = resolveComposerTagDisabledReason({
     contactId,
@@ -175,21 +177,23 @@ export function ComposerTagGrid({
       ),
     [tagsQuery.data],
   )
-  const appliedTagIds = useMemo(
-    () => new Set((contactQuery.data?.tags ?? []).map((tag) => tag.id)),
-    [contactQuery.data],
+  const rows = useMemo(
+    () => chunkRemainderFirst(tags, columns),
+    [tags, columns],
   )
 
-  // Whether the chips need more than the collapsed rows; re-measured when the
-  // list or the available width changes.
+  // Cells per row and whether the rows need more than the collapsed height;
+  // re-measured when the list or the available width changes.
   // biome-ignore lint/correctness/useExhaustiveDependencies: tags.length re-measures after a page loads
   useEffect(() => {
     const element = gridRef.current
     if (!element) {
       return
     }
-    const measure = () =>
+    const measure = () => {
+      setColumns(composerTagColumns(element.clientWidth))
       setIsOverflowing(element.scrollHeight > COMPOSER_TAG_COLLAPSED_MAX_PX + 1)
+    }
     measure()
     if (typeof ResizeObserver === "undefined") {
       return
@@ -202,6 +206,9 @@ export function ComposerTagGrid({
   const isLoading = tagsQuery.isPending
   const hasNoTagsAtAll = !(isLoading || tagsQuery.isError) && tags.length === 0
   const showToggle = isOverflowing || isExpanded || tagsQuery.hasNextPage
+  // Search only helps (and is only shown) when the tags overflow the collapsed
+  // rows, more pages exist, or a term is active and must stay clearable.
+  const showSearch = showToggle || searchText.trim() !== ""
 
   // A chip clipped by the collapsed height: expand so focus never scrolls
   // the hidden container.
@@ -223,73 +230,73 @@ export function ComposerTagGrid({
       aria-label={t("title")}
       className="flex flex-col gap-1.5 border-b px-2.5 pb-2"
     >
-      <div className="flex items-center gap-1.5">
-        <div className="relative max-w-56 flex-1">
-          <SearchIcon
-            aria-hidden
-            className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground"
-          />
-          <Input
-            aria-label={t("searchLabel")}
-            className="h-7 pl-7 text-xs"
-            onChange={(event) => setSearchText(event.target.value)}
-            placeholder={t("searchPlaceholder")}
-            type="search"
-            value={searchText}
-          />
+      {(showSearch || showToggle) && (
+        <div className="flex items-center gap-1.5">
+          {showSearch && (
+            <div className="relative max-w-56 flex-1">
+              <SearchIcon
+                aria-hidden
+                className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground"
+              />
+              <Input
+                aria-label={t("searchLabel")}
+                className="h-7 pl-7 text-xs"
+                onChange={(event) => setSearchText(event.target.value)}
+                placeholder={t("searchPlaceholder")}
+                type="search"
+                value={searchText}
+              />
+            </div>
+          )}
+          {showToggle && (
+            <Button
+              aria-expanded={isExpanded}
+              className="ml-auto h-7 gap-1 px-2 text-xs"
+              onClick={() => {
+                if (isExpanded && gridRef.current) {
+                  // The expanded grid scrolls; collapse back to the first rows.
+                  gridRef.current.scrollTop = 0
+                }
+                setIsExpanded((previous) => !previous)
+              }}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              {isExpanded ? (
+                <ChevronUpIcon aria-hidden className="size-3.5" />
+              ) : (
+                <ChevronDownIcon aria-hidden className="size-3.5" />
+              )}
+              {isExpanded ? t("collapse") : t("expand")}
+            </Button>
+          )}
         </div>
-        {showToggle && (
-          <Button
-            aria-expanded={isExpanded}
-            className="ml-auto h-7 gap-1 px-2 text-xs"
-            onClick={() => {
-              if (isExpanded && gridRef.current) {
-                // The expanded grid scrolls; collapse back to the first rows.
-                gridRef.current.scrollTop = 0
-              }
-              setIsExpanded((previous) => !previous)
-            }}
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            {isExpanded ? (
-              <ChevronUpIcon aria-hidden className="size-3.5" />
-            ) : (
-              <ChevronDownIcon aria-hidden className="size-3.5" />
-            )}
-            {isExpanded ? t("collapse") : t("expand")}
-          </Button>
-        )}
-      </div>
+      )}
 
       {disabledReason && (
-        <p className="text-muted-foreground text-xs" role="status">
+        <p className="px-2.5 py-1 text-muted-foreground text-xs" role="status">
           {t(disabledReasonKey[disabledReason])}
         </p>
       )}
 
       {isLoading && (
-        <div
-          aria-busy
-          className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-0.5"
-        >
+        <div aria-busy className="flex gap-px">
           {SKELETON_CHIP_KEYS.map((key) => (
-            <Skeleton className="h-7 rounded-sm" key={key} />
+            <Skeleton
+              className="h-[20px] min-w-0 flex-1 rounded-[2px]"
+              key={key}
+            />
           ))}
         </div>
       )}
 
-      {(tagsQuery.isError || contactLoadFailed) && (
-        <div className="flex items-center gap-2 text-muted-foreground text-xs">
-          <span>
-            {tagsQuery.isError ? t("loadError") : t("contactLoadError")}
-          </span>
+      {tagsLoadFailed && (
+        <div className="flex items-center gap-2 px-2.5 py-1 text-muted-foreground text-xs">
+          <span>{t("loadError")}</span>
           <Button
             className="h-6 px-2 text-xs"
-            onClick={() =>
-              tagsQuery.isError ? tagsQuery.refetch() : contactQuery.refetch()
-            }
+            onClick={() => tagsQuery.refetch()}
             size="sm"
             type="button"
             variant="ghost"
@@ -300,7 +307,7 @@ export function ComposerTagGrid({
       )}
 
       {hasNoTagsAtAll && (
-        <p className="text-muted-foreground text-xs">
+        <p className="px-2.5 py-1 text-muted-foreground text-xs">
           {search ? t("noMatch") : t("empty")}
         </p>
       )}
@@ -308,7 +315,7 @@ export function ComposerTagGrid({
       {tags.length > 0 && (
         <div
           className={cn(
-            "relative grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] content-start gap-0.5",
+            "relative flex flex-col gap-px",
             isExpanded ? "max-h-52 overflow-y-auto" : "overflow-hidden",
           )}
           ref={gridRef}
@@ -318,28 +325,28 @@ export function ComposerTagGrid({
               : { maxHeight: COMPOSER_TAG_COLLAPSED_MAX_PX }
           }
         >
-          {tags.map((tag) => (
-            <TagChip
-              isApplied={isTagShownApplied({
-                tagId: tag.id,
-                appliedTagIds,
-                unsettled,
-              })}
-              isDisabled={
-                disabledReason !== null ||
-                contactQuery.isPending ||
-                contactQuery.isError
-              }
-              isSettling={unsettled.has(tag.id)}
-              key={tag.id}
-              onFocus={onFocusChip}
-              onToggle={onToggle}
-              tag={tag}
-            />
+          {rows.map((row) => (
+            <div className="flex gap-px" key={row[0]?.id}>
+              {row.map((tag) => (
+                <TagChip
+                  isApplied={isTagShownApplied({
+                    applied: tag.applied === true,
+                    tagId: tag.id,
+                    unsettled,
+                  })}
+                  isDisabled={disabledReason !== null}
+                  isSettling={unsettled.has(tag.id)}
+                  key={tag.id}
+                  onFocus={onFocusChip}
+                  onToggle={onToggle}
+                  tag={tag}
+                />
+              ))}
+            </div>
           ))}
           {isExpanded && tagsQuery.hasNextPage && (
             <Button
-              className="col-span-full h-7 px-2 text-xs"
+              className="h-6 px-2 text-xs"
               disabled={tagsQuery.isFetchingNextPage}
               onClick={() => tagsQuery.fetchNextPage()}
               size="sm"

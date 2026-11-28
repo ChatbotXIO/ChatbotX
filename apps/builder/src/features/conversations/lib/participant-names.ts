@@ -6,11 +6,24 @@ export type ParticipantNameSummary = {
   /** How many names are written out (at most {@link MAX_INLINE_PARTICIPANT_NAMES}). */
   shownCount: number
   /**
-   * The "+N" label: how many loaded participants are not named, with a
-   * trailing "+" when the server has more pages. Empty when everyone loaded is
-   * named and nothing more is coming.
+   * What follows the "+" of the "+N" label: how many loaded participants are
+   * not named, with a trailing "+" when the server has more pages. `""` is the
+   * bare "+" (nothing hidden yet, more is coming); `null` means no label.
    */
-  overflowLabel: string
+  overflowLabel: string | null
+}
+
+/** The trimmed name, or null when it is missing, empty or only whitespace. */
+export const namedOrNull = (name: string | null): string | null => {
+  const trimmed = name?.trim()
+  return trimmed ? trimmed : null
+}
+
+const overflowLabelOf = (hidden: number, hasMore: boolean): string | null => {
+  if (hidden > 0) {
+    return `${hidden}${hasMore ? "+" : ""}`
+  }
+  return hasMore ? "" : null
 }
 
 /**
@@ -26,6 +39,6 @@ export const summarizeParticipantNames = (
   const hidden = loadedCount - shownCount
   return {
     shownCount,
-    overflowLabel: `${hidden > 0 ? hidden : ""}${hasMore ? "+" : ""}`,
+    overflowLabel: overflowLabelOf(hidden, hasMore),
   }
 }

@@ -79,8 +79,9 @@ describe("MessagingWindowRow", () => {
     expect(valueText()).toBe(
       "fields.channelProfile.messagingWindow.humanAgentOpen|143:59:59",
     )
-    // Keeps ticking through the whole human-agent phase.
-    expect(vi.getTimerCount()).toBe(1)
+    // Keeps ticking (interval) through the whole human-agent phase, with a
+    // timeout armed for its end.
+    expect(vi.getTimerCount()).toBe(2)
     act(() => {
       vi.advanceTimersByTime(7 * 24 * HOUR_MS)
     })
@@ -93,7 +94,8 @@ describe("MessagingWindowRow", () => {
       channel: "whatsapp",
       lastIncomingMessageAt: new Date(NOW - 24 * HOUR_MS + 2000),
     })
-    expect(vi.getTimerCount()).toBe(1)
+    // The 1 s interval and the timeout for the end of the window.
+    expect(vi.getTimerCount()).toBe(2)
     act(() => {
       vi.advanceTimersByTime(3000)
     })
@@ -132,13 +134,13 @@ describe("MessagingWindowRow", () => {
     expect(vi.getTimerCount()).toBe(0)
   })
 
-  test("clears its interval and listener on unmount", () => {
+  test("clears its interval, boundary timeout and listener on unmount", () => {
     const removeSpy = vi.spyOn(document, "removeEventListener")
     render({
       channel: "instagram",
       lastIncomingMessageAt: new Date(NOW - HOUR_MS),
     })
-    expect(vi.getTimerCount()).toBe(1)
+    expect(vi.getTimerCount()).toBe(2)
     act(() => root.unmount())
     expect(vi.getTimerCount()).toBe(0)
     expect(removeSpy).toHaveBeenCalledWith(
@@ -149,24 +151,24 @@ describe("MessagingWindowRow", () => {
     root = createRoot(container)
   })
 
-  test("pauses the interval while the document is hidden", () => {
+  test("pauses the interval while the document is hidden (the boundary timeout stays)", () => {
     render({
       channel: "instagram",
       lastIncomingMessageAt: new Date(NOW - HOUR_MS),
     })
-    expect(vi.getTimerCount()).toBe(1)
+    expect(vi.getTimerCount()).toBe(2)
     const visibility = vi
       .spyOn(document, "visibilityState", "get")
       .mockReturnValue("hidden")
     act(() => {
       document.dispatchEvent(new Event("visibilitychange"))
     })
-    expect(vi.getTimerCount()).toBe(0)
+    expect(vi.getTimerCount()).toBe(1)
     visibility.mockReturnValue("visible")
     act(() => {
       document.dispatchEvent(new Event("visibilitychange"))
     })
-    expect(vi.getTimerCount()).toBe(1)
+    expect(vi.getTimerCount()).toBe(2)
   })
 
   test("restarts counting when a new incoming message arrives while closed", () => {
@@ -179,6 +181,6 @@ describe("MessagingWindowRow", () => {
     expect(valueText()).toBe(
       "fields.channelProfile.messagingWindow.open|24:00:00",
     )
-    expect(vi.getTimerCount()).toBe(1)
+    expect(vi.getTimerCount()).toBe(2)
   })
 })

@@ -151,7 +151,7 @@
     "clone": "استنساخ",
     "remove": "إزالة",
     "restore": "استعادة",
-    "loadMore": "Load more",
+    "loadMore": "تحميل المزيد",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "اللون",
     "choose": "اختر لونًا",
-    "remove": "إزالة اللون"
+    "presetLabel": "اختر اللون {color}",
+    "previewLabel": "معاينة لون السمة",
+    "previewPlaceholder": "اسم الوسم"
   },
   "composerTags": {
-    "contactLoadError": "تعذّر تحميل وسوم جهة الاتصال هذه.",
     "title": "الوسوم",
     "searchLabel": "البحث في الوسوم",
     "searchPlaceholder": "البحث في الوسوم",
@@ -12700,6 +12701,7 @@
     "noMatch": "لا توجد وسوم تطابق بحثك.",
     "addFailed": "تعذّرت إضافة الوسم \"{name}\".",
     "removeFailed": "تعذّرت إزالة الوسم \"{name}\".",
+    "refreshFailed": "تعذّر تحديث الوسوم. أعد التحميل لرؤية الأحدث.",
     "disabledNoContact": "لا توجد جهة اتصال في هذه المحادثة لإضافة وسوم إليها.",
     "disabledBlocked": "جهة الاتصال هذه محظورة، لذا لا يمكن تغيير وسومها.",
     "disabledNoAccess": "ليس لديك صلاحية تغيير وسوم جهة الاتصال هذه."

@@ -35,6 +35,18 @@ import {
 } from "./lib/update-tag-payload"
 import { updateTagSchema } from "./schema/action"
 import { TagColorField } from "./tag-color-field"
+import {
+  TAG_DIALOG_BODY_CLASS,
+  TAG_DIALOG_CANCEL_CLASS,
+  TAG_DIALOG_CONFIRM_CLASS,
+  TAG_DIALOG_CONTENT_CLASS,
+  TAG_DIALOG_FIELD_CLASS,
+  TAG_DIALOG_FOOTER_CLASS,
+  TAG_DIALOG_FORM_CLASS,
+  TAG_DIALOG_HEADER_CLASS,
+  TAG_DIALOG_INPUT_CLASS,
+  TAG_DIALOG_TITLE_CLASS,
+} from "./tag-dialog-styles"
 
 export function UpdateTagDialog({
   workspaceId,
@@ -107,16 +119,16 @@ export function UpdateTagDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className={TAG_DIALOG_CONTENT_CLASS}>
+        <DialogHeader className={TAG_DIALOG_HEADER_CLASS}>
+          <DialogTitle className={TAG_DIALOG_TITLE_CLASS}>
             {t("messages.editFeature", { feature: t("fields.tag.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
-        <div className="flex items-center space-x-2">
-          <Form {...form}>
-            <form className="flex-1 space-y-4" onSubmit={onSubmit}>
+        <Form {...form}>
+          <form className={TAG_DIALOG_FORM_CLASS} onSubmit={onSubmit}>
+            <div className={TAG_DIALOG_BODY_CLASS}>
               <LockedDialogFieldset
                 bannerKey="tagEditorBanner"
                 resourceId={tag?.id}
@@ -125,10 +137,11 @@ export function UpdateTagDialog({
                   control={form.control}
                   name="name"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className={TAG_DIALOG_FIELD_CLASS}>
                       <FormLabel>{t("fields.name.label")}</FormLabel>
                       <FormControl>
                         <Input
+                          className={TAG_DIALOG_INPUT_CLASS}
                           placeholder={t("fields.name.label")}
                           {...field}
                         />
@@ -140,30 +153,32 @@ export function UpdateTagDialog({
               </LockedDialogFieldset>
               {/* Color stays editable on a View-only copy: the lock policy covers the name only. */}
               <TagColorField key={tag?.id} />
-              <div className="flex justify-end gap-4">
-                <Button
-                  onClick={() => onOpenChange(false)}
-                  type="button"
-                  variant="ghost"
-                >
-                  {t("actions.cancel")}
-                </Button>
-                <Button
-                  disabled={
-                    !(form.formState.isDirty && form.formState.isValid) ||
-                    form.formState.isSubmitting
-                  }
-                  type="submit"
-                >
-                  {form.formState.isSubmitting && (
-                    <Loader2Icon className="animate-spin" />
-                  )}
-                  {t("actions.confirm")}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </div>
+            </div>
+            <div className={TAG_DIALOG_FOOTER_CLASS}>
+              <Button
+                className={TAG_DIALOG_CANCEL_CLASS}
+                onClick={() => onOpenChange(false)}
+                type="button"
+                variant="secondary"
+              >
+                {t("actions.cancel")}
+              </Button>
+              <Button
+                className={TAG_DIALOG_CONFIRM_CLASS}
+                disabled={
+                  !(form.formState.isDirty && form.formState.isValid) ||
+                  form.formState.isSubmitting
+                }
+                type="submit"
+              >
+                {form.formState.isSubmitting && (
+                  <Loader2Icon className="animate-spin" />
+                )}
+                {t("actions.confirm")}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

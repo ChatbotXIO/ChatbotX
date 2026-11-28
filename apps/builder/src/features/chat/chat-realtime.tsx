@@ -7,11 +7,13 @@ import { useContext, useEffect, useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
 import type { RealtimeHandlerMap } from "@/features/realtime/types"
 import { useWorkspaceRealtimeEvents } from "@/features/realtime/use-workspace-realtime-events"
+import { APPLIED_TAG_IDS_MAX } from "@/features/tags/schema/query"
 import { useWorkspaceId } from "@/hooks/routing"
 import { createBoundedSeenSet } from "@/lib/bounded-seen-set"
 import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
 import { orpc } from "@/lib/orpc/query"
+import { contactTagsQueryOptions } from "../contacts/lib/contact-tags-query"
 import { useConversationIdParam } from "../conversations/hooks/use-conversation-id-param"
 import { conversationParticipantsQueryOptions } from "../conversations/hooks/use-conversation-participants"
 import { mergeParticipantReplyIntoPages } from "../conversations/lib/merge-participant-reply"
@@ -22,6 +24,20 @@ import {
 import type { ConversationParticipantResource } from "../conversations/schema/resource"
 import { outboundCallModeQueryKeys } from "../integration-whatsapp/calling/voip/outbound-call-mode-query-key"
 import { useWhatsappVoipCallStore } from "../integration-whatsapp/calling/voip/voip-call-store"
+import {
+  type ComposerTagAppliedRefresher,
+  createComposerTagAppliedRefresher,
+} from "../messages/lib/composer-tag-applied-refresher"
+import {
+  composerTagOptionsKey,
+  loadedTagOptionIds,
+  patchTagOptionsAppliedFromServer,
+} from "../messages/lib/composer-tag-cache"
+import {
+  currentTagToggleSettleSequence,
+  tagToggleQueueKey,
+  whenTagToggleIdle,
+} from "../messages/lib/tag-toggle-queue"
 import type { MessageResourceWithRelations } from "../messages/schema/resource"
 import { useResponseSlaEnabled } from "../response-sla/provider/response-sla-hook"
 import { useTranslationUiStore } from "../translation/store/translation-ui-store"
@@ -165,6 +181,49 @@ export function ChatRealtime() {
       tagPreviewRefresherRef.current = null
     }
   }, [chatStoreApi, workspaceId])
+  const composerTagRefresherRef = useRef<ComposerTagAppliedRefresher | null>(
+    null,
+  )
+  useEffect(() => {
+    const refresher = createComposerTagAppliedRefresher({
+      loadedTagIds: (contactId) =>
+        loadedTagOptionIds(queryClient, { workspaceId, contactId }),
+      fetchApplied: async (contactId, tagIds) =>
+        (
+          await client.tagsAPI.privateListAppliedTagIdsAPI({
+            workspaceId,
+            contactId,
+            tagIds,
+          })
+        ).appliedTagIds,
+      maxTagIdsPerRequest: APPLIED_TAG_IDS_MAX,
+      settleSequence: currentTagToggleSettleSequence,
+      apply: (contactId, checkedTagIds, appliedTagIds, requestSequence) =>
+        patchTagOptionsAppliedFromServer(queryClient, {
+          workspaceId,
+          contactId,
+          checkedTagIds,
+          appliedTagIds,
+          requestSequence,
+        }),
+      whenTagIdle: (contactId, tagId) =>
+        whenTagToggleIdle(tagToggleQueueKey(workspaceId, contactId), tagId),
+      onFailure: (contactId, error) => {
+        logger.warn(
+          { err: error },
+          "[chat-realtime] applied-tag check failed, re-reading the grid",
+        )
+        queryClient.invalidateQueries({
+          queryKey: composerTagOptionsKey(workspaceId, contactId),
+        })
+      },
+    })
+    composerTagRefresherRef.current = refresher
+    return () => {
+      refresher.dispose()
+      composerTagRefresherRef.current = null
+    }
+  }, [queryClient, workspaceId])
   const { data: members } = useWorkspaceMembers(workspaceId)
   const conversationIdParam = useConversationIdParam()
   const responseSlaEnabled = useResponseSlaEnabled()
@@ -546,16 +605,28 @@ export function ChatRealtime() {
     },
     contactTagsChanged: (event) => {
       tagPreviewRefresherRef.current?.notify(event.data.contactIds)
-      // The composer grid reads the open contact's tags from its own query:
-      // refresh that one contact only (never a query per loaded row). The
-      // toggle hook's pending/held overlay keeps winning while a click of this
-      // agent is in flight.
+      // The composer grid reads the open contact's tags from its own options
+      // query (one page per request): one small applied-check for the loaded
+      // tag ids, patched into the cache in place (never a refetch of every
+      // loaded page). A tag with a click of this agent in flight is left
+      // alone. The contact itself (its tag list can be huge) is only marked
+      // stale, never refetched here: this client's own clicks echo through
+      // this event too. The panel's Tags editor reads a query of its own,
+      // refetched here only while the section is open (an active observer).
       const activeContactId = getActiveContactId()
       if (activeContactId && event.data.contactIds.includes(activeContactId)) {
+        composerTagRefresherRef.current?.notify(activeContactId)
+        queryClient.invalidateQueries({
+          queryKey: contactTagsQueryOptions({
+            workspaceId,
+            contactId: activeContactId,
+          }).queryKey,
+        })
         queryClient.invalidateQueries({
           queryKey: orpc.contactsAPIs.getContactAuthenticatedAPI.queryOptions({
             input: { workspaceId, contactId: activeContactId },
           }).queryKey,
+          refetchType: "none",
         })
       }
     },

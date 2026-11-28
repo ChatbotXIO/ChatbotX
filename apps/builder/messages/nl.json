@@ -151,7 +151,7 @@
     "clone": "Klonen",
     "remove": "Verwijderen",
     "restore": "Herstellen",
-    "loadMore": "Load more",
+    "loadMore": "Meer laden",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Kleur",
     "choose": "Kies een kleur",
-    "remove": "Kleur verwijderen"
+    "presetLabel": "Kies kleur {color}",
+    "previewLabel": "Voorbeeld van themakleur",
+    "previewPlaceholder": "Tagnaam"
   },
   "composerTags": {
-    "contactLoadError": "De tags van dit contact konden niet worden geladen.",
     "title": "Tags",
     "searchLabel": "Tags zoeken",
     "searchPlaceholder": "Tags zoeken",
@@ -12700,6 +12701,7 @@
     "noMatch": "Geen tags komen overeen met je zoekopdracht.",
     "addFailed": "De tag \"{name}\" kon niet worden toegevoegd.",
     "removeFailed": "De tag \"{name}\" kon niet worden verwijderd.",
+    "refreshFailed": "Kan de tags niet vernieuwen. Herlaad om de nieuwste te zien.",
     "disabledNoContact": "Dit gesprek heeft geen contact om te taggen.",
     "disabledBlocked": "Dit contact is geblokkeerd, dus de tags kunnen niet worden gewijzigd.",
     "disabledNoAccess": "Je hebt geen toegang om de tags van dit contact te wijzigen."

@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Rəng",
     "choose": "Rəng seçin",
-    "remove": "Rəngi sil"
+    "presetLabel": "{color} rəngini seçin",
+    "previewLabel": "Mövzu rənginin önizləməsi",
+    "previewPlaceholder": "Etiket adı"
   },
   "composerTags": {
-    "contactLoadError": "Bu kontaktın teqləri yüklənmədi.",
     "title": "Teqlər",
     "searchLabel": "Teqlərdə axtar",
     "searchPlaceholder": "Teqlərdə axtar",
@@ -12700,6 +12701,7 @@
     "noMatch": "Axtarışınıza uyğun teq yoxdur.",
     "addFailed": "\"{name}\" teqi əlavə edilmədi.",
     "removeFailed": "\"{name}\" teqi silinmədi.",
+    "refreshFailed": "Teqləri yeniləmək mümkün olmadı. Ən sonuncunu görmək üçün səhifəni yeniləyin.",
     "disabledNoContact": "Bu söhbətdə teq vurulacaq kontakt yoxdur.",
     "disabledBlocked": "Bu kontakt bloklanıb, ona görə teqləri dəyişdirilə bilməz.",
     "disabledNoAccess": "Bu kontaktın teqlərini dəyişmək üçün icazəniz yoxdur."

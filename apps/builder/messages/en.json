@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Color",
     "choose": "Choose a color",
-    "remove": "Remove color"
+    "presetLabel": "Choose color {color}",
+    "previewLabel": "Theme color preview",
+    "previewPlaceholder": "Tag name"
   },
   "composerTags": {
-    "contactLoadError": "Could not load this contact's tags.",
     "title": "Tags",
     "searchLabel": "Search tags",
     "searchPlaceholder": "Search tags",
@@ -12700,6 +12701,7 @@
     "noMatch": "No tags match your search.",
     "addFailed": "Could not add the tag \"{name}\".",
     "removeFailed": "Could not remove the tag \"{name}\".",
+    "refreshFailed": "Could not refresh the tags. Reload to see the latest.",
     "disabledNoContact": "This conversation has no contact to tag.",
     "disabledBlocked": "This contact is blocked, so its tags cannot be changed.",
     "disabledNoAccess": "You do not have access to change this contact's tags."

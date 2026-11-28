@@ -151,7 +151,7 @@
     "clone": "Clonar",
     "remove": "Remover",
     "restore": "Restaurar",
-    "loadMore": "Load more",
+    "loadMore": "Carregar mais",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Cor",
     "choose": "Escolher uma cor",
-    "remove": "Remover cor"
+    "presetLabel": "Escolher a cor {color}",
+    "previewLabel": "Pré-visualização da cor do tema",
+    "previewPlaceholder": "Nome da tag"
   },
   "composerTags": {
-    "contactLoadError": "Não foi possível carregar as tags deste contato.",
     "title": "Tags",
     "searchLabel": "Buscar tags",
     "searchPlaceholder": "Buscar tags",
@@ -12700,6 +12701,7 @@
     "noMatch": "Nenhuma tag corresponde à sua busca.",
     "addFailed": "Não foi possível adicionar a tag \"{name}\".",
     "removeFailed": "Não foi possível remover a tag \"{name}\".",
+    "refreshFailed": "Não foi possível atualizar as tags. Recarregue para ver as mais recentes.",
     "disabledNoContact": "Esta conversa não tem um contato para etiquetar.",
     "disabledBlocked": "Este contato está bloqueado, então suas tags não podem ser alteradas.",
     "disabledNoAccess": "Você não tem acesso para alterar as tags deste contato."

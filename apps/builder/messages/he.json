@@ -151,7 +151,7 @@
     "clone": "שכפול",
     "remove": "הסרה",
     "restore": "שחזור",
-    "loadMore": "Load more",
+    "loadMore": "טען עוד",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "צבע",
     "choose": "בחירת צבע",
-    "remove": "הסרת צבע"
+    "presetLabel": "בחר את הצבע {color}",
+    "previewLabel": "תצוגה מקדימה של צבע הנושא",
+    "previewPlaceholder": "שם התגית"
   },
   "composerTags": {
-    "contactLoadError": "לא ניתן לטעון את התגיות של איש קשר זה.",
     "title": "תגיות",
     "searchLabel": "חיפוש תגיות",
     "searchPlaceholder": "חיפוש תגיות",
@@ -12700,6 +12701,7 @@
     "noMatch": "אין תגיות שתואמות לחיפוש.",
     "addFailed": "לא ניתן להוסיף את התגית \"{name}\".",
     "removeFailed": "לא ניתן להסיר את התגית \"{name}\".",
+    "refreshFailed": "לא ניתן לרענן את התגים. טען מחדש כדי לראות את העדכניים.",
     "disabledNoContact": "לשיחה זו אין איש קשר לתיוג.",
     "disabledBlocked": "איש הקשר הזה חסום, ולכן אי אפשר לשנות את התגיות שלו.",
     "disabledNoAccess": "אין לך הרשאה לשנות את התגיות של איש קשר זה."

@@ -140,6 +140,8 @@ export function getTagColumns({
       meta: {
         label: t("fields.contacts.label"),
       },
+      // The count is computed per page row, not a sortable column.
+      enableSorting: false,
       enableHiding: false,
     },
     {

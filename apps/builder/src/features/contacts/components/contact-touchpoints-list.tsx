@@ -200,7 +200,13 @@ const TouchpointRow = ({
       <div className="min-w-0 flex-1">
         <div className="truncate text-muted-foreground text-xs">{label}</div>
         {item.resourceName ? (
-          <div className="truncate font-medium">{item.resourceName}</div>
+          <div
+            className="truncate font-medium"
+            data-testid="touchpoint-resource-name"
+            title={item.resourceName}
+          >
+            {item.resourceName}
+          </div>
         ) : null}
         {details.length > 0 ? (
           <div className="truncate text-muted-foreground">
@@ -222,7 +228,7 @@ const TouchpointRow = ({
     </>
   )
   const className =
-    "flex items-start gap-2 rounded-md border p-2 transition-colors hover:bg-muted"
+    "flex min-w-0 items-start gap-2 rounded-md border p-2 transition-colors hover:bg-muted"
 
   if (toolHref) {
     return (
@@ -244,7 +250,7 @@ const TouchpointRow = ({
     )
   }
   return (
-    <div className="flex items-start gap-2 rounded-md border p-2">
+    <div className="flex min-w-0 items-start gap-2 rounded-md border p-2">
       {content}
     </div>
   )
@@ -301,7 +307,8 @@ export const ContactTouchpointsList = ({
   }
 
   return (
-    <div className="grid gap-2 px-2 text-sm">
+    // `minmax(0, 1fr)`: the default `auto` track grows to a long unbroken name and widens the panel.
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-2 px-2 text-sm">
       {rows.map((item) => (
         <TouchpointRow
           item={item}

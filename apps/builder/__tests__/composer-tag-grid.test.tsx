@@ -12,13 +12,17 @@ const mocks = vi.hoisted(() => ({
   removeAction: vi.fn(),
   listTags: vi.fn(),
   getContact: vi.fn(),
+  contactTags: vi.fn(),
   toastError: vi.fn(),
 }))
 
 vi.mock("@/lib/orpc/orpc", () => ({
   client: {
     tagsAPI: { privateListWorkspaceTagOptionsAPI: mocks.listTags },
-    contactsAPIs: { getContactAuthenticatedAPI: mocks.getContact },
+    contactsAPIs: {
+      getContactAuthenticatedAPI: mocks.getContact,
+      listContactTagsAuthenticatedAPI: mocks.contactTags,
+    },
   },
 }))
 vi.mock("@/features/contacts/actions/add-contact-tag-by-id.action", () => ({
@@ -37,6 +41,9 @@ vi.mock("@/hooks/use-debounced-value", () => ({
 }))
 
 const { orpc } = await import("@/lib/orpc/query")
+const { composerTagOptionsKey } = await import(
+  "@/features/messages/lib/composer-tag-cache"
+)
 const { ComposerTagGrid } = await import(
   "@/features/messages/components/composer-tag-grid"
 )
@@ -53,7 +60,7 @@ describe("ComposerTagGrid", () => {
   let container: HTMLDivElement
   let root: Root
   let queryClient: QueryClient
-  let contactTags: { id: string }[]
+  let appliedIds: string[]
 
   const flush = async () => {
     for (let i = 0; i < 6; i++) {
@@ -92,18 +99,25 @@ describe("ComposerTagGrid", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    contactTags = []
-    mocks.listTags.mockResolvedValue({
-      data: [tag("t1", "alpha", "#000000"), tag("t2", "beta")],
+    appliedIds = []
+    // The server answers `applied` per tag of the page for the asked contact.
+    mocks.listTags.mockImplementation(async () => ({
+      data: [tag("t1", "alpha", "#000000"), tag("t2", "beta")].map((item) => ({
+        ...item,
+        applied: appliedIds.includes(item.id),
+      })),
       pageCount: 1,
-    })
-    mocks.getContact.mockImplementation(async () => ({
-      id: "c1",
-      tags: contactTags,
     }))
-    mocks.addAction.mockResolvedValue({
-      data: { contactId: "c1", tagId: "t" },
-    })
+    mocks.getContact.mockResolvedValue({ id: "c1", tags: [] })
+    mocks.addAction.mockImplementation(
+      async (_workspaceId: string, input: { tagId: string }) => ({
+        data: {
+          contactId: "c1",
+          tagId: input.tagId,
+          tag: { id: input.tagId, name: `tag-${input.tagId}`, color: null },
+        },
+      }),
+    )
     mocks.removeAction.mockResolvedValue({
       data: { contactId: "c1", tagId: "t" },
     })
@@ -119,26 +133,58 @@ describe("ComposerTagGrid", () => {
   })
 
   test("shows every tag with its color and marks the contact's tags", async () => {
-    contactTags = [{ id: "t1" }]
+    appliedIds = ["t1"]
     await render()
 
     expect(chip("alpha")?.getAttribute("aria-pressed")).toBe("true")
     expect(chip("beta")?.getAttribute("aria-pressed")).toBe("false")
+    // Applied: full color; unapplied: the color at 40% alpha; text always white.
     expect(chip("alpha")?.style.backgroundColor).toBe("rgb(0, 0, 0)")
     expect(chip("alpha")?.style.color).toBe("rgb(255, 255, 255)")
+    expect(chip("beta")?.style.backgroundColor).toBe("rgba(140, 140, 140, 0.4)")
+    expect(chip("beta")?.style.color).toBe("rgb(255, 255, 255)")
   })
 
-  test("lays the tags out as equal-width filled cells with a corner dot on applied ones", async () => {
-    contactTags = [{ id: "t1" }]
+  test("lays the tags out as equal flex cells in a 1px-gap container with no background, with a dot on applied ones", async () => {
+    appliedIds = ["t1"]
     await render()
 
-    const grid = chip("alpha")?.parentElement
-    expect(grid?.className).toContain("grid")
-    expect(grid?.className).toContain("minmax(5.5rem,1fr)")
-    expect(chip("alpha")?.className).toContain("rounded-sm")
+    const row = chip("alpha")?.parentElement
+    const grid = row?.parentElement
+    expect(grid?.className).not.toContain("bg-[")
+    expect(grid?.className).not.toContain("pt-0.5")
+    expect(grid?.className).toContain("gap-px")
+    expect(row?.className).toContain("gap-px")
+    expect(chip("alpha")?.className).toContain("flex-1")
+    expect(chip("alpha")?.className).toContain("basis-0")
+    expect(chip("alpha")?.className).toContain("min-w-0")
+    expect(chip("alpha")?.className).toContain("leading-[20px]")
+    expect(chip("alpha")?.className).toContain("enabled:hover:opacity-70")
+    expect(chip("alpha")?.className).toContain("rounded-[2px]")
+    expect(chip("alpha")?.className).toContain("text-[10px]")
+    expect(chip("alpha")?.className).toContain("font-normal")
     expect(chip("alpha")?.querySelector("[data-applied-dot]")).not.toBeNull()
-    expect(chip("alpha")?.querySelector("span.truncate")).not.toBeNull()
+    expect(chip("alpha")?.className).toContain("truncate")
     expect(chip("beta")?.querySelector("[data-applied-dot]")).toBeNull()
+  })
+
+  test("the remainder row comes first, then full rows", async () => {
+    const width = vi
+      .spyOn(HTMLElement.prototype, "clientWidth", "get")
+      .mockReturnValue(264)
+    mocks.listTags.mockResolvedValue({
+      data: ["a", "b", "c", "d", "e", "f", "g"].map((name) => tag(name, name)),
+      pageCount: 1,
+    })
+    await render()
+
+    // 264px fits 3 columns: 7 tags -> 1, 3, 3.
+    const grid = chip("a")?.parentElement?.parentElement
+    const rowSizes = Array.from(grid?.children ?? []).map(
+      (row) => row.querySelectorAll("button").length,
+    )
+    expect(rowSizes).toEqual([1, 3, 3])
+    width.mockRestore()
   })
 
   test("focusing a chip clipped by the collapsed height expands the grid", async () => {
@@ -153,6 +199,25 @@ describe("ComposerTagGrid", () => {
 
     const toggle = container.querySelector("[aria-expanded]")
     expect(toggle?.getAttribute("aria-expanded")).toBe("true")
+  })
+
+  test("the collapsed grid is three 20px rows with 1px gaps", async () => {
+    await render()
+
+    expect(chip("alpha")?.parentElement?.parentElement?.style.maxHeight).toBe(
+      "62px",
+    )
+  })
+
+  test("a nearly white tag gets a subtle inset outline", async () => {
+    mocks.listTags.mockResolvedValue({
+      data: [tag("t1", "snow", "#FFFFFF"), tag("t2", "ink", "#000000")],
+      pageCount: 1,
+    })
+    await render()
+
+    expect(chip("snow")?.className).toContain("ring-black/10")
+    expect(chip("ink")?.className).not.toContain("ring-black/10")
   })
 
   test("a focus ring on an edge cell is drawn inside it", async () => {
@@ -192,29 +257,165 @@ describe("ComposerTagGrid", () => {
     expect(chip("alpha")).not.toBeNull()
   })
 
-  test("a successful click re-reads the contact but not the tag list", async () => {
+  const contactKey = () =>
+    orpc.contactsAPIs.getContactAuthenticatedAPI.queryOptions({
+      input: { workspaceId: "w1", contactId: "c1" },
+    }).queryKey
+
+  test("a successful click patches the cached pages and contact in place, with no refetch", async () => {
     await render()
-    const readsBefore = mocks.getContact.mock.calls.length
+    // The contact panel's read, already in the cache.
+    await queryClient.fetchQuery(
+      orpc.contactsAPIs.getContactAuthenticatedAPI.queryOptions({
+        input: { workspaceId: "w1", contactId: "c1" },
+      }),
+    )
+    const contactReadsBefore = mocks.getContact.mock.calls.length
     const listReadsBefore = mocks.listTags.mock.calls.length
 
-    contactTags = [{ id: "t2" }]
     await click("beta")
 
     expect(mocks.addAction).toHaveBeenCalledWith("w1", {
       contactId: "c1",
       tagId: "t2",
     })
-    expect(mocks.getContact.mock.calls.length).toBeGreaterThan(readsBefore)
+    expect(mocks.getContact.mock.calls.length).toBe(contactReadsBefore)
     // Every list page counts contacts per tag: a success must not refetch them.
     expect(mocks.listTags.mock.calls.length).toBe(listReadsBefore)
     expect(chip("beta")?.getAttribute("aria-pressed")).toBe("true")
+    expect(
+      queryClient.getQueryData<{ tags: { id: string }[] }>(contactKey())?.tags,
+    ).toEqual([expect.objectContaining({ id: "t2", name: "tag-t2" })])
+
+    await click("beta")
+    expect(mocks.getContact.mock.calls.length).toBe(contactReadsBefore)
+    expect(
+      queryClient.getQueryData<{ tags: unknown[] }>(contactKey())?.tags,
+    ).toEqual([])
+    expect(chip("beta")?.getAttribute("aria-pressed")).toBe("false")
+  })
+
+  const contactTagsKey = () =>
+    orpc.contactsAPIs.listContactTagsAuthenticatedAPI.queryOptions({
+      input: { workspaceId: "w1", contactId: "c1" },
+    }).queryKey
+
+  test("a successful click also patches the Tags editor's own list in place", async () => {
+    await render()
+    queryClient.setQueryData(contactTagsKey(), { data: [] })
+
+    await click("beta")
+    expect(
+      queryClient.getQueryData<{ data: { id: string }[] }>(contactTagsKey())
+        ?.data,
+    ).toEqual([expect.objectContaining({ id: "t2" })])
+
+    await click("beta")
+    expect(
+      queryClient.getQueryData<{ data: unknown[] }>(contactTagsKey())?.data,
+    ).toEqual([])
+  })
+
+  test("a read begun before the click is superseded by a fresh read after it", async () => {
+    await render()
+    queryClient.setQueryData(contactTagsKey(), { data: [] })
+    let resolveStale: (value: { data: unknown[] }) => void = () => undefined
+    mocks.contactTags.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveStale = resolve
+        }),
+    )
+    const stale = queryClient.fetchQuery({
+      ...orpc.contactsAPIs.listContactTagsAuthenticatedAPI.queryOptions({
+        input: { workspaceId: "w1", contactId: "c1" },
+      }),
+      staleTime: 0,
+    })
+    stale.catch(() => undefined)
+    // The server has the click by the time the fresh read happens.
+    mocks.contactTags.mockResolvedValue({
+      data: [{ id: "t2", name: "tag-t2" }],
+    })
+
+    await click("beta")
+    // The read captured the pre-toggle (empty) state and lands after the settle.
+    resolveStale({ data: [] })
+    await flush()
+
+    expect(
+      queryClient.getQueryData<{ data: { id: string }[] }>(contactTagsKey())
+        ?.data,
+    ).toEqual([expect.objectContaining({ id: "t2" })])
+  })
+
+  test("an add the server skipped (tag deleted meanwhile) re-reads instead of showing the tag applied", async () => {
+    await render()
+    await queryClient.fetchQuery(
+      orpc.contactsAPIs.getContactAuthenticatedAPI.queryOptions({
+        input: { workspaceId: "w1", contactId: "c1" },
+      }),
+    )
+    queryClient.setQueryData(contactTagsKey(), { data: [] })
+    mocks.addAction.mockResolvedValue({
+      data: {
+        contactId: "c1",
+        tagId: "t2",
+        tag: { id: "t2", name: "tag-t2", color: null },
+        attached: false,
+      },
+    })
+    const listReadsBefore = mocks.listTags.mock.calls.length
+
+    await click("beta")
+
+    expect(mocks.listTags.mock.calls.length).toBeGreaterThan(listReadsBefore)
+    expect(chip("beta")?.getAttribute("aria-pressed")).toBe("false")
+    expect(
+      queryClient.getQueryData<{ tags: unknown[] }>(contactKey())?.tags,
+    ).toEqual([])
+    expect(
+      queryClient.getQueryData<{ data: unknown[] }>(contactTagsKey())?.data,
+    ).toEqual([])
+    expect(queryClient.getQueryState(contactTagsKey())?.isInvalidated).toBe(
+      true,
+    )
+  })
+
+  test("an add that returns no tag object cannot patch the contact, so it re-reads the options", async () => {
+    await render()
+    await queryClient.fetchQuery(
+      orpc.contactsAPIs.getContactAuthenticatedAPI.queryOptions({
+        input: { workspaceId: "w1", contactId: "c1" },
+      }),
+    )
+    mocks.addAction.mockResolvedValue({
+      data: { contactId: "c1", tagId: "t2", attached: true },
+    })
+    const listReadsBefore = mocks.listTags.mock.calls.length
+
+    await click("beta")
+
+    expect(mocks.listTags.mock.calls.length).toBeGreaterThan(listReadsBefore)
+    expect(
+      queryClient.getQueryData<{ tags: unknown[] }>(contactKey())?.tags,
+    ).toEqual([])
+  })
+
+  test("asks for the options with the contact id, and the key carries it", async () => {
+    await render()
+
+    expect(mocks.listTags).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "w1", contactId: "c1" }),
+      expect.anything(),
+    )
   })
 
   test("a click on an applied tag removes it", async () => {
-    contactTags = [{ id: "t1" }]
+    appliedIds = ["t1"]
     await render()
 
-    contactTags = []
+    appliedIds = []
     await click("alpha")
 
     expect(mocks.removeAction).toHaveBeenCalledWith("w1", {
@@ -257,7 +458,7 @@ describe("ComposerTagGrid", () => {
   })
 
   test("a remote contact refresh mid-toggle keeps the pending state, and a remote removal shows once idle", async () => {
-    contactTags = [{ id: "t1" }]
+    appliedIds = ["t1"]
     await render()
     expect(chip("alpha")?.getAttribute("aria-pressed")).toBe("true")
 
@@ -272,12 +473,10 @@ describe("ComposerTagGrid", () => {
 
     // Another agent removes alpha while beta's request is in flight; the
     // realtime handler invalidates the contact query.
-    contactTags = []
+    appliedIds = []
     await act(async () => {
       await queryClient.invalidateQueries({
-        queryKey: orpc.contactsAPIs.getContactAuthenticatedAPI.queryOptions({
-          input: { workspaceId: "w1", contactId: "c1" },
-        }).queryKey,
+        queryKey: composerTagOptionsKey("w1", "c1"),
       })
     })
     await flush()
@@ -286,23 +485,23 @@ describe("ComposerTagGrid", () => {
     expect(chip("alpha")?.getAttribute("aria-pressed")).toBe("false")
     expect(chip("beta")?.getAttribute("aria-pressed")).toBe("true")
 
-    contactTags = [{ id: "t2" }]
+    appliedIds = ["t2"]
     await act(async () => finishAdd())
     await flush()
     expect(chip("beta")?.getAttribute("aria-pressed")).toBe("true")
   })
 
-  test("reconciles with the server after settle instead of rolling back from memory", async () => {
+  test("a realtime refresh after the click shows what other agents changed, without rolling back", async () => {
     await render()
-    // Another agent also added alpha while this request was in flight.
-    mocks.addAction.mockImplementation(() => {
-      contactTags = [{ id: "t2" }, { id: "t1" }]
-      return Promise.resolve({
-        data: { contactId: "c1", tagId: "t" },
+    await click("beta")
+    // Another agent also added alpha; the realtime event refreshes the options.
+    appliedIds = ["t2", "t1"]
+    await act(async () => {
+      await queryClient.invalidateQueries({
+        queryKey: composerTagOptionsKey("w1", "c1"),
       })
     })
-
-    await click("beta")
+    await flush()
 
     expect(chip("beta")?.getAttribute("aria-pressed")).toBe("true")
     expect(chip("alpha")?.getAttribute("aria-pressed")).toBe("true")
@@ -349,31 +548,20 @@ describe("ComposerTagGrid", () => {
   test.each([
     "NOT_FOUND",
     "FORBIDDEN",
-  ])("a contact read answered %s (no access) disables the grid", async (code) => {
-    mocks.getContact.mockRejectedValue(new ORPCError(code))
+  ])("an options read answered %s (no access to the contact) disables the grid", async (code) => {
+    mocks.listTags.mockRejectedValue(new ORPCError(code))
     await render()
 
-    expect(chip("alpha")?.disabled).toBe(true)
     expect(container.textContent).toContain("disabledNoAccess")
+    expect(container.textContent).not.toContain("loadError")
+    expect(chip("alpha")).toBeNull()
   })
 
-  test("any other contact read failure is a load error with a retry, not a permission lock", async () => {
-    mocks.getContact.mockRejectedValue(new Error("network down"))
+  test("the grid never reads the contact", async () => {
+    appliedIds = ["t1"]
     await render()
 
-    expect(container.textContent).toContain("contactLoadError")
-    expect(container.textContent).not.toContain("disabledNoAccess")
-    expect(chip("alpha")?.disabled).toBe(true)
-
-    mocks.getContact.mockResolvedValue({ id: "c1", tags: [] })
-    const retry = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent?.includes("retry"),
-    )
-    await act(async () => retry?.click())
-    await flush()
-
-    expect(container.textContent).not.toContain("contactLoadError")
-    expect(chip("alpha")?.disabled).toBe(false)
+    expect(mocks.getContact).not.toHaveBeenCalled()
   })
 
   test("a tag that appears on two pages is shown once", async () => {
@@ -398,7 +586,27 @@ describe("ComposerTagGrid", () => {
     expect(chip("beta")).not.toBeNull()
   })
 
+  test("the search box is hidden while every tag fits the collapsed rows", async () => {
+    await render()
+
+    expect(container.querySelector("input[type=search]")).toBeNull()
+  })
+
+  test("the search box shows when more pages exist", async () => {
+    mocks.listTags.mockResolvedValueOnce({
+      data: [tag("t1", "alpha")],
+      pageCount: 2,
+    })
+    await render()
+
+    expect(container.querySelector("input[type=search]")).not.toBeNull()
+  })
+
   test("search sends the text as the tag name filter and restarts at page 1", async () => {
+    mocks.listTags.mockResolvedValueOnce({
+      data: [tag("t1", "alpha")],
+      pageCount: 2,
+    })
     await render()
     const input =
       container.querySelector<HTMLInputElement>("input[type=search]")
@@ -424,6 +632,10 @@ describe("ComposerTagGrid", () => {
   })
 
   test("a no-match search says so", async () => {
+    mocks.listTags.mockResolvedValueOnce({
+      data: [tag("t1", "alpha")],
+      pageCount: 2,
+    })
     await render()
     mocks.listTags.mockResolvedValue({ data: [], pageCount: 1 })
     const input =

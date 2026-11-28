@@ -151,7 +151,7 @@
     "clone": "Kloonaa",
     "remove": "Poista",
     "restore": "Palauta",
-    "loadMore": "Load more",
+    "loadMore": "Lataa lisää",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Väri",
     "choose": "Valitse väri",
-    "remove": "Poista väri"
+    "presetLabel": "Valitse väri {color}",
+    "previewLabel": "Teemavärin esikatselu",
+    "previewPlaceholder": "Tunnisteen nimi"
   },
   "composerTags": {
-    "contactLoadError": "Tämän yhteystiedon tunnisteiden lataus epäonnistui.",
     "title": "Tunnisteet",
     "searchLabel": "Hae tunnisteita",
     "searchPlaceholder": "Hae tunnisteita",
@@ -12700,6 +12701,7 @@
     "noMatch": "Mikään tunniste ei vastaa hakua.",
     "addFailed": "Tunnisteen \"{name}\" lisääminen epäonnistui.",
     "removeFailed": "Tunnisteen \"{name}\" poistaminen epäonnistui.",
+    "refreshFailed": "Tunnisteiden päivitys epäonnistui. Lataa sivu uudelleen nähdäksesi uusimmat.",
     "disabledNoContact": "Tässä keskustelussa ei ole yhteystietoa, jolle tunnisteita voisi lisätä.",
     "disabledBlocked": "Tämä yhteystieto on estetty, joten sen tunnisteita ei voi muuttaa.",
     "disabledNoAccess": "Sinulla ei ole oikeutta muuttaa tämän yhteystiedon tunnisteita."

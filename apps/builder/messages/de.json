@@ -151,7 +151,7 @@
     "clone": "Klonen",
     "remove": "Entfernen",
     "restore": "Wiederherstellen",
-    "loadMore": "Load more",
+    "loadMore": "Mehr laden",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Farbe",
     "choose": "Farbe auswählen",
-    "remove": "Farbe entfernen"
+    "presetLabel": "Farbe {color} wählen",
+    "previewLabel": "Vorschau der Designfarbe",
+    "previewPlaceholder": "Tag-Name"
   },
   "composerTags": {
-    "contactLoadError": "Die Tags dieses Kontakts konnten nicht geladen werden.",
     "title": "Tags",
     "searchLabel": "Tags suchen",
     "searchPlaceholder": "Tags suchen",
@@ -12700,6 +12701,7 @@
     "noMatch": "Kein Tag entspricht deiner Suche.",
     "addFailed": "Der Tag „{name}“ konnte nicht hinzugefügt werden.",
     "removeFailed": "Der Tag „{name}“ konnte nicht entfernt werden.",
+    "refreshFailed": "Die Tags konnten nicht aktualisiert werden. Lade neu, um den aktuellen Stand zu sehen.",
     "disabledNoContact": "Diese Unterhaltung hat keinen Kontakt, der getaggt werden kann.",
     "disabledBlocked": "Dieser Kontakt ist blockiert, daher können seine Tags nicht geändert werden.",
     "disabledNoAccess": "Du hast keine Berechtigung, die Tags dieses Kontakts zu ändern."

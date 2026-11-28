@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, test, vi } from "vitest"
 import {
   createTagToggleQueue,
+  currentTagToggleSettleSequence,
+  isTagToggleSettledAfter,
   sharedTagToggleQueueCount,
   subscribeTagToggleQueue,
   type TagToggleIntent,
+  tagToggleQueueKey,
+  whenTagToggleIdle,
 } from "@/features/messages/lib/tag-toggle-queue"
 
 type Deferred = { resolve: () => void; reject: (error: Error) => void }
@@ -323,5 +327,124 @@ describe("subscribeTagToggleQueue", () => {
       expect.objectContaining({ tagId: "tag", name: "" }),
     )
     subscription.unsubscribe()
+  })
+
+  test("the queue key is the workspace and contact ids", () => {
+    expect(tagToggleQueueKey("ws", "contact")).toBe("ws:contact")
+  })
+
+  test("a tag settled after a sequence was taken is reported newer than it, others are not", async () => {
+    const { flush, settleSend, subscriber, work } = rig()
+    const subscription = subscribeTagToggleQueue(KEY, work, subscriber())
+    const before = currentTagToggleSettleSequence()
+    expect(isTagToggleSettledAfter(KEY, "tag", before)).toBe(false)
+
+    subscription.queue.request("tag", "add")
+    settleSend.shift()?.()
+    await flush()
+
+    expect(isTagToggleSettledAfter(KEY, "tag", before)).toBe(true)
+    expect(isTagToggleSettledAfter(KEY, "other", before)).toBe(false)
+    // A sequence taken after the settlement is not older than it.
+    expect(
+      isTagToggleSettledAfter(KEY, "tag", currentTagToggleSettleSequence()),
+    ).toBe(false)
+    subscription.unsubscribe()
+  })
+
+  test("whenTagToggleIdle waits for the request and its settlement, and resolves at once for an idle tag", async () => {
+    const { flush, settleSend, subscriber, work } = rig()
+    const rereads: (() => void)[] = []
+    work.settle.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          rereads.push(resolve)
+        }),
+    )
+    const subscription = subscribeTagToggleQueue(KEY, work, subscriber())
+    await expect(whenTagToggleIdle(KEY, "tag")).resolves.toBeUndefined()
+
+    subscription.queue.request("tag", "add")
+    const onIdle = vi.fn()
+    whenTagToggleIdle(KEY, "tag").then(onIdle)
+    await flush()
+    expect(onIdle).not.toHaveBeenCalled()
+
+    settleSend.shift()?.()
+    await flush()
+    // Request done, its re-read still running.
+    expect(onIdle).not.toHaveBeenCalled()
+
+    rereads.shift()?.()
+    await flush()
+    expect(onIdle).toHaveBeenCalledTimes(1)
+    subscription.unsubscribe()
+  })
+
+  test("the entry survives with no view until its settlement ends, so the settle sequence is kept", async () => {
+    const { flush, settleSend, subscriber, work } = rig()
+    const rereads: (() => void)[] = []
+    work.settle.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          rereads.push(resolve)
+        }),
+    )
+    const before = currentTagToggleSettleSequence()
+    const subscription = subscribeTagToggleQueue(KEY, work, subscriber())
+    subscription.queue.request("tag", "add")
+    subscription.unsubscribe()
+    settleSend.shift()?.()
+    await flush()
+
+    expect(sharedTagToggleQueueCount()).toBe(1)
+    expect(isTagToggleSettledAfter(KEY, "tag", before)).toBe(true)
+    rereads.shift()?.()
+    await flush()
+    expect(sharedTagToggleQueueCount()).toBe(0)
+  })
+
+  test("a check begun before the entry was released and recreated is reported stale", async () => {
+    const { flush, settleSend, subscriber, work } = rig()
+    const first = subscribeTagToggleQueue(KEY, work, subscriber())
+    const checkStarted = currentTagToggleSettleSequence()
+
+    first.queue.request("tag", "add")
+    settleSend.shift()?.()
+    await flush()
+    first.unsubscribe()
+    await flush()
+    expect(sharedTagToggleQueueCount()).toBe(0)
+
+    // A new view recreates the entry; it has no settlement time for the tag.
+    const second = subscribeTagToggleQueue(KEY, work, subscriber())
+    expect(sharedTagToggleQueueCount()).toBe(1)
+    expect(isTagToggleSettledAfter(KEY, "tag", checkStarted)).toBe(true)
+    // A check begun on the recreated entry is trusted.
+    expect(
+      isTagToggleSettledAfter(KEY, "tag", currentTagToggleSettleSequence()),
+    ).toBe(false)
+    second.unsubscribe()
+  })
+
+  test("once the entry is released, a check begun before a later settlement is reported stale (global sequence)", async () => {
+    const { flush, settleSend, subscriber, work } = rig()
+    const subscription = subscribeTagToggleQueue(KEY, work, subscriber())
+    const checkStarted = currentTagToggleSettleSequence()
+
+    subscription.queue.request("tag", "add")
+    settleSend.shift()?.()
+    await flush()
+    subscription.unsubscribe()
+    await flush()
+    expect(sharedTagToggleQueueCount()).toBe(0)
+
+    // The old answer arrives: skipped, to be rechecked (idle resolves at once).
+    expect(isTagToggleSettledAfter(KEY, "tag", checkStarted)).toBe(true)
+    await expect(whenTagToggleIdle(KEY, "tag")).resolves.toBeUndefined()
+    // A check begun after the settlement is trusted.
+    expect(
+      isTagToggleSettledAfter(KEY, "tag", currentTagToggleSettleSequence()),
+    ).toBe(false)
   })
 })

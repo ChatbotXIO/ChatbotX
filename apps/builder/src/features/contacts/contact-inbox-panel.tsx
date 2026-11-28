@@ -20,7 +20,6 @@ import UpdateContactSequenceField, {
   type ContactSequence,
 } from "../contact-sequences/update-contact-sequence-field"
 import { useThreadControl } from "../conversations/hooks/use-thread-control"
-import type { TagResource } from "../tags/schema/resource"
 import { ContactAdReferralsList } from "./components/contact-ad-referrals-list"
 import { ContactAppointmentsList } from "./components/contact-appointments-list"
 import { ContactBroadcastsList } from "./components/contact-broadcasts-list"
@@ -31,6 +30,7 @@ import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
 import { useAutoRefreshContactProfile } from "./hooks/use-auto-refresh-contact-profile"
 import { contactDisplayName } from "./lib/contact-display-name"
+import { contactTagsQueryOptions } from "./lib/contact-tags-query"
 import type { GetContactResponse } from "./schema/query"
 
 type AccordionModule = {
@@ -200,16 +200,9 @@ export const ContactInboxPanel = ({
       {
         keyName: t("fields.tags.label"),
         content: (
-          <UpdateContactTagField
+          <ContactTagsSection
             contact={contactData}
-            onSuccess={(updatedTags: TagResource[]) => {
-              setContactData((previousContact) =>
-                previousContact
-                  ? { ...previousContact, tags: updatedTags }
-                  : null,
-              )
-            }}
-            tags={contactData.tags}
+            key={contactData.id}
             workspaceId={workspaceId}
           />
         ),
@@ -254,7 +247,6 @@ export const ContactInboxPanel = ({
     contactData,
     workspaceId,
     t,
-    setContactData,
     threadControl,
     activeConversationId,
     canOpenBroadcasts,
@@ -310,6 +302,48 @@ export const ContactInboxPanel = ({
         ))}
       </Accordion>
     </div>
+  )
+}
+
+/**
+ * The Tags editor. It reads the contact's tags from a query of its own that
+ * exists only while this section is open: a `contactTagsChanged` event
+ * refetches it then. The editor sends only its own additions and removals,
+ * so a stale list can never drop another agent's tags.
+ */
+function ContactTagsSection({
+  workspaceId,
+  contact,
+}: {
+  workspaceId: string
+  contact: GetContactResponse
+}) {
+  const queryOptions = contactTagsQueryOptions({
+    workspaceId,
+    contactId: contact.id,
+  })
+  const { data, isError, isFetching, isPending, refetch } =
+    useQuery(queryOptions)
+
+  // The error state only when there is nothing to show: a failed background
+  // refetch keeps the editor on the last known server state.
+  if (data === undefined) {
+    return (
+      <SectionQueryState
+        isError={isError}
+        isFetching={isFetching}
+        isPending={isPending}
+        onRetry={() => refetch()}
+      />
+    )
+  }
+
+  return (
+    <UpdateContactTagField
+      contact={contact}
+      tags={data.data}
+      workspaceId={workspaceId}
+    />
   )
 }
 

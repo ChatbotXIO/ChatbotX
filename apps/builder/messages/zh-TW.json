@@ -2235,7 +2235,7 @@
     "clone": "複製",
     "remove": "移除",
     "restore": "還原",
-    "loadMore": "Load more",
+    "loadMore": "載入更多",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "顏色",
     "choose": "選擇顏色",
-    "remove": "移除顏色"
+    "presetLabel": "選擇顏色 {color}",
+    "previewLabel": "主題色預覽",
+    "previewPlaceholder": "標籤名稱"
   },
   "composerTags": {
-    "contactLoadError": "無法載入此聯絡人的標籤。",
     "title": "標籤",
     "searchLabel": "搜尋標籤",
     "searchPlaceholder": "搜尋標籤",
@@ -12700,6 +12701,7 @@
     "noMatch": "沒有符合搜尋的標籤。",
     "addFailed": "無法新增標籤「{name}」。",
     "removeFailed": "無法移除標籤「{name}」。",
+    "refreshFailed": "無法重新整理標籤。請重新載入以查看最新內容。",
     "disabledNoContact": "此對話沒有可加上標籤的聯絡人。",
     "disabledBlocked": "此聯絡人已被封鎖，無法變更其標籤。",
     "disabledNoAccess": "你沒有權限變更此聯絡人的標籤。"

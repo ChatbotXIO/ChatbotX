@@ -155,7 +155,7 @@
     "view": "查看",
     "viewAnalytics": "查看分析",
     "wait": "等等",
-    "loadMore": "Load more",
+    "loadMore": "加载更多",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "颜色",
     "choose": "选择颜色",
-    "remove": "移除颜色"
+    "presetLabel": "选择颜色 {color}",
+    "previewLabel": "主题色预览",
+    "previewPlaceholder": "标签名称"
   },
   "composerTags": {
-    "contactLoadError": "无法加载此联系人的标签。",
     "title": "标签",
     "searchLabel": "搜索标签",
     "searchPlaceholder": "搜索标签",
@@ -12700,6 +12701,7 @@
     "noMatch": "没有与搜索匹配的标签。",
     "addFailed": "无法添加标签“{name}”。",
     "removeFailed": "无法移除标签“{name}”。",
+    "refreshFailed": "无法刷新标签。请重新加载以查看最新内容。",
     "disabledNoContact": "此对话没有可添加标签的联系人。",
     "disabledBlocked": "此联系人已被屏蔽，无法更改其标签。",
     "disabledNoAccess": "你没有权限更改此联系人的标签。"

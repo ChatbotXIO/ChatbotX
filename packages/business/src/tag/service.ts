@@ -132,15 +132,30 @@ class TagService extends BaseService {
   /**
    * Live tags as id, name and color, by name, one page at a time and
    * optionally filtered by a name substring. For pickers: unlike `list` it
-   * counts no contacts per tag and is not cached.
+   * counts no contacts per tag and is not cached. With `contactId` each row
+   * also says whether that contact has the tag (`applied`); the caller must
+   * have checked the contact is reachable.
    */
   async listOptions(input: {
     workspaceId: string
     name?: string | null
     page: number
     perPage: number
+    contactId?: string | null
   }) {
     return await tagRepository.listOptions(input)
+  }
+
+  /**
+   * Which of `tagIds` the contact has (live tags of the workspace only); the
+   * caller must have checked the contact is reachable.
+   */
+  async listAppliedTagIds(input: {
+    workspaceId: string
+    contactId: string
+    tagIds: string[]
+  }) {
+    return await tagRepository.listAppliedTagIds(input)
   }
 
   async create(props: {
@@ -842,12 +857,9 @@ class TagService extends BaseService {
   /**
    * Throws not-found unless every id is a live tag of the workspace. For
    * callers that must not silently skip a deleted tag (the attach paths skip
-   * them by design).
+   * them by design). Returns the live tags.
    */
-  async assertLiveTags(props: {
-    workspaceId: string
-    tagIds: string[]
-  }): Promise<void> {
+  async requireLiveTags(props: { workspaceId: string; tagIds: string[] }) {
     const ids = [...new Set(props.tagIds)]
     const live = await db.query.tagModel.findMany({
       where: {
@@ -855,13 +867,18 @@ class TagService extends BaseService {
         id: { in: ids },
         deletedAt: { isNull: true as const },
       },
-      columns: { id: true },
     })
     if (live.length !== ids.length) {
       throw notFoundException("Tag not found")
     }
+    return live
   }
 
+  /**
+   * Links the live tags among `tagIds` to the contact (a tag deleted since the
+   * caller listed it is skipped) and returns the ids now linked, newly or
+   * already, so a caller can tell a skipped tag from an attached one.
+   */
   async attachToContact(props: {
     workspaceId: string
     contactId: string
@@ -876,11 +893,11 @@ class TagService extends BaseService {
     /** A member's scope: a contact outside it is not found. Omit for token/system callers. */
     accessScope?: ContactAccessScope
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<string[]> {
     const { workspaceId, contactId, tagIds, contactInboxId, tx = db } = props
 
     if (tagIds.length === 0) {
-      return
+      return []
     }
 
     await this.requireContact({
@@ -899,7 +916,7 @@ class TagService extends BaseService {
     })
 
     if (tags.length === 0) {
-      return
+      return []
     }
 
     const newlyAttached = await tx
@@ -936,6 +953,7 @@ class TagService extends BaseService {
         })),
       )
     }
+    return tags.map((tag) => tag.id)
   }
 
   /**

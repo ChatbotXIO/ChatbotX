@@ -151,7 +151,7 @@
     "clone": "Klon",
     "remove": "Hapus",
     "restore": "Pulihkan",
-    "loadMore": "Load more",
+    "loadMore": "Muat lebih banyak",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Warna",
     "choose": "Pilih warna",
-    "remove": "Hapus warna"
+    "presetLabel": "Pilih warna {color}",
+    "previewLabel": "Pratinjau warna tema",
+    "previewPlaceholder": "Nama tag"
   },
   "composerTags": {
-    "contactLoadError": "Tidak dapat memuat tag kontak ini.",
     "title": "Tag",
     "searchLabel": "Cari tag",
     "searchPlaceholder": "Cari tag",
@@ -12700,6 +12701,7 @@
     "noMatch": "Tidak ada tag yang cocok dengan pencarian Anda.",
     "addFailed": "Tidak dapat menambahkan tag \"{name}\".",
     "removeFailed": "Tidak dapat menghapus tag \"{name}\".",
+    "refreshFailed": "Tidak dapat memuat ulang tag. Muat ulang halaman untuk melihat yang terbaru.",
     "disabledNoContact": "Percakapan ini tidak memiliki kontak untuk diberi tag.",
     "disabledBlocked": "Kontak ini diblokir, sehingga tag-nya tidak dapat diubah.",
     "disabledNoAccess": "Anda tidak memiliki akses untuk mengubah tag kontak ini."

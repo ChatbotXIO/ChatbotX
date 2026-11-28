@@ -151,7 +151,7 @@
     "clone": "Clonar",
     "remove": "Remover",
     "restore": "Restaurar",
-    "loadMore": "Load more",
+    "loadMore": "Carregar mais",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Cor",
     "choose": "Escolher uma cor",
-    "remove": "Remover cor"
+    "presetLabel": "Escolher a cor {color}",
+    "previewLabel": "Pré-visualização da cor do tema",
+    "previewPlaceholder": "Nome da etiqueta"
   },
   "composerTags": {
-    "contactLoadError": "Não foi possível carregar as etiquetas deste contacto.",
     "title": "Etiquetas",
     "searchLabel": "Pesquisar etiquetas",
     "searchPlaceholder": "Pesquisar etiquetas",
@@ -12700,6 +12701,7 @@
     "noMatch": "Nenhuma etiqueta corresponde à sua pesquisa.",
     "addFailed": "Não foi possível adicionar a etiqueta \"{name}\".",
     "removeFailed": "Não foi possível remover a etiqueta \"{name}\".",
+    "refreshFailed": "Não foi possível atualizar as etiquetas. Recarregue para ver as mais recentes.",
     "disabledNoContact": "Esta conversa não tem um contacto para etiquetar.",
     "disabledBlocked": "Este contacto está bloqueado, por isso as suas etiquetas não podem ser alteradas.",
     "disabledNoAccess": "Não tem acesso para alterar as etiquetas deste contacto."

@@ -165,7 +165,7 @@ describe.skipIf(!databaseUrl)("contact touchpoint repository", async () => {
         contactId: contact.id,
         inboxId: inbox.id,
         originalContactId: contact.id,
-        source: "comment",
+        source: "comments",
         sourceId: `contact-${suffix}`,
         createdAt: at("2026-01-01T00:00:00"),
         firstInteractionAt: at("2026-01-02T00:00:00"),
@@ -210,7 +210,7 @@ describe.skipIf(!databaseUrl)("contact touchpoint repository", async () => {
       resourceKey: world.contactInboxId,
       channel: "instagram",
       inboxId: world.inboxId,
-      details: { source: "comment" },
+      details: { source: "comments" },
     })
     expect(rows[0].occurredAt).toEqual(at("2026-01-02T00:00:00"))
 
@@ -239,7 +239,7 @@ describe.skipIf(!databaseUrl)("contact touchpoint repository", async () => {
       contactId: world.contactId,
       inboxId: secondInbox,
       channel: "instagram",
-      source: "comment",
+      source: "comments",
       sourceId: `c-${secondContactInbox}`,
     })
     const livePost = newId()

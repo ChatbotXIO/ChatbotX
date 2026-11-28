@@ -5,7 +5,9 @@ import {
   READABLE_TEXT_DARK,
   READABLE_TEXT_LIGHT,
   readableTextColor,
-  tagChipStyle,
+  TAG_GRID_NEUTRAL_COLOR,
+  TAG_PRESET_COLORS,
+  tagGridCellStyle,
   tintedBadgeStyle,
 } from "../src/color"
 
@@ -73,21 +75,75 @@ describe("readableTextColor", () => {
   })
 })
 
-describe("tagChipStyle", () => {
-  test("pairs the color with readable text", () => {
-    expect(tagChipStyle("#000000")).toEqual({
-      backgroundColor: "#000000",
+describe("tagGridCellStyle", () => {
+  test("an applied tag is the full color with white text", () => {
+    expect(tagGridCellStyle("#16A34A", true)).toEqual({
+      backgroundColor: "#16A34A",
       color: "#ffffff",
-    })
-    expect(tagChipStyle("#FFFFFF")).toEqual({
-      backgroundColor: "#FFFFFF",
-      color: "#0f172a",
+      dotColor: "#ffffff",
+      needsOutline: false,
     })
   })
 
-  test("an uncolored tag has no style", () => {
-    expect(tagChipStyle(null)).toBeUndefined()
-    expect(tagChipStyle(undefined)).toBeUndefined()
+  test("an unapplied tag is the color at 40% alpha with white text", () => {
+    expect(tagGridCellStyle("#16A34A", false)).toEqual({
+      backgroundColor: "rgba(22, 163, 74, 0.4)",
+      color: "#ffffff",
+      dotColor: "#ffffff",
+      needsOutline: false,
+    })
+  })
+
+  test.each([
+    null,
+    undefined,
+    "",
+    "nope",
+  ])("an uncolored or invalid color %j uses the neutral gray", (color) => {
+    expect(tagGridCellStyle(color, true).backgroundColor).toBe(
+      TAG_GRID_NEUTRAL_COLOR,
+    )
+    expect(tagGridCellStyle(color, false).backgroundColor).toBe(
+      "rgba(140, 140, 140, 0.4)",
+    )
+  })
+
+  test("a nearly white tag gets muted text and dot, and an opaque faded fill when not applied", () => {
+    expect(tagGridCellStyle("#FFFFFF", true)).toEqual({
+      backgroundColor: "#FFFFFF",
+      color: "#667085",
+      dotColor: "#667085",
+      needsOutline: true,
+    })
+    expect(tagGridCellStyle("#FFFFFF", false)).toEqual({
+      backgroundColor: "#EAECF0",
+      color: "#667085",
+      dotColor: "#667085",
+      needsOutline: true,
+    })
+  })
+
+  test.each([
+    null,
+    "nope",
+  ])("needsOutline follows the normalized color: %j is the neutral gray, no outline", (color) => {
+    expect(tagGridCellStyle(color, true).needsOutline).toBe(false)
+  })
+
+  test("every other fill has white text and a white dot", () => {
+    expect(tagGridCellStyle("#FFC53D", false).dotColor).toBe("#ffffff")
+    expect(tagGridCellStyle("#FFC53D", true).color).toBe("#ffffff")
+    expect(tagGridCellStyle("#000000", true).color).toBe("#ffffff")
+  })
+})
+
+describe("TAG_PRESET_COLORS", () => {
+  test("holds nine distinct colors that already pass hexColorSchema unchanged", () => {
+    expect(TAG_PRESET_COLORS).toHaveLength(9)
+    expect(new Set(TAG_PRESET_COLORS).size).toBe(9)
+    for (const color of TAG_PRESET_COLORS) {
+      expect(hexColorSchema.parse(color)).toBe(color)
+    }
   })
 })
 

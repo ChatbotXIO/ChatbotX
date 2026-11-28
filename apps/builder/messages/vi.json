@@ -151,7 +151,7 @@
     "clone": "Nhân bản",
     "remove": "Xóa",
     "restore": "Khôi phục",
-    "loadMore": "Load more",
+    "loadMore": "Tải thêm",
     "saveAsDraft": "Lưu nháp",
     "schedule": "Lên lịch",
     "moveToDraft": "Chuyển về nháp",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Màu sắc",
     "choose": "Chọn màu",
-    "remove": "Xóa màu"
+    "presetLabel": "Chọn màu {color}",
+    "previewLabel": "Màu chủ đề sẽ được hiển thị",
+    "previewPlaceholder": "Tên thẻ"
   },
   "composerTags": {
-    "contactLoadError": "Không thể tải thẻ của liên hệ này.",
     "title": "Thẻ",
     "searchLabel": "Tìm thẻ",
     "searchPlaceholder": "Tìm thẻ",
@@ -12700,6 +12701,7 @@
     "noMatch": "Không có thẻ nào khớp với tìm kiếm.",
     "addFailed": "Không thể thêm thẻ \"{name}\".",
     "removeFailed": "Không thể xóa thẻ \"{name}\".",
+    "refreshFailed": "Không thể làm mới danh sách thẻ. Tải lại trang để xem mới nhất.",
     "disabledNoContact": "Cuộc trò chuyện này không có liên hệ để gắn thẻ.",
     "disabledBlocked": "Liên hệ này đã bị chặn nên không thể thay đổi thẻ.",
     "disabledNoAccess": "Bạn không có quyền thay đổi thẻ của liên hệ này."

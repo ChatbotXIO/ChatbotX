@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  assertLiveTags: vi.fn(),
+  requireLiveTags: vi.fn(),
   attachToContact: vi.fn(),
   detachFromContact: vi.fn(),
 }))
@@ -39,6 +39,8 @@ const input = {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.requireLiveTags.mockResolvedValue([{ id: "t1", name: "alpha" }])
+  mocks.attachToContact.mockResolvedValue(["t1"])
   vi.mocked(requireContactPermissionScope).mockResolvedValue(scope as never)
 })
 
@@ -46,7 +48,7 @@ describe("addContactTagByIdAction", () => {
   test("checks the tag is live, then attaches by id with the member's scope", async () => {
     await add(input)
 
-    expect(mocks.assertLiveTags).toHaveBeenCalledWith({
+    expect(mocks.requireLiveTags).toHaveBeenCalledWith({
       workspaceId: "w1",
       tagIds: ["t1"],
     })
@@ -58,8 +60,25 @@ describe("addContactTagByIdAction", () => {
     })
   })
 
+  test("reports attached when the link exists", async () => {
+    await expect(add(input)).resolves.toMatchObject({
+      tagId: "t1",
+      tag: { id: "t1" },
+      attached: true,
+    })
+  })
+
+  test("reports not attached when the tag was deleted before the attach", async () => {
+    mocks.attachToContact.mockResolvedValue([])
+
+    await expect(add(input)).resolves.toMatchObject({
+      tagId: "t1",
+      attached: false,
+    })
+  })
+
   test("a deleted tag fails and nothing is attached or created", async () => {
-    mocks.assertLiveTags.mockRejectedValue(new Error("Tag not found"))
+    mocks.requireLiveTags.mockRejectedValue(new Error("Tag not found"))
 
     await expect(add(input)).rejects.toThrow("Tag not found")
     expect(mocks.attachToContact).not.toHaveBeenCalled()
@@ -71,7 +90,7 @@ describe("addContactTagByIdAction", () => {
     )
 
     await expect(add(input)).rejects.toThrow("not authorized")
-    expect(mocks.assertLiveTags).not.toHaveBeenCalled()
+    expect(mocks.requireLiveTags).not.toHaveBeenCalled()
   })
 })
 

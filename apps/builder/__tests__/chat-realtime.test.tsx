@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { ChatStoreContext } from "@/features/chat/store/chat-store-provider"
 import { useWhatsappVoipCallStore } from "@/features/integration-whatsapp/calling/voip/voip-call-store"
+import { subscribeTagToggleQueue } from "@/features/messages/lib/tag-toggle-queue"
 
 vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-1",
@@ -14,28 +15,49 @@ const {
   fetchQueryMock,
   fetchInfiniteQueryMock,
   membersState,
-} = vi.hoisted(() => ({
-  invalidateQueriesMock: vi.fn(),
-  setQueryDataMock: vi.fn(),
-  fetchQueryMock: vi.fn(),
-  fetchInfiniteQueryMock: vi.fn(),
-  membersState: {
-    data: undefined as
-      | {
-          userId: string
-          user: { name: string | null; image: string | null }
-        }[]
-      | undefined,
-  },
-}))
+  queryClientMock,
+  optionsCache,
+} = vi.hoisted(() => {
+  const invalidate = vi.fn()
+  const setQueryData = vi.fn()
+  const fetchQuery = vi.fn()
+  const fetchInfiniteQuery = vi.fn()
+  // One cached options query of the open contact: the loaded pages.
+  const cache: { pages: { data: { id: string; applied?: boolean }[] }[] } = {
+    pages: [],
+  }
+  return {
+    invalidateQueriesMock: invalidate,
+    setQueryDataMock: setQueryData,
+    fetchQueryMock: fetchQuery,
+    fetchInfiniteQueryMock: fetchInfiniteQuery,
+    optionsCache: cache,
+    queryClientMock: {
+      invalidateQueries: invalidate,
+      setQueryData,
+      fetchQuery,
+      fetchInfiniteQuery,
+      getQueriesData: () => [[["options"], cache]],
+      setQueriesData: (
+        _filter: unknown,
+        updater: (previous: typeof cache) => typeof cache,
+      ) => {
+        Object.assign(cache, updater(cache))
+      },
+    },
+    membersState: {
+      data: undefined as
+        | {
+            userId: string
+            user: { name: string | null; image: string | null }
+          }[]
+        | undefined,
+    },
+  }
+})
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-query")>()),
-  useQueryClient: () => ({
-    invalidateQueries: invalidateQueriesMock,
-    setQueryData: setQueryDataMock,
-    fetchQuery: fetchQueryMock,
-    fetchInfiniteQuery: fetchInfiniteQueryMock,
-  }),
+  useQueryClient: () => queryClientMock,
 }))
 
 vi.mock("@/features/users/provider/user-hook", () => ({
@@ -73,6 +95,7 @@ const chatStoreState = {
 const wholeStoreSelectionMock = vi.fn()
 const clientMock = vi.hoisted(() => ({
   listContactTagPreviewsAuthenticatedAPI: vi.fn(),
+  privateListAppliedTagIdsAPI: vi.fn(),
 }))
 // Only the tag-preview call is replaced; every other procedure (the
 // participants query options in `@/lib/orpc/query`) keeps the real client.
@@ -84,13 +107,24 @@ vi.mock("@/lib/orpc/orpc", async (importOriginal) => {
         ? clientMock.listContactTagPreviewsAuthenticatedAPI
         : Reflect.get(target, property, receiver),
   })
+  const tagsAPI = new Proxy(actual.client.tagsAPI, {
+    get: (target, property, receiver) =>
+      property === "privateListAppliedTagIdsAPI"
+        ? clientMock.privateListAppliedTagIdsAPI
+        : Reflect.get(target, property, receiver),
+  })
   return {
     ...actual,
     client: new Proxy(actual.client, {
-      get: (target, property, receiver) =>
-        property === "conversationsAPI"
-          ? conversationsAPI
-          : Reflect.get(target, property, receiver),
+      get: (target, property, receiver) => {
+        if (property === "conversationsAPI") {
+          return conversationsAPI
+        }
+        if (property === "tagsAPI") {
+          return tagsAPI
+        }
+        return Reflect.get(target, property, receiver)
+      },
     }),
   }
 })
@@ -440,32 +474,202 @@ describe("ChatRealtime — chat event parity", () => {
       })
     })
 
+    const invalidationsOf = (name: string) =>
+      invalidateQueriesMock.mock.calls.filter(([arg]) =>
+        JSON.stringify(arg?.queryKey).includes(name),
+      )
     const contactQueryInvalidations = () =>
       invalidateQueriesMock.mock.calls.filter(([arg]) =>
         JSON.stringify(arg?.queryKey).includes("getContactAuthenticatedAPI"),
       )
 
-    test("an event with the open contact invalidates that contact's query once", async () => {
+    const loadPages = (pageCount: number, perPage = 50) => {
+      optionsCache.pages = Array.from({ length: pageCount }, (_, page) => ({
+        data: Array.from({ length: perPage }, (_, index) => ({
+          id: String(page * perPage + index + 1),
+          applied: false,
+        })),
+      }))
+    }
+    const appliedIds = () =>
+      optionsCache.pages.flatMap((page) =>
+        page.data.filter((option) => option.applied).map((option) => option.id),
+      )
+
+    test("an event with the open contact runs one applied-check for a fully expanded grid, patches the cache and refetches no page", async () => {
       invalidateQueriesMock.mockClear()
+      clientMock.privateListAppliedTagIdsAPI.mockReset()
+      loadPages(25)
+      clientMock.privateListAppliedTagIdsAPI.mockResolvedValue({
+        appliedTagIds: ["3", "1000"],
+      })
       await renderWithStore(["c1", "c2"], "c1")
 
       act(() => emit("contactTagsChanged", { contactIds: ["c1", "c2"] }))
+      act(() => emit("contactTagsChanged", { contactIds: ["c1"] }))
       await act(() => vi.advanceTimersByTimeAsync(500))
 
-      const calls = contactQueryInvalidations()
+      expect(
+        clientMock.privateListAppliedTagIdsAPI,
+      ).toHaveBeenCalledExactlyOnceWith({
+        workspaceId: "workspace-1",
+        contactId: "c1",
+        tagIds: Array.from({ length: 1250 }, (_, index) => String(index + 1)),
+      })
+      expect(appliedIds()).toEqual(["3", "1000"])
+      expect(invalidationsOf("privateListWorkspaceTagOptionsAPI")).toHaveLength(
+        0,
+      )
+      // The contact's whole tag list is never refetched by the event.
+      const contactCalls = contactQueryInvalidations()
+      expect(contactCalls.length).toBeGreaterThan(0)
+      for (const [arg] of contactCalls) {
+        expect(arg.refetchType).toBe("none")
+      }
+    })
+
+    test("the panel's contact-tags query is invalidated with the default refetch, only for the open contact", async () => {
+      invalidateQueriesMock.mockClear()
+      await renderWithStore(["c1", "c2"], "c1")
+
+      act(() => emit("contactTagsChanged", { contactIds: ["c1"] }))
+      await act(() => vi.advanceTimersByTimeAsync(500))
+
+      const calls = invalidationsOf("listContactTagsAuthenticatedAPI")
       expect(calls).toHaveLength(1)
-      expect(JSON.stringify(calls[0]?.[0].queryKey)).toContain("c1")
-      expect(JSON.stringify(calls[0]?.[0].queryKey)).not.toContain("c2")
+      expect(JSON.stringify(calls[0][0].queryKey)).toContain("c1")
+      expect(calls[0][0].refetchType).toBeUndefined()
+
+      invalidateQueriesMock.mockClear()
+      act(() => emit("contactTagsChanged", { contactIds: ["c2"] }))
+      await act(() => vi.advanceTimersByTimeAsync(500))
+      expect(invalidationsOf("listContactTagsAuthenticatedAPI")).toHaveLength(0)
+    })
+
+    test("more loaded ids than one request may carry are asked in slices, without re-reading any page", async () => {
+      invalidateQueriesMock.mockClear()
+      clientMock.privateListAppliedTagIdsAPI.mockReset()
+      loadPages(50)
+      clientMock.privateListAppliedTagIdsAPI.mockImplementation(
+        async ({ tagIds }: { tagIds: string[] }) => ({
+          appliedTagIds: tagIds.filter((id) => id === "2001" || id === "7"),
+        }),
+      )
+      await renderWithStore(["c1"], "c1")
+
+      act(() => emit("contactTagsChanged", { contactIds: ["c1"] }))
+      await act(() => vi.advanceTimersByTimeAsync(500))
+
+      const asked = clientMock.privateListAppliedTagIdsAPI.mock.calls.map(
+        ([arg]) => arg.tagIds.length,
+      )
+      expect(asked).toEqual([2000, 500])
+      expect(appliedIds()).toEqual(["7", "2001"])
+      expect(invalidationsOf("privateListWorkspaceTagOptionsAPI")).toHaveLength(
+        0,
+      )
+    })
+
+    test("a tag with a click in flight keeps its optimistic state", async () => {
+      clientMock.privateListAppliedTagIdsAPI.mockReset()
+      loadPages(1, 3)
+      clientMock.privateListAppliedTagIdsAPI.mockResolvedValue({
+        appliedTagIds: ["1"],
+      })
+      const subscription = subscribeTagToggleQueue(
+        "workspace-1:c1",
+        {
+          send: () => new Promise<void>(() => undefined),
+          onFailure: vi.fn(),
+          settle: async () => undefined,
+        },
+        { onChange: vi.fn(), onHold: vi.fn(), onRelease: vi.fn() },
+      )
+      subscription.request({ id: "2", name: "two" }, "add")
+      optionsCache.pages[0].data[1].applied = true
+      await renderWithStore(["c1"], "c1")
+
+      act(() => emit("contactTagsChanged", { contactIds: ["c1"] }))
+      await act(() => vi.advanceTimersByTimeAsync(500))
+      subscription.unsubscribe()
+
+      expect(optionsCache.pages[0].data).toEqual([
+        { id: "1", applied: true },
+        { id: "2", applied: true },
+        { id: "3", applied: false },
+      ])
+    })
+
+    test("a tag skipped for a pending click is checked again once the click settles, and the server's answer wins", async () => {
+      clientMock.privateListAppliedTagIdsAPI.mockReset()
+      loadPages(1, 3)
+      // Another agent removed tag 3 right after this agent's add committed.
+      clientMock.privateListAppliedTagIdsAPI.mockResolvedValue({
+        appliedTagIds: [],
+      })
+      let commitAdd: () => void = () => undefined
+      const subscription = subscribeTagToggleQueue(
+        "workspace-1:c1",
+        {
+          send: () =>
+            new Promise<void>((resolve) => {
+              commitAdd = resolve
+            }),
+          onFailure: vi.fn(),
+          // The click's own patch.
+          settle: () => {
+            optionsCache.pages[0].data[2].applied = true
+            return Promise.resolve()
+          },
+        },
+        { onChange: vi.fn(), onHold: vi.fn(), onRelease: vi.fn() },
+      )
+      subscription.request({ id: "3", name: "three" }, "add")
+      await renderWithStore(["c1"], "c1")
+
+      act(() => emit("contactTagsChanged", { contactIds: ["c1"] }))
+      await act(() => vi.advanceTimersByTimeAsync(500))
+      // The first answer skipped the pending tag: no write, no second request yet.
+      expect(clientMock.privateListAppliedTagIdsAPI).toHaveBeenCalledTimes(1)
+      expect(optionsCache.pages[0].data[2].applied).toBe(false)
+
+      commitAdd()
+      await act(() => vi.advanceTimersByTimeAsync(0))
+      expect(optionsCache.pages[0].data[2].applied).toBe(true)
+      await act(() => vi.advanceTimersByTimeAsync(500))
+
+      expect(clientMock.privateListAppliedTagIdsAPI).toHaveBeenCalledTimes(2)
+      expect(optionsCache.pages[0].data[2].applied).toBe(false)
+      subscription.unsubscribe()
+    })
+
+    test("a failed applied-check falls back to re-reading the grid options", async () => {
+      invalidateQueriesMock.mockClear()
+      loadPages(1, 2)
+      clientMock.privateListAppliedTagIdsAPI.mockRejectedValue(new Error("x"))
+      await renderWithStore(["c1"], "c1")
+
+      act(() => emit("contactTagsChanged", { contactIds: ["c1"] }))
+      await act(() => vi.advanceTimersByTimeAsync(500))
+
+      expect(invalidationsOf("privateListWorkspaceTagOptionsAPI")).toHaveLength(
+        1,
+      )
     })
 
     test("an event for other contacts only does not invalidate the open contact", async () => {
       invalidateQueriesMock.mockClear()
+      clientMock.privateListAppliedTagIdsAPI.mockClear()
       await renderWithStore(["c1", "c2"], "c1")
 
       act(() => emit("contactTagsChanged", { contactIds: ["c2"] }))
       await act(() => vi.advanceTimersByTimeAsync(500))
 
       expect(contactQueryInvalidations()).toHaveLength(0)
+      expect(invalidationsOf("privateListWorkspaceTagOptionsAPI")).toHaveLength(
+        0,
+      )
+      expect(clientMock.privateListAppliedTagIdsAPI).not.toHaveBeenCalled()
     })
 
     test("an event for a row that is not loaded sends no request", async () => {

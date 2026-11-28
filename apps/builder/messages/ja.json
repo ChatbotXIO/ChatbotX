@@ -151,7 +151,7 @@
     "clone": "複製",
     "remove": "削除",
     "restore": "復元",
-    "loadMore": "Load more",
+    "loadMore": "さらに読み込む",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "色",
     "choose": "色を選択",
-    "remove": "色を削除"
+    "presetLabel": "色 {color} を選択",
+    "previewLabel": "テーマカラーのプレビュー",
+    "previewPlaceholder": "タグ名"
   },
   "composerTags": {
-    "contactLoadError": "このコンタクトのタグを読み込めませんでした。",
     "title": "タグ",
     "searchLabel": "タグを検索",
     "searchPlaceholder": "タグを検索",
@@ -12700,6 +12701,7 @@
     "noMatch": "検索に一致するタグはありません。",
     "addFailed": "タグ「{name}」を追加できませんでした。",
     "removeFailed": "タグ「{name}」を削除できませんでした。",
+    "refreshFailed": "タグを更新できませんでした。再読み込みして最新の状態を確認してください。",
     "disabledNoContact": "この会話にはタグを付けるコンタクトがありません。",
     "disabledBlocked": "このコンタクトはブロックされているため、タグを変更できません。",
     "disabledNoAccess": "このコンタクトのタグを変更する権限がありません。"

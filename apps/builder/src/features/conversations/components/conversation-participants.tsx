@@ -12,7 +12,10 @@ import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { useFormatter, useTranslations } from "next-intl"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useConversationParticipants } from "../hooks/use-conversation-participants"
-import { summarizeParticipantNames } from "../lib/participant-names"
+import {
+  namedOrNull,
+  summarizeParticipantNames,
+} from "../lib/participant-names"
 import type {
   ConversationParticipantResource,
   ListConversationItemResource,
@@ -65,14 +68,16 @@ export function ConversationParticipants({
   }
 
   const nameOf = (participant: ConversationParticipantResource) =>
-    participant.name ?? t("unnamedMember")
-  const givenNameLabelOf = (participant: ConversationParticipantResource) =>
-    participant.name ? givenNameOf(participant.name) : nameOf(participant)
+    namedOrNull(participant.name) ?? t("unnamedMember")
+  const givenNameLabelOf = (participant: ConversationParticipantResource) => {
+    const name = namedOrNull(participant.name)
+    return name ? givenNameOf(name) : nameOf(participant)
+  }
   const timeOf = (participant: ConversationParticipantResource) =>
     format.dateTime(participant.lastRepliedAt, REPLY_TIME_FORMAT)
 
   // Three given names, then how many more are loaded ("+2"; "+2+" while the
-  // list has another page). Falls back to the row's preview, which has no page.
+  // list has another page; a bare "+" when only more pages are left). Falls back to the row's preview, which has no page.
   const { shownCount, overflowLabel } = summarizeParticipantNames(
     participants.length,
     query.hasNextPage,
@@ -107,7 +112,7 @@ export function ConversationParticipants({
                 names: inlineNames,
               })}
             </span>
-            {overflowLabel && (
+            {overflowLabel !== null && (
               // Outside the truncated names, so a long list never clips it.
               <span className="shrink-0 font-medium">
                 {t("overflowCount", { overflow: overflowLabel })}

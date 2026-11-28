@@ -151,7 +151,7 @@
     "clone": "Klon",
     "remove": "Fjern",
     "restore": "Gendan",
-    "loadMore": "Load more",
+    "loadMore": "Indlæs mere",
     "saveAsDraft": "Save as draft",
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
@@ -12685,10 +12685,11 @@
   "tagColor": {
     "label": "Farve",
     "choose": "Vælg en farve",
-    "remove": "Fjern farve"
+    "presetLabel": "Vælg farven {color}",
+    "previewLabel": "Forhåndsvisning af temafarve",
+    "previewPlaceholder": "Tagnavn"
   },
   "composerTags": {
-    "contactLoadError": "Dette kontakts tags kunne ikke indlæses.",
     "title": "Tags",
     "searchLabel": "Søg efter tags",
     "searchPlaceholder": "Søg efter tags",
@@ -12700,6 +12701,7 @@
     "noMatch": "Ingen tags matcher din søgning.",
     "addFailed": "Tagget \"{name}\" kunne ikke tilføjes.",
     "removeFailed": "Tagget \"{name}\" kunne ikke fjernes.",
+    "refreshFailed": "Kunne ikke opdatere tags. Genindlæs for at se de seneste.",
     "disabledNoContact": "Denne samtale har ingen kontakt at tagge.",
     "disabledBlocked": "Denne kontakt er blokeret, så dens tags kan ikke ændres.",
     "disabledNoAccess": "Du har ikke adgang til at ændre denne kontakts tags."

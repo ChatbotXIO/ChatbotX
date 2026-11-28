@@ -1,20 +1,23 @@
 // @vitest-environment node
 
 import { describe, expect, test } from "vitest"
-import { summarizeParticipantNames } from "@/features/conversations/lib/participant-names"
+import {
+  namedOrNull,
+  summarizeParticipantNames,
+} from "@/features/conversations/lib/participant-names"
 
 describe("summarizeParticipantNames", () => {
-  test("names everyone and shows no overflow for up to 3 participants", () => {
+  test("names everyone and shows no overflow label for up to 3 participants", () => {
     expect(summarizeParticipantNames(0, false)).toEqual({
-      overflowLabel: "",
+      overflowLabel: null,
       shownCount: 0,
     })
     expect(summarizeParticipantNames(2, false)).toEqual({
-      overflowLabel: "",
+      overflowLabel: null,
       shownCount: 2,
     })
     expect(summarizeParticipantNames(3, false)).toEqual({
-      overflowLabel: "",
+      overflowLabel: null,
       shownCount: 3,
     })
   })
@@ -37,10 +40,21 @@ describe("summarizeParticipantNames", () => {
     })
   })
 
-  test("shows a bare + when exactly 3 are loaded and more exist", () => {
+  test("has no count to show when exactly 3 are loaded and more exist (the template adds the single +)", () => {
     expect(summarizeParticipantNames(3, true)).toEqual({
-      overflowLabel: "+",
+      overflowLabel: "",
       shownCount: 3,
     })
+  })
+})
+
+describe("namedOrNull", () => {
+  test.each([
+    [null, null],
+    ["", null],
+    ["   ", null],
+    ["  Ada  ", "Ada"],
+  ])("%j -> %j", (name, expected) => {
+    expect(namedOrNull(name)).toBe(expected)
   })
 })

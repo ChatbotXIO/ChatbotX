@@ -13,12 +13,14 @@ import { publicListRequest, publicSortRequest } from "@/lib/public-api/list"
 import { publicTagResource, tagResource } from "./resource"
 
 export const listTagsSearchParams = {
-  page: parseAsInteger,
-  perPage: parseAsInteger,
+  // Defaults page the table on the server like the other list tables; the
+  // list request itself keeps "no page = everything" for its other callers.
+  page: parseAsInteger.withDefault(1),
+  perPage: parseAsInteger.withDefault(10),
   name: parseAsString,
-  sort: getSortingStateParser<
-    TagModel & { contactsCount?: number }
-  >().withDefault([{ id: "createdAt", desc: true }]),
+  sort: getSortingStateParser<TagModel>().withDefault([
+    { id: "createdAt", desc: true },
+  ]),
   folderId: parseAsBigInt,
 }
 export const listTagsSearchParamsCache =
@@ -52,11 +54,37 @@ export const listTagOptionsRequest = z.object({
     .max(TAG_OPTIONS_MAX_PER_PAGE)
     .default(TAG_OPTIONS_MAX_PER_PAGE),
   workspaceId: zodBigintAsString(),
+  contactId: zodBigintAsString()
+    .nullish()
+    .describe(
+      "When set, each option also says whether this contact has the tag (`applied`).",
+    ),
 })
 export type ListTagOptionsRequest = z.infer<typeof listTagOptionsRequest>
 
+/** Most tag ids one applied-check can carry (the grid's loaded pages). */
+export const APPLIED_TAG_IDS_MAX = 2000
+
+export const listAppliedTagIdsRequest = z.object({
+  workspaceId: zodBigintAsString(),
+  contactId: zodBigintAsString(),
+  tagIds: z.array(zodBigintAsString()).max(APPLIED_TAG_IDS_MAX),
+})
+export type ListAppliedTagIdsRequest = z.infer<typeof listAppliedTagIdsRequest>
+
+export const listAppliedTagIdsResponse = z.object({
+  appliedTagIds: z.array(z.string()),
+})
+export type ListAppliedTagIdsResponse = z.infer<
+  typeof listAppliedTagIdsResponse
+>
+
 export const listTagOptionsResponse = z.object({
-  data: z.array(tagResource.pick({ id: true, name: true, color: true })),
+  data: z.array(
+    tagResource
+      .pick({ id: true, name: true, color: true })
+      .extend({ applied: z.boolean().optional() }),
+  ),
   pageCount: z.number().int(),
 })
 export type ListTagOptionsResponse = z.infer<typeof listTagOptionsResponse>
