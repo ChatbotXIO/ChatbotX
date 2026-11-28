@@ -1699,6 +1699,20 @@
       "channelId": "Kanal-ID",
       "lineUserId": "LINE User ID"
     },
+    "channelProfile": {
+      "followsBusiness": "Følger virksomheden",
+      "followerCount": "Følgere",
+      "yes": "Ja",
+      "no": "Nej",
+      "messagingWindow": {
+        "label": "Beskedvindue",
+        "open": "Åbent • {time}",
+        "humanAgentOpen": "Medarbejdervindue • {time}",
+        "closed": "Lukket",
+        "tooltip": "Du kan svare i 24 timer efter kundens sidste besked.",
+        "tooltipHumanAgent": "Du kan svare i 24 timer efter kundens sidste besked. Derefter kan en medarbejder stadig svare i op til 7 dage."
+      }
+    },
     "flow": {
       "label": "Flow"
     },
@@ -3160,7 +3174,8 @@
       "moreOptions": "Flere muligheder",
       "findPlacesNearMe": "Find steder i nærheden",
       "callPhoneNumber": "Ring til telefonnummer",
-      "copyText": "Kopiér tekst"
+      "copyText": "Kopiér tekst",
+      "sendChannelPost": "Send et opslag"
     },
     "externalRequest": {
       "errors": {
@@ -3501,6 +3516,29 @@
       "limitHint": "Op til {max} tegn efter variablerne er udfyldt.",
       "fallbackHint": "På kanaler, der ikke kan kopiere tekst, modtager kontakten i stedet denne tekst som svar.",
       "viewerTitle": "Kopierer denne tekst"
+    },
+    "sendChannelPost": {
+      "title": "Send et opslag",
+      "description": "Vælg et af dine opslag, der skal sendes til kunden.",
+      "inbox": "Indbakke",
+      "inboxPlaceholder": "Vælg en indbakke",
+      "noInboxes": "Tilslut en Instagram- eller Messenger-indbakke for at sende opslag.",
+      "search": "Søg i opslag",
+      "empty": "Der er endnu ingen opslag for denne indbakke.",
+      "loadError": "Opslagene kunne ikke indlæses.",
+      "retry": "Prøv igen",
+      "loadMore": "Indlæs flere",
+      "select": "Vælg et opslag",
+      "unavailable": "Dette opslag er ikke længere tilgængeligt.",
+      "noCaption": "Ingen billedtekst",
+      "openPost": "Åbn opslag",
+      "sendFailed": "Opslaget kunne ikke sendes.",
+      "reasons": {
+        "typeNotShareable": "Denne type opslag kan ikke sendes her",
+        "linkUnavailable": "Dette opslag har intet link at sende",
+        "linkTooLong": "Linket er for langt til at blive sendt",
+        "shareUnsupported": "Denne kanal kan ikke sende opslag"
+      }
     }
   },
   "folders": {
@@ -4581,6 +4619,7 @@
     "sendFailed": "Afsendelse mislykkedes",
     "repliedToStory": "Svarede på din story",
     "sentAttachments": "Sendte {count, plural, one {1 vedhæftet fil} other {# vedhæftede filer}}",
+    "sentPost": "Sendte et opslag",
     "deleteComment": "Slet kommentar",
     "deleteCommentConfirmation": "Er du sikker du want til slet denne kommentar? Its svar vil also være slettet, both i din indbakke og på Facebook. Denne action kan ikke være undone.",
     "deleteMessageSuccess": "Besked slettet",
@@ -4770,7 +4809,8 @@
       "continue": "Fortsæt med at sende",
       "discard": "Kassér beskeder i kø",
       "dismiss": "Afvis"
-    }
+    },
+    "sendChannelPostPostRequired": "Vælg et opslag at sende."
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",
@@ -7608,6 +7648,7 @@
     "locked": {
       "flowBanner": "Dette flow er installeret fra en skabelon med kun visning. Du kan se det, men ikke redigere det.",
       "badge": "Kun visning",
+      "tagEditorBanner": "Dette er installeret fra en skabelon med skrivebeskyttet adgang. Kun farven kan ændres.",
       "editorBanner": "Dette er installeret fra en skabelon med kun visning. Du kan se det, men ikke redigere det.",
       "badgeHint": "Installeret fra en skabelon med kun visning"
     },
@@ -8303,6 +8344,28 @@
   "contactAdReferrals": {
     "title": "Annoncehistorik",
     "empty": "Der er endnu ikke registreret annonceklik for denne kontakt."
+  },
+  "contactTouchpoints": {
+    "title": "Tilmeldt via",
+    "empty": "Ingen tilmeldinger registreret for denne kontakt endnu.",
+    "kinds": {
+      "postComment": "Opslagskommentar",
+      "form": "Formular"
+    },
+    "details": {
+      "played": "{count, plural, one {# spil} other {# spil}}",
+      "lastPrize": "Seneste præmie: {prize}",
+      "score": "Point: {score}",
+      "completed": "Fuldført",
+      "inProgress": "I gang",
+      "submissions": "{count, plural, one {# indsendelse} other {# indsendelser}}",
+      "pollChoice": "Stemte på {name}",
+      "leads": "{count, plural, one {# lead} other {# leads}}",
+      "requests": "{count, plural, one {# forespørgsel} other {# forespørgsler}}",
+      "replies": "{count, plural, one {# svar} other {# svar}}",
+      "visits": "{count, plural, one {# besøg} other {# besøg}}",
+      "clicks": "{count, plural, one {# klik} other {# klik}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "Der er endnu ikke sendt nogen udsendelser til denne kontakt.",
@@ -12613,7 +12676,34 @@
     "label": "Hvem har svaret i denne samtale",
     "unnamedMember": "Medlem",
     "loadMoreFailed": "Kunne ikke indlæse flere medlemmer",
-    "lastMessageBy": "Seneste besked fra {name}"
+    "lastMessageBy": "Seneste besked fra {name}",
+    "namesOverflow": "{names} +{count}"
+  },
+  "tagColor": {
+    "label": "Farve",
+    "choose": "Vælg en farve",
+    "remove": "Fjern farve"
+  },
+  "composerTags": {
+    "contactLoadError": "Dette kontakts tags kunne ikke indlæses.",
+    "title": "Tags",
+    "searchLabel": "Søg efter tags",
+    "searchPlaceholder": "Søg efter tags",
+    "expand": "Vis alle",
+    "collapse": "Vis færre",
+    "loadMore": "Indlæs flere",
+    "loadError": "Tags kunne ikke indlæses.",
+    "empty": "Ingen tags endnu. Opret tags på siden Tags.",
+    "noMatch": "Ingen tags matcher din søgning.",
+    "addFailed": "Tagget \"{name}\" kunne ikke tilføjes.",
+    "removeFailed": "Tagget \"{name}\" kunne ikke fjernes.",
+    "disabledNoContact": "Denne samtale har ingen kontakt at tagge.",
+    "disabledBlocked": "Denne kontakt er blokeret, så dens tags kan ikke ændres.",
+    "disabledNoAccess": "Du har ikke adgang til at ændre denne kontakts tags."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {# tag mere} other {# tags mere}}"
   },
   "posts": {
     "title": "Opslag",

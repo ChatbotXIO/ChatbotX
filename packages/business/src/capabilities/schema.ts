@@ -5,6 +5,10 @@ import {
   sendProductsDisplays,
   waTemplateParamsSchema,
 } from "@chatbotx.io/flow-config"
+import {
+  channelPostContentTypes,
+  channelPostShareModes,
+} from "@chatbotx.io/utils/channel-post"
 import { z } from "zod"
 
 const productMessageConditionSchema = z.enum(productMessageConditions)
@@ -80,6 +84,21 @@ const capabilitiesChannelPolicySchema = z.object({
     .optional()
     .describe(
       "Present only on channels that can send products with the `sendProducts` step.",
+    ),
+  channelPostShare: z
+    .object({
+      mode: z
+        .enum(channelPostShareModes)
+        .describe(
+          "`nativeMedia`: the platform's own post card. `textLink`: a text with the post's name and link.",
+        ),
+      contentTypes: z
+        .array(channelPostContentTypes)
+        .describe("The post kinds this channel can send."),
+    })
+    .optional()
+    .describe(
+      "Present only on channels that can send one of the business's posts (the `sendChannelPost` step, and `channelPost` on `messages.create`). Pick ids from `channelPostManagement.list` with `shareableOnly=true`.",
     ),
 })
 

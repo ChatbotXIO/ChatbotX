@@ -178,7 +178,8 @@
       "moreOptions": "Mai multe opțiuni",
       "findPlacesNearMe": "Găsește locuri în apropiere",
       "callPhoneNumber": "Apelează un număr de telefon",
-      "copyText": "Copiază textul"
+      "copyText": "Copiază textul",
+      "sendChannelPost": "Trimite o postare"
     },
     "externalRequest": {
       "errors": {
@@ -519,6 +520,29 @@
       "limitHint": "Până la {max} caractere după completarea variabilelor.",
       "fallbackHint": "Pe canalele care nu pot copia text, contactul primește acest text ca răspuns.",
       "viewerTitle": "Copiază acest text"
+    },
+    "sendChannelPost": {
+      "title": "Trimite o postare",
+      "description": "Alege una dintre postările tale pentru a o trimite clientului.",
+      "inbox": "Inbox",
+      "inboxPlaceholder": "Selectează un inbox",
+      "noInboxes": "Conectează un inbox Instagram sau Messenger pentru a trimite postări.",
+      "search": "Caută postări",
+      "empty": "Nu există încă postări pentru acest inbox.",
+      "loadError": "Postările nu au putut fi încărcate.",
+      "retry": "Încearcă din nou",
+      "loadMore": "Încarcă mai multe",
+      "select": "Selectează o postare",
+      "unavailable": "Această postare nu mai este disponibilă.",
+      "noCaption": "Fără descriere",
+      "openPost": "Deschide postarea",
+      "sendFailed": "Postarea nu a putut fi trimisă.",
+      "reasons": {
+        "typeNotShareable": "Acest tip de postare nu poate fi trimis aici",
+        "linkUnavailable": "Această postare nu are un link de trimis",
+        "linkTooLong": "Linkul este prea lung pentru a fi trimis",
+        "shareUnsupported": "Acest canal nu poate trimite postări"
+      }
     }
   },
   "folders": {
@@ -3096,6 +3120,20 @@
       "channelId": "ID canal",
       "lineUserId": "LINE User ID"
     },
+    "channelProfile": {
+      "followsBusiness": "Urmărește afacerea",
+      "followerCount": "Urmăritori",
+      "yes": "Da",
+      "no": "Nu",
+      "messagingWindow": {
+        "label": "Fereastra de mesagerie",
+        "open": "Deschisă • {time}",
+        "humanAgentOpen": "Fereastra agent uman • {time}",
+        "closed": "Închisă",
+        "tooltip": "Poți răspunde timp de 24 de ore după ultimul mesaj al clientului.",
+        "tooltipHumanAgent": "Poți răspunde timp de 24 de ore după ultimul mesaj al clientului. După aceea, un agent uman mai poate răspunde până la 7 zile."
+      }
+    },
     "flow": {
       "label": "Flux"
     },
@@ -4581,6 +4619,7 @@
     "sendFailed": "Trimiterea a eșuat",
     "repliedToStory": "A răspuns la story-ul tău",
     "sentAttachments": "S-a trimis {count, plural, one {1 atașament} other {# atașamente}}",
+    "sentPost": "S-a trimis o postare",
     "deleteComment": "Șterge comentariul",
     "deleteCommentConfirmation": "Ești sigur că vrei să ștergi acest comentariu? Răspunsurile sale vor fi șterse și ele, atât din mesajele primite, cât și de pe Facebook. Această acțiune nu poate fi anulată.",
     "deleteMessageSuccess": "Mesaj șters",
@@ -4770,7 +4809,8 @@
       "continue": "Continuă trimiterea",
       "discard": "Renunță la mesajele din coadă",
       "dismiss": "Închide"
-    }
+    },
+    "sendChannelPostPostRequired": "Alege o postare de trimis."
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",
@@ -6849,6 +6889,28 @@
     "title": "Istoric reclame",
     "empty": "Nu a fost înregistrat încă niciun clic pe reclame pentru acest contact."
   },
+  "contactTouchpoints": {
+    "title": "Înscris prin",
+    "empty": "Nu există încă participări înregistrate pentru acest contact.",
+    "kinds": {
+      "postComment": "Comentariu la postare",
+      "form": "Formular"
+    },
+    "details": {
+      "played": "{count, plural, one {# joc} other {# jocuri}}",
+      "lastPrize": "Ultimul premiu: {prize}",
+      "score": "Scor: {score}",
+      "completed": "Finalizat",
+      "inProgress": "În desfășurare",
+      "submissions": "{count, plural, one {# trimitere} other {# trimiteri}}",
+      "pollChoice": "A votat pentru {name}",
+      "leads": "{count, plural, one {# lead} other {# lead-uri}}",
+      "requests": "{count, plural, one {# solicitare} other {# solicitări}}",
+      "replies": "{count, plural, one {# răspuns} other {# răspunsuri}}",
+      "visits": "{count, plural, one {# vizită} other {# vizite}}",
+      "clicks": "{count, plural, one {# clic} other {# clicuri}}"
+    }
+  },
   "contactBroadcasts": {
     "empty": "Nu a fost trimisă încă nicio difuzare către acest contact.",
     "searchPlaceholder": "Caută după nume sau ID"
@@ -8435,6 +8497,7 @@
     "locked": {
       "flowBanner": "Acest flux a fost instalat dintr-un șablon doar pentru vizualizare. Îl poți vedea, dar nu îl poți edita.",
       "badge": "Doar vizualizare",
+      "tagEditorBanner": "Acesta a fost instalat dintr-un șablon doar pentru vizualizare. Se poate modifica doar culoarea.",
       "editorBanner": "Acesta a fost instalat dintr-un șablon doar pentru vizualizare. Îl poți vedea, dar nu îl poți edita.",
       "badgeHint": "Instalat dintr-un șablon doar pentru vizualizare"
     },
@@ -12613,7 +12676,34 @@
     "label": "Cine a răspuns în această conversație",
     "unnamedMember": "Membru",
     "loadMoreFailed": "Nu s-au putut încărca mai mulți membri",
-    "lastMessageBy": "Ultimul mesaj de la {name}"
+    "lastMessageBy": "Ultimul mesaj de la {name}",
+    "namesOverflow": "{names} +{count}"
+  },
+  "tagColor": {
+    "label": "Culoare",
+    "choose": "Alege o culoare",
+    "remove": "Elimină culoarea"
+  },
+  "composerTags": {
+    "contactLoadError": "Etichetele acestui contact nu au putut fi încărcate.",
+    "title": "Etichete",
+    "searchLabel": "Caută etichete",
+    "searchPlaceholder": "Caută etichete",
+    "expand": "Afișează tot",
+    "collapse": "Afișează mai puțin",
+    "loadMore": "Încarcă mai multe",
+    "loadError": "Etichetele nu au putut fi încărcate.",
+    "empty": "Nu există încă etichete. Creează etichete pe pagina Etichete.",
+    "noMatch": "Nicio etichetă nu corespunde căutării.",
+    "addFailed": "Eticheta „{name}” nu a putut fi adăugată.",
+    "removeFailed": "Eticheta „{name}” nu a putut fi eliminată.",
+    "disabledNoContact": "Această conversație nu are un contact de etichetat.",
+    "disabledBlocked": "Acest contact este blocat, deci etichetele lui nu pot fi modificate.",
+    "disabledNoAccess": "Nu ai acces să modifici etichetele acestui contact."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {încă # etichetă} other {încă # etichete}}"
   },
   "posts": {
     "title": "Postări",

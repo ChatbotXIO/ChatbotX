@@ -198,3 +198,31 @@ describe("template flow nodes", () => {
     expect(parseTemplateExport(withFlow([node])).ok).toBe(false)
   })
 })
+
+describe("tag manifest color", () => {
+  const withTags = (tags: Record<string, unknown>) => {
+    const envelope = buildEnvelope()
+    return parseTemplateExport({
+      ...envelope,
+      manifests: { ...envelope.manifests, tags },
+    })
+  }
+
+  test("an old payload without color still parses and has no color", () => {
+    const result = withTags({ "1": { name: "vip" } })
+    expect(result.ok && result.data.manifests.tags["1"]).toEqual({
+      name: "vip",
+    })
+  })
+
+  test("a new payload keeps a #RRGGBB color", () => {
+    const result = withTags({ "1": { name: "vip", color: "#1A2B3C" } })
+    expect(result.ok && result.data.manifests.tags["1"]?.color).toBe("#1A2B3C")
+  })
+
+  test("a color that is not #RRGGBB is rejected", () => {
+    expect(withTags({ "1": { name: "vip", color: "#1A2B3C4D" } }).ok).toBe(
+      false,
+    )
+  })
+})

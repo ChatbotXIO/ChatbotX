@@ -107,6 +107,11 @@ vi.mock("@chatbotx.io/redis", () => ({
 vi.mock("../src/contact", () => ({ contactService: {} }))
 vi.mock("../src/tag/sync.service", () => ({ tagSyncService: {} }))
 
+// The realtime publisher is Redis-backed and irrelevant here (see tag-service-contact-tags-changed.test.ts).
+vi.mock("../src/tag/realtime", () => ({
+  publishContactTagsChanged: vi.fn(async () => undefined),
+}))
+
 const { tagService } = await import("../src/tag/service")
 
 const mapping = (externalLabelId: string) => ({

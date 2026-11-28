@@ -1699,6 +1699,20 @@
       "channelId": "チャネルID",
       "lineUserId": "LINE User ID"
     },
+    "channelProfile": {
+      "followsBusiness": "ビジネスをフォロー中",
+      "followerCount": "フォロワー数",
+      "yes": "はい",
+      "no": "いいえ",
+      "messagingWindow": {
+        "label": "メッセージ送信可能期間",
+        "open": "受付中 • {time}",
+        "humanAgentOpen": "有人対応ウィンドウ • {time}",
+        "closed": "終了",
+        "tooltip": "顧客の最後のメッセージから24時間は返信できます。",
+        "tooltipHumanAgent": "顧客の最後のメッセージから24時間は返信できます。その後も、有人エージェントは最大7日間返信できます。"
+      }
+    },
     "flow": {
       "label": "フロー"
     },
@@ -3160,7 +3174,8 @@
       "moreOptions": "その他のオプション",
       "findPlacesNearMe": "近くの場所を探す",
       "callPhoneNumber": "電話番号に発信",
-      "copyText": "テキストをコピー"
+      "copyText": "テキストをコピー",
+      "sendChannelPost": "投稿を送信"
     },
     "externalRequest": {
       "errors": {
@@ -3501,6 +3516,29 @@
       "limitHint": "変数を埋めた後で最大{max}文字。",
       "fallbackHint": "テキストをコピーできないチャネルでは、連絡先はこのテキストを返信として受け取ります。",
       "viewerTitle": "このテキストをコピー"
+    },
+    "sendChannelPost": {
+      "title": "投稿を送信",
+      "description": "お客様に送る投稿を選択してください。",
+      "inbox": "受信トレイ",
+      "inboxPlaceholder": "受信トレイを選択",
+      "noInboxes": "投稿を送信するには、InstagramまたはMessengerの受信トレイを接続してください。",
+      "search": "投稿を検索",
+      "empty": "この受信トレイにはまだ投稿がありません。",
+      "loadError": "投稿を読み込めませんでした。",
+      "retry": "再試行",
+      "loadMore": "さらに読み込む",
+      "select": "投稿を選択",
+      "unavailable": "この投稿は利用できなくなりました。",
+      "noCaption": "キャプションなし",
+      "openPost": "投稿を開く",
+      "sendFailed": "投稿を送信できませんでした。",
+      "reasons": {
+        "typeNotShareable": "この種類の投稿はここでは送信できません",
+        "linkUnavailable": "この投稿には送信できるリンクがありません",
+        "linkTooLong": "リンクが長すぎて送信できません",
+        "shareUnsupported": "このチャネルでは投稿を送信できません"
+      }
     }
   },
   "folders": {
@@ -4558,6 +4596,7 @@
     "sendFailed": "送信に失敗しました",
     "repliedToStory": "あなたのストーリーに返信しました",
     "sentAttachments": "{count, plural, one {添付ファイル1件を送信} other {添付ファイル#件を送信}}",
+    "sentPost": "投稿を送信",
     "deleteComment": "コメントを削除",
     "deleteCommentConfirmation": "このコメントを削除してもよろしいですか？返信も受信トレイとFacebookの両方から削除されます。この操作は元に戻せません。",
     "deleteMessageSuccess": "メッセージを削除しました",
@@ -4747,7 +4786,8 @@
       "continue": "送信を続ける",
       "discard": "待機中のメッセージを破棄",
       "dismiss": "閉じる"
-    }
+    },
+    "sendChannelPostPostRequired": "送信する投稿を選択してください。"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",
@@ -7608,6 +7648,7 @@
     "locked": {
       "flowBanner": "このフローは閲覧専用のテンプレートからインストールされました。表示はできますが編集はできません。",
       "badge": "閲覧専用",
+      "tagEditorBanner": "これは閲覧専用テンプレートからインストールされました。変更できるのは色だけです。",
       "editorBanner": "これは閲覧専用のテンプレートからインストールされました。表示はできますが編集はできません。",
       "badgeHint": "閲覧専用テンプレートからインストールされました"
     },
@@ -8303,6 +8344,28 @@
   "contactAdReferrals": {
     "title": "広告の履歴",
     "empty": "このコンタクトの広告クリックはまだ記録されていません。"
+  },
+  "contactTouchpoints": {
+    "title": "参加経路",
+    "empty": "この連絡先の参加履歴はまだありません。",
+    "kinds": {
+      "postComment": "投稿へのコメント",
+      "form": "フォーム"
+    },
+    "details": {
+      "played": "{count, plural, one {#回プレイ} other {#回プレイ}}",
+      "lastPrize": "直近の賞品: {prize}",
+      "score": "スコア: {score}",
+      "completed": "完了",
+      "inProgress": "進行中",
+      "submissions": "{count, plural, one {#件の送信} other {#件の送信}}",
+      "pollChoice": "{name}に投票",
+      "leads": "{count, plural, one {#件のリード} other {#件のリード}}",
+      "requests": "{count, plural, one {#件のリクエスト} other {#件のリクエスト}}",
+      "replies": "{count, plural, one {#件の返信} other {#件の返信}}",
+      "visits": "{count, plural, one {#回の訪問} other {#回の訪問}}",
+      "clicks": "{count, plural, one {#回のクリック} other {#回のクリック}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "このコンタクトにはまだ一斉配信が送信されていません。",
@@ -12613,7 +12676,34 @@
     "label": "この会話で返信した人",
     "unnamedMember": "メンバー",
     "loadMoreFailed": "メンバーをこれ以上読み込めませんでした",
-    "lastMessageBy": "{name} の最後のメッセージ"
+    "lastMessageBy": "{name} の最後のメッセージ",
+    "namesOverflow": "{names} +{count}"
+  },
+  "tagColor": {
+    "label": "色",
+    "choose": "色を選択",
+    "remove": "色を削除"
+  },
+  "composerTags": {
+    "contactLoadError": "このコンタクトのタグを読み込めませんでした。",
+    "title": "タグ",
+    "searchLabel": "タグを検索",
+    "searchPlaceholder": "タグを検索",
+    "expand": "すべて表示",
+    "collapse": "表示を減らす",
+    "loadMore": "さらに読み込む",
+    "loadError": "タグを読み込めませんでした。",
+    "empty": "タグがまだありません。タグページで作成してください。",
+    "noMatch": "検索に一致するタグはありません。",
+    "addFailed": "タグ「{name}」を追加できませんでした。",
+    "removeFailed": "タグ「{name}」を削除できませんでした。",
+    "disabledNoContact": "この会話にはタグを付けるコンタクトがありません。",
+    "disabledBlocked": "このコンタクトはブロックされているため、タグを変更できません。",
+    "disabledNoAccess": "このコンタクトのタグを変更する権限がありません。"
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {他 # 件のタグ} other {他 # 件のタグ}}"
   },
   "posts": {
     "title": "投稿",

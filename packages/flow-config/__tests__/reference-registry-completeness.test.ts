@@ -55,7 +55,6 @@ const NOT_A_WORKSPACE_REFERENCE: Readonly<Record<string, string>> = {
   appointmentId: "runtime event data",
   broadcastId: "runtime event data",
   challengeId: "runtime event data",
-  channelPostId: "runtime event data",
   commentAutomationId: "runtime event data",
   commentId: "runtime event data",
   commentMessageId: "runtime event data",

@@ -69,6 +69,37 @@ beforeEach(() => {
   mocks.existingTags = []
 })
 
+describe("tag colors from the manifest", () => {
+  test("passes each entry's color to upsertByNames, which sets it only on tags it creates", async () => {
+    mocks.upsertByNames.mockResolvedValue([
+      { id: "t-a", name: "a" },
+      { id: "t-b", name: "b" },
+    ])
+
+    await resolveTagManifest(makeCtx(), {
+      "1": { name: "a", color: "#112233" },
+      "2": { name: "b" },
+    })
+
+    expect(mocks.upsertByNames).toHaveBeenCalledWith(
+      expect.objectContaining({
+        names: ["a", "b"],
+        colorsByName: new Map([["a", "#112233"]]),
+      }),
+    )
+  })
+
+  test("an old manifest without colors sends an empty color map", async () => {
+    mocks.upsertByNames.mockResolvedValue([{ id: "t-a", name: "a" }])
+
+    await resolveTagManifest(makeCtx(), { "1": { name: "a" } })
+
+    expect(mocks.upsertByNames).toHaveBeenCalledWith(
+      expect.objectContaining({ colorsByName: new Map() }),
+    )
+  })
+})
+
 describe("tags created from the manifest", () => {
   const manifest = { "1": { name: "new" }, "2": { name: "old" } }
 

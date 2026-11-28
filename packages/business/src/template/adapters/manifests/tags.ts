@@ -13,6 +13,9 @@ import { placeCreatedRows } from "./folders"
  * `upsertByNames`'s uniform return) purely to know which names were
  * pre-existing for accurate `wasExisting` provenance.
  *
+ * Only the tags this call CREATES get the template's color; a same-name tag the
+ * installer already had keeps whatever color (or none) it has.
+ *
  * Only the tags this call CREATES are placed, in their template folder or else
  * `installFolder` (set when the template asked for an install folder): a
  * same-name tag the installer already had is reused where it is and never moved.
@@ -44,6 +47,11 @@ export const resolveTagManifest = async (
   const resolved = await tagService.upsertByNames({
     workspaceId: ctx.workspaceId,
     names,
+    colorsByName: new Map(
+      entries.flatMap(([, entry]) =>
+        entry.color ? [[entry.name.trim(), entry.color] as const] : [],
+      ),
+    ),
     tx: ctx.tx,
   })
   const resolvedByName = new Map(resolved.map((row) => [row.name, row.id]))

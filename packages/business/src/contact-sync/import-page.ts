@@ -18,6 +18,7 @@ import {
 import { contactService } from "../contact/service"
 import { validateCustomFieldValue } from "../javascript-execution/custom-field-value"
 import { quotaEnforcementService } from "../quota-enforcement/service"
+import { publishContactTagsChanged } from "../tag/realtime"
 import { workspaceUsageService } from "../workspace-usage/service"
 import { externalValueToText, isCompatibleFieldType } from "./field-type"
 import {
@@ -296,9 +297,14 @@ const importTags = async (
       }
     }
   }
-  await contactRepository.linkTags({
+  const { contactIds } = await contactRepository.linkTags({
     workspaceId: input.scope.workspaceId,
     pairs,
+  })
+  // Committed: tell open inboxes which contacts gained a tag.
+  await publishContactTagsChanged({
+    workspaceId: input.scope.workspaceId,
+    contactIds,
   })
   return state
 }

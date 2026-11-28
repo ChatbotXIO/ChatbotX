@@ -24,6 +24,7 @@
     "./broadcast": "./src/broadcast.ts",
     "./channel": "./src/channel.ts",
     "./channel-post": "./src/channel-post.ts",
+    "./color": "./src/color.ts",
     "./publish-destination": "./src/publish-destination.ts",
     "./social-account": "./src/social-account.ts",
     "./social-post": "./src/social-post.ts",

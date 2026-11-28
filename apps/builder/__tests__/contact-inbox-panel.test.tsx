@@ -151,6 +151,16 @@ vi.mock(
   }),
 )
 
+const touchpointsListProps = vi.hoisted(() => ({
+  current: null as null | Record<string, unknown>,
+}))
+vi.mock("@/features/contacts/components/contact-touchpoints-list", () => ({
+  ContactTouchpointsList: (props: Record<string, unknown>) => {
+    touchpointsListProps.current = props
+    return <div data-testid="touchpoints-section" />
+  },
+}))
+
 vi.mock("@/features/contacts/components/update-contact-tag-field", () => ({
   default: () => null,
 }))
@@ -412,13 +422,14 @@ describe("ContactInboxPanel", () => {
     ).toBe("Patched Jane")
   })
 
-  test("lists the sections with ads history and appointments first, and Broadcasts right before Sequences", () => {
+  test("lists the sections with Opted In through first, ads history and appointments next, and Broadcasts right before Sequences", () => {
     seededContact = makeContact("contact-1", "Jane")
 
     render()
 
     // The accordion mock renders every trigger; the titles echo their keys.
     const order = [
+      "contactTouchpoints.title",
       "contactAdReferrals.title",
       "appointments.title",
       "coupons.title",
@@ -432,6 +443,26 @@ describe("ContactInboxPanel", () => {
 
     expect(positions.every((position) => position >= 0)).toBe(true)
     expect(positions).toEqual([...positions].sort((a, b) => a - b))
+  })
+
+  test("mounts the touchpoints section for the contact only once its accordion item opens", () => {
+    seededContact = makeContact("contact-1", "Jane")
+    touchpointsListProps.current = null
+
+    render()
+    expect(touchpointsListProps.current).toBeNull()
+
+    act(() => {
+      latestAccordionOnValueChange?.(["contactTouchpoints.title"])
+    })
+
+    expect(
+      container.querySelector('[data-testid="touchpoints-section"]'),
+    ).not.toBeNull()
+    expect(touchpointsListProps.current).toEqual({
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+    })
   })
 
   test("does not mount the broadcasts section before its accordion item opens", () => {

@@ -24,6 +24,7 @@ import { toast } from "sonner"
 import { useInvalidateTags } from "@/features/tags/provider/tag-hook"
 import { createTagAction } from "./actions/create-tag-action"
 import { createTagRequest } from "./schema/action"
+import { TagColorField } from "./tag-color-field"
 
 type CreateTagDialogProps = {
   workspaceId: string
@@ -65,6 +66,7 @@ export const CreateTagDialog = ({
           defaultValues: {
             name: "",
             folderId: null,
+            color: null,
           },
         },
         errorMapProps: {},
@@ -109,6 +111,7 @@ export const CreateTagDialog = ({
         <Form {...form}>
           <form className="space-y-6" onSubmit={handleSubmitWithAction}>
             <InputField label={t("fields.name.label")} name="name" required />
+            <TagColorField />
 
             <DialogFooter>
               <DialogClose

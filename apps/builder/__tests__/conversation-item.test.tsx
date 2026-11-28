@@ -197,6 +197,65 @@ describe("ConversationItem", () => {
     expect(container.textContent).toContain("Hù")
   })
 
+  describe("contact tag chips", () => {
+    const withTags = (
+      names: string[],
+      tagCount: number,
+      color: string | null = null,
+    ): ListConversationItemResource =>
+      makeConversation({
+        contact: {
+          fullName: "Ada Lovelace",
+          tagCount,
+          tagPreview: names.map((name) => ({ id: `id-${name}`, name, color })),
+        } as unknown as ListConversationItemResource["contact"],
+      })
+
+    test("a contact with no tags shows no chips and no overflow", async () => {
+      await render(withTags([], 0))
+
+      expect(container.textContent).not.toContain("more:")
+    })
+
+    test("a contact with a few tags shows each of them and no +N", async () => {
+      await render(withTags(["alpha", "beta"], 2))
+
+      expect(container.textContent).toContain("alpha")
+      expect(container.textContent).toContain("beta")
+      expect(container.textContent).not.toContain("more:")
+    })
+
+    test("a contact with many tags shows the loaded chips then a count-only +N", async () => {
+      await render(withTags(["alpha", "beta", "gamma"], 12))
+
+      expect(container.textContent).toContain("alpha")
+      expect(container.textContent).toContain("gamma")
+      // `more` receives the hidden count: 12 total - 3 shown.
+      expect(container.textContent).toContain("more:9")
+    })
+
+    test("a colored tag paints its chip with a readable text color; an uncolored one has no inline style", async () => {
+      await render(withTags(["dark"], 1, "#000000"))
+      const darkChip = container.querySelector<HTMLElement>('[title="dark"]')
+      expect(darkChip?.style.backgroundColor).toBe("rgb(0, 0, 0)")
+      expect(darkChip?.style.color).toBe("rgb(255, 255, 255)")
+
+      await render(withTags(["light"], 1, "#FDE68A"))
+      const lightChip = container.querySelector<HTMLElement>('[title="light"]')
+      expect(lightChip?.style.color).toBe("rgb(15, 23, 42)")
+
+      await render(withTags(["plain"], 1, null))
+      const plainChip = container.querySelector<HTMLElement>('[title="plain"]')
+      expect(plainChip?.getAttribute("style")).toBeNull()
+    })
+
+    test("a row held from before previews existed renders without chips", async () => {
+      await render(makeConversation())
+
+      expect(container.textContent).not.toContain("more:")
+    })
+  })
+
   describe("contact phone and email icons", () => {
     const withContact = (contact: Record<string, unknown>) =>
       makeConversation({

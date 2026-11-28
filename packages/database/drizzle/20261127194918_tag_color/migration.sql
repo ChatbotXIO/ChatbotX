@@ -1,0 +1,1 @@
+ALTER TABLE "Tag" ADD COLUMN "color" text;

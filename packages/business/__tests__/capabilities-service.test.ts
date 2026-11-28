@@ -150,6 +150,39 @@ describe("getCapabilities", () => {
     }
   })
 
+  test("exposes the post-share rules only for a channel that can send posts", async () => {
+    for (const [channel, mode] of [
+      ["instagram", "nativeMedia"],
+      ["messenger", "textLink"],
+    ] as const) {
+      const response = await getCapabilities({
+        channel,
+        include: ["flowSpec"],
+        workspaceId: "ws-1",
+      })
+      const policy =
+        capabilitiesResponseSchema.parse(response).flowSpec
+          ?.selectedChannelPolicy
+      expect(policy?.unsupportedSteps).not.toContain("sendChannelPost")
+      expect(policy?.channelPostShare?.mode).toBe(mode)
+      expect(policy?.channelPostShare?.contentTypes).toContain("photo")
+    }
+
+    for (const channel of ["omnichannel", "whatsapp", "telegram"] as const) {
+      const other = await getCapabilities({
+        channel,
+        include: ["flowSpec"],
+        workspaceId: "ws-1",
+      })
+      expect(other.flowSpec?.selectedChannelPolicy?.unsupportedSteps).toContain(
+        "sendChannelPost",
+      )
+      expect(
+        other.flowSpec?.selectedChannelPolicy?.channelPostShare,
+      ).toBeUndefined()
+    }
+  })
+
   test("`include` dispatches only the requested loaders", async () => {
     const result = await getCapabilities({
       workspaceId: "ws-1",

@@ -12,6 +12,7 @@ import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { useFormatter, useTranslations } from "next-intl"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useConversationParticipants } from "../hooks/use-conversation-participants"
+import { summarizeParticipantNames } from "../lib/participant-names"
 import type {
   ConversationParticipantResource,
   ListConversationItemResource,
@@ -70,6 +71,20 @@ export function ConversationParticipants({
   const timeOf = (participant: ConversationParticipantResource) =>
     format.dateTime(participant.lastRepliedAt, REPLY_TIME_FORMAT)
 
+  // Three given names, then how many more are loaded ("+2"; "+2+" while the
+  // list has another page). Falls back to the row's preview, which has no page.
+  const { shownCount, overflowLabel } = summarizeParticipantNames(
+    participants.length,
+    query.hasNextPage,
+  )
+  const inlineNames = format.list(
+    participants.slice(0, shownCount).map(givenNameLabelOf),
+    LIST_FORMAT,
+  )
+  const namesLabel = overflowLabel
+    ? t("namesOverflow", { names: inlineNames, count: overflowLabel })
+    : inlineNames
+
   return (
     <Dialog>
       <DialogTrigger
@@ -93,10 +108,7 @@ export function ConversationParticipants({
             >
               {t("joinedShort", {
                 count: participants.length,
-                names: format.list(
-                  participants.map(givenNameLabelOf),
-                  LIST_FORMAT,
-                ),
+                names: namesLabel,
               })}
             </span>
             <span aria-hidden>•</span>

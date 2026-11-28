@@ -55,6 +55,19 @@ export const createMessageRequest = z
         "Catalog products to send instead of text, on channels with product messages (WhatsApp today) inside the customer-service window. Product ids come from `products.listSendable` (scope `ecommerce`); put the text in `products.body`. Cannot be combined with text, files, media, `flowId` or a comment reply: when `products` is valid only it is sent. Fails with `validation` (422) when the message breaks the channel's rules, and `productMessageUnresolvable` (422, `data.reason`) when the channel has no product messages, no catalog is connected, or some ids are not sendable.",
       ),
     }),
+    // Same ordering reason as `products`: a valid `channelPost` must win over
+    // the text branch, which would strip it.
+    z.object({
+      channelPost: z
+        .object({
+          channelPostId: zodBigintAsString().describe(
+            "Id of the post to send (numeric string), from `channelPostManagement.list` with `shareableOnly=true` on the conversation's inbox.",
+          ),
+        })
+        .describe(
+          "One of the business's own posts to send instead of text. Instagram sends the post as a post card; Messenger sends a text with the post's name and link. Cannot be combined with text, files, media, `products`, `flowId` or a comment reply: when `channelPost` is valid only it is sent. Refused with `channelPostShareRefused` (422, `data.reason`) when the post was removed, belongs to another inbox, is a kind the channel cannot send, has no link to send, or the channel cannot send posts.",
+        ),
+    }),
     z.object({
       text: z.string().trim().min(1).max(1000).describe("Message text."),
       files: z

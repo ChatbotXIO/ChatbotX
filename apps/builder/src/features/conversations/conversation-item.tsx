@@ -40,6 +40,7 @@ import { useOptionalWhatsappVoipCallContext } from "../integration-whatsapp/call
 import { useTenantSettings } from "../tenant/tenant-settings-provider"
 import { ConversationLanguageBadge } from "../translation/components/conversation-language-badge"
 import { ConversationParticipantStack } from "./components/conversation-participant-stack"
+import { ConversationTagPreview } from "./components/conversation-tag-preview"
 import { LastActivityAgo } from "./components/last-activity-ago"
 import { SlaPill } from "./components/sla-pill"
 import { ThreadControlPill } from "./components/thread-control-pill"
@@ -393,6 +394,9 @@ export default function ConversationItem({
             )}
             <span className="truncate">{previewText}</span>
           </div>
+          {conversation.contact ? (
+            <ConversationTagPreview contact={conversation.contact} />
+          ) : null}
           <div className="flex items-center justify-between gap-1 text-xs">
             <div className="flex min-w-0 items-center gap-1">
               {adBadge && (

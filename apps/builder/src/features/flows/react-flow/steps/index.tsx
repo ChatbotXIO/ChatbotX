@@ -64,6 +64,7 @@ import { questionnairesStep } from "./questionnaires"
 import { removeContactTagStep } from "./remove-contact-tag"
 import sendAudioStep from "./send-audio"
 import { sendCarouselStep } from "./send-carousel"
+import sendChannelPostStep from "./send-channel-post"
 import sendCollectionStep from "./send-collection"
 import sendFileStep from "./send-file"
 import sendGifStep from "./send-gif"
@@ -218,6 +219,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.whatsappFlow]: whatsappFlowStep,
   [stepTypes.enum.sendProducts]: sendProductsStep,
   [stepTypes.enum.sendCollection]: sendCollectionStep,
+  [stepTypes.enum.sendChannelPost]: sendChannelPostStep,
   [stepTypes.enum.whatsappLocation]: whatsappLocationStep,
   [stepTypes.enum.setMessengerUserPersistentMenu]:
     setMessengerUserPersistentMenuStep,

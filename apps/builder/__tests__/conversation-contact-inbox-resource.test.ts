@@ -18,6 +18,30 @@ const contactInboxPayload = {
 const messagingWindow = { state: "unknown", changesAt: null, closesAt: null }
 
 describe("contactInboxResource", () => {
+  test("carries the Instagram profile facts, including false and 0", () => {
+    const parsed = contactInboxResource.parse({
+      ...contactInboxPayload,
+      followsBusiness: false,
+      followerCount: 0,
+    })
+
+    expect(parsed.followsBusiness).toBe(false)
+    expect(parsed.followerCount).toBe(0)
+  })
+
+  test("keeps null and tolerates payloads without the profile facts", () => {
+    expect(
+      contactInboxResource.parse({
+        ...contactInboxPayload,
+        followsBusiness: null,
+        followerCount: null,
+      }),
+    ).toMatchObject({ followsBusiness: null, followerCount: null })
+    expect(contactInboxResource.parse(contactInboxPayload)).not.toHaveProperty(
+      "followerCount",
+    )
+  })
+
   test("strips internal identity-change history", () => {
     const parsed = contactInboxResource.parse({
       ...contactInboxPayload,

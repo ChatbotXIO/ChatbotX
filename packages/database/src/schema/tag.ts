@@ -19,6 +19,8 @@ export const tagModel = pgTable(
   {
     ...sharedColumns,
     name: text().notNull(),
+    /** `#RRGGBB`, or null for the default (uncolored) look. */
+    color: text(),
     deletedAt: timestamp(timestampConfig),
     folderId: bigintAsString().references(() => folderModel.id, {
       onDelete: "set null",

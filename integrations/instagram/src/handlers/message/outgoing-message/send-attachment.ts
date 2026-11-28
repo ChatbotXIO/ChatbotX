@@ -28,3 +28,16 @@ export function convertMediaType(stepType: string): FileType {
       return "file"
   }
 }
+
+/**
+ * Shares one of the business's own posts: the post's platform id in a
+ * `MEDIA_SHARE` attachment. Both Instagram logins document the same payload.
+ */
+export function toMediaShareAttachment(
+  externalPostId: string,
+): InstagramMessageAttachment {
+  return {
+    type: "MEDIA_SHARE",
+    payload: { id: externalPostId },
+  }
+}

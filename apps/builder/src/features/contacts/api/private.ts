@@ -1,4 +1,7 @@
-import { contactExportService } from "@chatbotx.io/business"
+import {
+  contactExportService,
+  contactTouchpointService,
+} from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
@@ -41,6 +44,10 @@ import {
   listContactsRequest,
   listContactsTableResponse,
 } from "../schema/query"
+import {
+  listContactTouchpointsRequest,
+  listContactTouchpointsResponse,
+} from "../schema/touchpoint"
 
 export const contactsAuthenticatedAPI = {
   getContactAuthenticatedAPI: authorizedAPI
@@ -84,6 +91,33 @@ export const contactsAuthenticatedAPI = {
       return await listContactAdReferrals({
         workspaceId: input.workspaceId,
         contactId: input.contactId,
+        perPage: input.perPage,
+        cursor: input.cursor,
+        accessScope: {
+          restrictToAssignedUserId: scope.restrictToAssignedUserId,
+        },
+      })
+    }),
+
+  listContactTouchpointsAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/contacts/{contactId}/touchpoints",
+      summary: "List the tools a contact opted in through",
+      tags: ["Contacts"],
+    })
+    .input(listContactTouchpointsRequest.and(getContactRequest))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listContactTouchpointsResponse)
+    .handler(async ({ input, context }) => {
+      const scope = requireContactPermissionScopeForMember({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      return await contactTouchpointService.list({
+        workspaceId: input.workspaceId,
+        contactId: input.contactId,
+        kinds: input.kinds,
         perPage: input.perPage,
         cursor: input.cursor,
         accessScope: {

@@ -1,6 +1,7 @@
 import { act, StrictMode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { ChatStoreContext } from "@/features/chat/store/chat-store-provider"
 import { useWhatsappVoipCallStore } from "@/features/integration-whatsapp/calling/voip/voip-call-store"
 
 vi.mock("@/hooks/routing", () => ({
@@ -70,7 +71,33 @@ const chatStoreState = {
   scheduleConversationHeadRefresh: vi.fn(),
 }
 const wholeStoreSelectionMock = vi.fn()
-vi.mock("@/features/chat/store/chat-store-provider", () => ({
+const clientMock = vi.hoisted(() => ({
+  listContactTagPreviewsAuthenticatedAPI: vi.fn(),
+}))
+// Only the tag-preview call is replaced; every other procedure (the
+// participants query options in `@/lib/orpc/query`) keeps the real client.
+vi.mock("@/lib/orpc/orpc", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/orpc/orpc")>()
+  const conversationsAPI = new Proxy(actual.client.conversationsAPI, {
+    get: (target, property, receiver) =>
+      property === "listContactTagPreviewsAuthenticatedAPI"
+        ? clientMock.listContactTagPreviewsAuthenticatedAPI
+        : Reflect.get(target, property, receiver),
+  })
+  return {
+    ...actual,
+    client: new Proxy(actual.client, {
+      get: (target, property, receiver) =>
+        property === "conversationsAPI"
+          ? conversationsAPI
+          : Reflect.get(target, property, receiver),
+    }),
+  }
+})
+vi.mock("@/features/chat/store/chat-store-provider", async () => ({
+  // The real context: ChatRealtime reads the store API through it for the
+  // tag-preview refresher; tests without a provider get `undefined`.
+  ChatStoreContext: (await import("react")).createContext(undefined),
   useChatStore: (selector: (state: typeof chatStoreState) => unknown) => {
     const selection = selector(chatStoreState)
     if (selection === chatStoreState) {
@@ -161,12 +188,13 @@ describe("ChatRealtime — chat event parity", () => {
     expect(wholeStoreSelectionMock).not.toHaveBeenCalled()
   })
 
-  test("registers exactly the thirteen chat events, no more, no fewer", async () => {
+  test("registers exactly the fourteen chat events, no more, no fewer", async () => {
     await render()
     expect(Object.keys(capturedHandlers ?? {}).sort()).toEqual(
       [
         "contactBlocked",
         "contactInboxThreadControlUpdated",
+        "contactTagsChanged",
         "contactUnblocked",
         "conversationAssigned",
         "conversationUpdated",
@@ -346,6 +374,110 @@ describe("ChatRealtime — chat event parity", () => {
       undefined,
       false,
     )
+  })
+
+  describe("contactTagsChanged", () => {
+    const renderWithStore = (
+      loadedContactIds: string[],
+      activeContactId: string | null = null,
+    ) =>
+      act(() => {
+        root.render(
+          <ChatStoreContext.Provider
+            value={
+              {
+                getState: () => ({
+                  activeConversationId: activeContactId
+                    ? `conv-${activeContactId}`
+                    : null,
+                  conversations: loadedContactIds.map((contactId) => ({
+                    id: `conv-${contactId}`,
+                    contactId,
+                  })),
+                  updateContact: chatStoreState.updateContact,
+                }),
+              } as never
+            }
+          >
+            <ChatRealtime />
+          </ChatStoreContext.Provider>,
+        )
+      })
+
+    beforeEach(() => {
+      vi.useFakeTimers()
+      clientMock.listContactTagPreviewsAuthenticatedAPI.mockReset()
+    })
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    test("refreshes only loaded rows, in one coalesced request, and patches the store", async () => {
+      clientMock.listContactTagPreviewsAuthenticatedAPI.mockResolvedValue({
+        data: [
+          {
+            contactId: "c1",
+            tagCount: 4,
+            tagPreview: [{ id: "t1", name: "alpha", color: "#1A2B3C" }],
+          },
+        ],
+      })
+      await renderWithStore(["c1", "c2"])
+
+      act(() => emit("contactTagsChanged", { contactIds: ["c1", "zzz"] }))
+      act(() => emit("contactTagsChanged", { contactIds: ["c2"] }))
+      await act(() => vi.advanceTimersByTimeAsync(500))
+
+      expect(
+        clientMock.listContactTagPreviewsAuthenticatedAPI,
+      ).toHaveBeenCalledExactlyOnceWith({
+        workspaceId: "workspace-1",
+        contactIds: ["c1", "c2"],
+      })
+      expect(chatStoreState.updateContact).toHaveBeenCalledWith("c1", {
+        tagCount: 4,
+        tagPreview: [{ id: "t1", name: "alpha", color: "#1A2B3C" }],
+      })
+    })
+
+    const contactQueryInvalidations = () =>
+      invalidateQueriesMock.mock.calls.filter(([arg]) =>
+        JSON.stringify(arg?.queryKey).includes("getContactAuthenticatedAPI"),
+      )
+
+    test("an event with the open contact invalidates that contact's query once", async () => {
+      invalidateQueriesMock.mockClear()
+      await renderWithStore(["c1", "c2"], "c1")
+
+      act(() => emit("contactTagsChanged", { contactIds: ["c1", "c2"] }))
+      await act(() => vi.advanceTimersByTimeAsync(500))
+
+      const calls = contactQueryInvalidations()
+      expect(calls).toHaveLength(1)
+      expect(JSON.stringify(calls[0]?.[0].queryKey)).toContain("c1")
+      expect(JSON.stringify(calls[0]?.[0].queryKey)).not.toContain("c2")
+    })
+
+    test("an event for other contacts only does not invalidate the open contact", async () => {
+      invalidateQueriesMock.mockClear()
+      await renderWithStore(["c1", "c2"], "c1")
+
+      act(() => emit("contactTagsChanged", { contactIds: ["c2"] }))
+      await act(() => vi.advanceTimersByTimeAsync(500))
+
+      expect(contactQueryInvalidations()).toHaveLength(0)
+    })
+
+    test("an event for a row that is not loaded sends no request", async () => {
+      await renderWithStore(["c1"])
+
+      act(() => emit("contactTagsChanged", { contactIds: ["other"] }))
+      await act(() => vi.advanceTimersByTimeAsync(2000))
+
+      expect(
+        clientMock.listContactTagPreviewsAuthenticatedAPI,
+      ).not.toHaveBeenCalled()
+    })
   })
 
   test("contactBlocked / contactUnblocked update the contact", async () => {

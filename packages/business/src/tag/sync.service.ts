@@ -4,6 +4,7 @@ import { tagChannelRepository } from "@chatbotx.io/database/repositories"
 import type { TagChannelModel } from "@chatbotx.io/database/types"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { BaseService } from "../base.service"
+import { publishContactTagsChanged } from "./realtime"
 
 const SYNC_TAG_BULK_CHUNK_SIZE = 1000
 
@@ -151,7 +152,14 @@ class TagSyncService extends BaseService {
     input: Parameters<typeof tagChannelRepository.upsertLabelMapping>[0],
     tx?: DatabaseClient,
   ): Promise<void> {
-    await tagChannelRepository.upsertLabelMapping(input, tx)
+    const linkedNow = await tagChannelRepository.upsertLabelMapping(input, tx)
+    // A caller-owned transaction has not committed yet: that caller publishes.
+    if (linkedNow && !tx) {
+      await publishContactTagsChanged({
+        workspaceId: input.workspaceId,
+        contactIds: [input.contactInbox.contactId],
+      })
+    }
   }
 
   async insertTagChannelIfAbsent(
@@ -206,10 +214,19 @@ class TagSyncService extends BaseService {
   async deleteContactTagsForContacts(
     input: Parameters<
       typeof tagChannelRepository.deleteContactTagsForContacts
-    >[0],
+    >[0] & { workspaceId: string },
     tx?: DatabaseClient,
   ): Promise<void> {
-    await tagChannelRepository.deleteContactTagsForContacts(input, tx)
+    const { workspaceId, ...link } = input
+    const removedContactIds =
+      await tagChannelRepository.deleteContactTagsForContacts(link, tx)
+    // A caller-owned transaction has not committed yet: that caller publishes.
+    if (!tx) {
+      await publishContactTagsChanged({
+        workspaceId,
+        contactIds: removedContactIds,
+      })
+    }
   }
 
   async deleteTagChannel(

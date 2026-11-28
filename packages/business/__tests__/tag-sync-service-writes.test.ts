@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ---------------------------------------------------------------------------
 
 const tagChannelRepositoryMock = {
-  upsertLabelMapping: vi.fn(async () => undefined),
+  upsertLabelMapping: vi.fn(async () => false),
   insertIfAbsent: vi.fn(async () => undefined),
   updateExternalLabelId: vi.fn(async () => undefined),
   insertOrFetch: vi.fn(async () => ({ id: "tag-channel-1" })),
@@ -18,7 +18,7 @@ const tagChannelRepositoryMock = {
   linkContactInbox: vi.fn(async () => undefined),
   unlinkContactInbox: vi.fn(async () => undefined),
   deleteLinksForChannel: vi.fn(async () => undefined),
-  deleteContactTagsForContacts: vi.fn(async () => undefined),
+  deleteContactTagsForContacts: vi.fn(async (): Promise<string[]> => []),
   deleteById: vi.fn(async () => undefined),
 }
 
@@ -34,6 +34,9 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   defaultQueue: { add: vi.fn(async () => undefined) },
 }))
 
+const publishContactTagsChanged = vi.fn(async () => undefined)
+vi.mock("../src/tag/realtime", () => ({ publishContactTagsChanged }))
+
 const { tagSyncService } = await import("../src/tag/sync.service")
 
 const FAKE_TX = { _brand: "tx" } as never
@@ -42,6 +45,9 @@ beforeEach(() => {
   for (const fn of Object.values(tagChannelRepositoryMock)) {
     fn.mockClear()
   }
+  tagChannelRepositoryMock.upsertLabelMapping.mockResolvedValue(false)
+  tagChannelRepositoryMock.deleteContactTagsForContacts.mockResolvedValue([])
+  publishContactTagsChanged.mockClear()
 })
 
 describe("TagSyncService — TagChannel write pass-throughs", () => {
@@ -61,6 +67,90 @@ describe("TagSyncService — TagChannel write pass-throughs", () => {
       input,
       FAKE_TX,
     )
+  })
+
+  describe("contactTagsChanged", () => {
+    const labelInput = {
+      workspaceId: "ws-1",
+      channelType: "messenger",
+      integrationId: "int-1",
+      label: { externalLabelId: "ext-1", name: "VIP" },
+      contactInbox: { id: "cinbox-1", contactId: "contact-1" },
+    }
+
+    test("upsertLabelMapping publishes the contact when the tag link is new", async () => {
+      tagChannelRepositoryMock.upsertLabelMapping.mockResolvedValue(true)
+
+      await tagSyncService.upsertLabelMapping(labelInput)
+
+      expect(publishContactTagsChanged).toHaveBeenCalledExactlyOnceWith({
+        workspaceId: "ws-1",
+        contactIds: ["contact-1"],
+      })
+    })
+
+    test("upsertLabelMapping publishes nothing when the contact already had the tag", async () => {
+      await tagSyncService.upsertLabelMapping(labelInput)
+
+      expect(publishContactTagsChanged).not.toHaveBeenCalled()
+    })
+
+    test("upsertLabelMapping leaves publishing to a caller that owns the transaction", async () => {
+      tagChannelRepositoryMock.upsertLabelMapping.mockResolvedValue(true)
+
+      await tagSyncService.upsertLabelMapping(labelInput, FAKE_TX)
+
+      expect(publishContactTagsChanged).not.toHaveBeenCalled()
+    })
+
+    test("upsertLabelMapping publishes nothing when the write fails", async () => {
+      tagChannelRepositoryMock.upsertLabelMapping.mockRejectedValue(
+        new Error("db down"),
+      )
+
+      await expect(
+        tagSyncService.upsertLabelMapping(labelInput),
+      ).rejects.toThrow("db down")
+      expect(publishContactTagsChanged).not.toHaveBeenCalled()
+    })
+
+    test("deleteContactTagsForContacts publishes only the contacts that really had the tag", async () => {
+      tagChannelRepositoryMock.deleteContactTagsForContacts.mockResolvedValue([
+        "contact-2",
+      ])
+
+      await tagSyncService.deleteContactTagsForContacts({
+        workspaceId: "ws-1",
+        tagId: "tag-1",
+        contactIds: ["contact-1", "contact-2"],
+      })
+
+      expect(
+        tagChannelRepositoryMock.deleteContactTagsForContacts,
+      ).toHaveBeenCalledWith(
+        { tagId: "tag-1", contactIds: ["contact-1", "contact-2"] },
+        undefined,
+      )
+      expect(publishContactTagsChanged).toHaveBeenCalledExactlyOnceWith({
+        workspaceId: "ws-1",
+        contactIds: ["contact-2"],
+      })
+    })
+
+    test("deleteContactTagsForContacts publishes nothing when the delete fails", async () => {
+      tagChannelRepositoryMock.deleteContactTagsForContacts.mockRejectedValue(
+        new Error("db down"),
+      )
+
+      await expect(
+        tagSyncService.deleteContactTagsForContacts({
+          workspaceId: "ws-1",
+          tagId: "tag-1",
+          contactIds: ["contact-1"],
+        }),
+      ).rejects.toThrow("db down")
+      expect(publishContactTagsChanged).not.toHaveBeenCalled()
+    })
   })
 
   test("insertTagChannelIfAbsent forwards input and tx to tagChannelRepository.insertIfAbsent", async () => {
@@ -182,7 +272,10 @@ describe("TagSyncService — TagChannel write pass-throughs", () => {
   test("deleteContactTagsForContacts forwards input and tx to tagChannelRepository.deleteContactTagsForContacts", async () => {
     const input = { tagId: "tag-1", contactIds: ["contact-1", "contact-2"] }
 
-    await tagSyncService.deleteContactTagsForContacts(input, FAKE_TX)
+    await tagSyncService.deleteContactTagsForContacts(
+      { ...input, workspaceId: "ws-1" },
+      FAKE_TX,
+    )
 
     expect(
       tagChannelRepositoryMock.deleteContactTagsForContacts,

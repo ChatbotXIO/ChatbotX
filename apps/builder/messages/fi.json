@@ -1699,6 +1699,20 @@
       "channelId": "Kanavan tunnus",
       "lineUserId": "LINE User ID"
     },
+    "channelProfile": {
+      "followsBusiness": "Seuraa yritystä",
+      "followerCount": "Seuraajat",
+      "yes": "Kyllä",
+      "no": "Ei",
+      "messagingWindow": {
+        "label": "Viestiikkuna",
+        "open": "Auki • {time}",
+        "humanAgentOpen": "Ihmisagentin ikkuna • {time}",
+        "closed": "Suljettu",
+        "tooltip": "Vastaaminen on sallittu 24 tuntia asiakkaan viimeisen viestin jälkeen.",
+        "tooltipHumanAgent": "Vastaaminen on sallittu 24 tuntia asiakkaan viimeisen viestin jälkeen. Sen jälkeen ihmisagentti voi vastata vielä enintään 7 päivää."
+      }
+    },
     "flow": {
       "label": "Flow"
     },
@@ -3160,7 +3174,8 @@
       "moreOptions": "Lisää vaihtoehtoja",
       "findPlacesNearMe": "Etsi lähellä olevia paikkoja",
       "callPhoneNumber": "Soita puhelinnumeroon",
-      "copyText": "Kopioi teksti"
+      "copyText": "Kopioi teksti",
+      "sendChannelPost": "Lähetä julkaisu"
     },
     "externalRequest": {
       "errors": {
@@ -3501,6 +3516,29 @@
       "limitHint": "Enintään {max} merkkiä muuttujien täyttämisen jälkeen.",
       "fallbackHint": "Kanavilla, jotka eivät voi kopioida tekstiä, yhteyshenkilö saa tämän tekstin vastauksena.",
       "viewerTitle": "Kopioi tämän tekstin"
+    },
+    "sendChannelPost": {
+      "title": "Lähetä julkaisu",
+      "description": "Valitse yksi julkaisuistasi lähetettäväksi asiakkaalle.",
+      "inbox": "Saapuneet",
+      "inboxPlaceholder": "Valitse saapuneet-kansio",
+      "noInboxes": "Yhdistä Instagram- tai Messenger-saapuneet lähettääksesi julkaisuja.",
+      "search": "Hae julkaisuja",
+      "empty": "Tällä kansiolla ei ole vielä julkaisuja.",
+      "loadError": "Julkaisujen lataaminen epäonnistui.",
+      "retry": "Yritä uudelleen",
+      "loadMore": "Lataa lisää",
+      "select": "Valitse julkaisu",
+      "unavailable": "Tämä julkaisu ei ole enää saatavilla.",
+      "noCaption": "Ei kuvatekstiä",
+      "openPost": "Avaa julkaisu",
+      "sendFailed": "Julkaisun lähettäminen epäonnistui.",
+      "reasons": {
+        "typeNotShareable": "Tämän tyyppistä julkaisua ei voi lähettää täällä",
+        "linkUnavailable": "Tällä julkaisulla ei ole lähetettävää linkkiä",
+        "linkTooLong": "Linkki on liian pitkä lähetettäväksi",
+        "shareUnsupported": "Tämä kanava ei voi lähettää julkaisuja"
+      }
     }
   },
   "folders": {
@@ -4581,6 +4619,7 @@
     "sendFailed": "Lähetys epäonnistui",
     "repliedToStory": "Vastasi tarinaasi",
     "sentAttachments": "Lähetettiin {count, plural, one {1 liite} other {# liitettä}}",
+    "sentPost": "Lähetettiin julkaisu",
     "deleteComment": "Poista kommentti",
     "deleteCommentConfirmation": "Haluatko varmasti poistaa tämän kommentin? Myös sen vastaukset poistetaan sekä saapuneet-kansiostasi että Facebookista. Tätä toimintoa ei voi kumota.",
     "deleteMessageSuccess": "Viesti poistettu",
@@ -4770,7 +4809,8 @@
       "continue": "Jatka lähettämistä",
       "discard": "Hylkää jonossa olevat viestit",
       "dismiss": "Hylkää"
-    }
+    },
+    "sendChannelPostPostRequired": "Valitse lähetettävä julkaisu."
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",
@@ -7608,6 +7648,7 @@
     "locked": {
       "flowBanner": "Tämä flow on asennettu vain katseltavasta mallista. Voit katsoa sitä, mutta et muokata sitä.",
       "badge": "Vain katselu",
+      "tagEditorBanner": "Tämä asennettiin vain luku -mallista. Vain väriä voi muuttaa.",
       "editorBanner": "Tämä on asennettu vain katseltavasta mallista. Voit katsoa sitä, mutta et muokata sitä.",
       "badgeHint": "Asennettu vain katseltavasta mallista"
     },
@@ -8303,6 +8344,28 @@
   "contactAdReferrals": {
     "title": "Mainoshistoria",
     "empty": "Tälle yhteystiedolle ei ole vielä kirjattu mainosklikkauksia."
+  },
+  "contactTouchpoints": {
+    "title": "Liittynyt kautta",
+    "empty": "Tälle kontaktille ei ole vielä kirjattu osallistumisia.",
+    "kinds": {
+      "postComment": "Julkaisun kommentti",
+      "form": "Lomake"
+    },
+    "details": {
+      "played": "{count, plural, one {# peli} other {# peliä}}",
+      "lastPrize": "Viimeisin palkinto: {prize}",
+      "score": "Pisteet: {score}",
+      "completed": "Valmis",
+      "inProgress": "Kesken",
+      "submissions": "{count, plural, one {# lähetys} other {# lähetystä}}",
+      "pollChoice": "Äänesti kohdetta {name}",
+      "leads": "{count, plural, one {# liidi} other {# liidiä}}",
+      "requests": "{count, plural, one {# pyyntö} other {# pyyntöä}}",
+      "replies": "{count, plural, one {# vastaus} other {# vastausta}}",
+      "visits": "{count, plural, one {# käynti} other {# käyntiä}}",
+      "clicks": "{count, plural, one {# napsautus} other {# napsautusta}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "Tälle yhteystiedolle ei ole vielä lähetetty joukkolähetyksiä.",
@@ -12613,7 +12676,34 @@
     "label": "Kuka vastasi tässä keskustelussa",
     "unnamedMember": "Jäsen",
     "loadMoreFailed": "Lisää jäseniä ei voitu ladata",
-    "lastMessageBy": "Viimeisin viesti: {name}"
+    "lastMessageBy": "Viimeisin viesti: {name}",
+    "namesOverflow": "{names} +{count}"
+  },
+  "tagColor": {
+    "label": "Väri",
+    "choose": "Valitse väri",
+    "remove": "Poista väri"
+  },
+  "composerTags": {
+    "contactLoadError": "Tämän yhteystiedon tunnisteiden lataus epäonnistui.",
+    "title": "Tunnisteet",
+    "searchLabel": "Hae tunnisteita",
+    "searchPlaceholder": "Hae tunnisteita",
+    "expand": "Näytä kaikki",
+    "collapse": "Näytä vähemmän",
+    "loadMore": "Lataa lisää",
+    "loadError": "Tunnisteiden lataus epäonnistui.",
+    "empty": "Ei vielä tunnisteita. Luo tunnisteita Tunnisteet-sivulla.",
+    "noMatch": "Mikään tunniste ei vastaa hakua.",
+    "addFailed": "Tunnisteen \"{name}\" lisääminen epäonnistui.",
+    "removeFailed": "Tunnisteen \"{name}\" poistaminen epäonnistui.",
+    "disabledNoContact": "Tässä keskustelussa ei ole yhteystietoa, jolle tunnisteita voisi lisätä.",
+    "disabledBlocked": "Tämä yhteystieto on estetty, joten sen tunnisteita ei voi muuttaa.",
+    "disabledNoAccess": "Sinulla ei ole oikeutta muuttaa tämän yhteystiedon tunnisteita."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {# tunniste lisää} other {# tunnistetta lisää}}"
   },
   "posts": {
     "title": "Julkaisut",

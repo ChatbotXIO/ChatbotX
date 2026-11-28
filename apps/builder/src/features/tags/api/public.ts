@@ -13,13 +13,15 @@ import { createTagRequest } from "../schema/action"
 import { listTagsPublicRequest, publicListTagsResponse } from "../schema/query"
 import { publicTagResource } from "../schema/resource"
 
-const createTagPublicRequest = createTagRequest.pick({ name: true }).extend({
-  folderId: zodBigintAsString()
-    .nullish()
-    .describe(
-      'Folder id from `folders.list` (folderType "tag"). Pass null or "0" for the root.',
-    ),
-})
+const createTagPublicRequest = createTagRequest
+  .pick({ name: true, color: true })
+  .extend({
+    folderId: zodBigintAsString()
+      .nullish()
+      .describe(
+        'Folder id from `folders.list` (folderType "tag"). Pass null or "0" for the root.',
+      ),
+  })
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
@@ -51,7 +53,7 @@ export const tagsPublicRouter = {
       path: "/v1/tags",
       summary: "Create tag",
       description:
-        "Adds a workspace tag and returns its id for later attachment to contacts. Use `tags.list` to check for an existing tag, or `contacts.addTags` to attach it.",
+        "Adds a workspace tag (optionally with a `#RRGGBB` `color`) and returns its id for later attachment to contacts. Use `tags.list` to check for an existing tag, or `contacts.addTags` to attach it.",
       successStatus: 201,
       tags: ["Tags"],
     })
@@ -73,7 +75,7 @@ export const tagsPublicRouter = {
       path: "/v1/tags/{idOrName}",
       summary: "Get tag",
       description:
-        "Returns one tag's id, name and folder. Use `tags.list` to find its id or name first.",
+        "Returns one tag's id, name, color and folder. Use `tags.list` to find its id or name first.",
       tags: ["Tags"],
     })
     .input(
@@ -99,7 +101,7 @@ export const tagsPublicRouter = {
       path: "/v1/tags/{id}",
       summary: "Update tag",
       description:
-        "Renames a tag and, when `folderId` is given, moves it to that folder. Use `tags.list` to find its id first.",
+        "Renames a tag, sets or clears its `color` (omit to leave it unchanged, null to clear) and, when `folderId` is given, moves it to that folder. Use `tags.list` to find its id first.",
       tags: ["Tags"],
     })
     .input(

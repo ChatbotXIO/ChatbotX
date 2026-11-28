@@ -1856,6 +1856,20 @@
       "channelId": "معرّف القناة",
       "lineUserId": "LINE User ID"
     },
+    "channelProfile": {
+      "followsBusiness": "يتابع النشاط التجاري",
+      "followerCount": "المتابعون",
+      "yes": "نعم",
+      "no": "لا",
+      "messagingWindow": {
+        "label": "نافذة المراسلة",
+        "open": "مفتوحة • {time}",
+        "humanAgentOpen": "نافذة الوكيل البشري • {time}",
+        "closed": "مغلقة",
+        "tooltip": "يُسمح بالرد خلال 24 ساعة من آخر رسالة للعميل.",
+        "tooltipHumanAgent": "يُسمح بالرد خلال 24 ساعة من آخر رسالة للعميل. بعد ذلك يمكن لوكيل بشري الرد حتى 7 أيام."
+      }
+    },
     "flow": {
       "label": "المسار"
     },
@@ -3317,7 +3331,8 @@
       "moreOptions": "خيارات إضافية",
       "findPlacesNearMe": "البحث عن أماكن بالقرب مني",
       "callPhoneNumber": "الاتصال برقم هاتف",
-      "copyText": "نسخ النص"
+      "copyText": "نسخ النص",
+      "sendChannelPost": "إرسال منشور"
     },
     "externalRequest": {
       "errors": {
@@ -3658,6 +3673,29 @@
       "limitHint": "حتى {max} حرفًا بعد ملء المتغيرات.",
       "fallbackHint": "في القنوات التي لا يمكنها نسخ النص، تتلقى جهة الاتصال هذا النص كرد بدلاً من ذلك.",
       "viewerTitle": "ينسخ هذا النص"
+    },
+    "sendChannelPost": {
+      "title": "إرسال منشور",
+      "description": "اختر أحد منشوراتك لإرساله إلى العميل.",
+      "inbox": "صندوق الوارد",
+      "inboxPlaceholder": "اختر صندوق وارد",
+      "noInboxes": "اربط صندوق وارد Instagram أو Messenger لإرسال المنشورات.",
+      "search": "البحث في المنشورات",
+      "empty": "لا توجد منشورات لصندوق الوارد هذا بعد.",
+      "loadError": "تعذّر تحميل المنشورات.",
+      "retry": "إعادة المحاولة",
+      "loadMore": "تحميل المزيد",
+      "select": "اختر منشورًا",
+      "unavailable": "هذا المنشور لم يعد متاحًا.",
+      "noCaption": "بدون وصف",
+      "openPost": "فتح المنشور",
+      "sendFailed": "تعذّر إرسال المنشور.",
+      "reasons": {
+        "typeNotShareable": "لا يمكن إرسال هذا النوع من المنشورات هنا",
+        "linkUnavailable": "ليس لهذا المنشور رابط لإرساله",
+        "linkTooLong": "الرابط أطول من أن يُرسل",
+        "shareUnsupported": "لا تستطيع هذه القناة إرسال المنشورات"
+      }
     }
   },
   "folders": {
@@ -4581,6 +4619,7 @@
     "sendFailed": "فشل الإرسال",
     "repliedToStory": "رد على قصتك",
     "sentAttachments": "تم إرسال {count, plural, one {مرفق واحد} other {# مرفقات}}",
+    "sentPost": "تم إرسال منشور",
     "deleteComment": "حذف التعليق",
     "deleteCommentConfirmation": "هل أنت متأكد من رغبتك في حذف هذا التعليق؟ ستُحذف ردوده أيضًا من صندوق الوارد ومن Facebook. لا يمكن التراجع عن هذا الإجراء.",
     "deleteMessageSuccess": "تم حذف الرسالة",
@@ -4770,7 +4809,8 @@
       "continue": "متابعة الإرسال",
       "discard": "تجاهل الرسائل في قائمة الانتظار",
       "dismiss": "تجاهل"
-    }
+    },
+    "sendChannelPostPostRequired": "اختر منشورًا لإرساله."
   },
   "instagram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Instagram.",
@@ -7212,6 +7252,7 @@
     "locked": {
       "flowBanner": "هذا التدفق مثبّت من قالب للعرض فقط. يمكنك الاطلاع عليه ولكن لا يمكن تعديله.",
       "badge": "للعرض فقط",
+      "tagEditorBanner": "تم تثبيت هذا من قالب للعرض فقط. يمكن تغيير اللون فقط.",
       "editorBanner": "تم تثبيت هذا من قالب للعرض فقط. يمكنك الاطلاع عليه ولكن لا يمكن تعديله.",
       "badgeHint": "تم التثبيت من قالب للعرض فقط"
     },
@@ -7907,6 +7948,28 @@
   "contactAdReferrals": {
     "title": "سجل الإعلانات",
     "empty": "لم تُسجَّل نقرات على الإعلانات لجهة الاتصال هذه بعد."
+  },
+  "contactTouchpoints": {
+    "title": "انضم عبر",
+    "empty": "لا توجد مشاركات مسجلة لهذا العميل بعد.",
+    "kinds": {
+      "postComment": "تعليق على منشور",
+      "form": "نموذج"
+    },
+    "details": {
+      "played": "{count, plural, one {# مرة لعب} other {# مرات لعب}}",
+      "lastPrize": "آخر جائزة: {prize}",
+      "score": "النتيجة: {score}",
+      "completed": "مكتمل",
+      "inProgress": "قيد التنفيذ",
+      "submissions": "{count, plural, one {# إرسال} other {# عمليات إرسال}}",
+      "pollChoice": "صوّت لصالح {name}",
+      "leads": "{count, plural, one {# عميل محتمل} other {# عملاء محتملين}}",
+      "requests": "{count, plural, one {# طلب} other {# طلبات}}",
+      "replies": "{count, plural, one {# رد} other {# ردود}}",
+      "visits": "{count, plural, one {# زيارة} other {# زيارات}}",
+      "clicks": "{count, plural, one {# نقرة} other {# نقرات}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "لم يُرسل أي بث إلى جهة الاتصال هذه بعد.",
@@ -12613,7 +12676,34 @@
     "label": "من رد في هذه المحادثة",
     "unnamedMember": "عضو",
     "loadMoreFailed": "تعذّر تحميل المزيد من الأعضاء",
-    "lastMessageBy": "آخر رسالة من {name}"
+    "lastMessageBy": "آخر رسالة من {name}",
+    "namesOverflow": "{names} +{count}"
+  },
+  "tagColor": {
+    "label": "اللون",
+    "choose": "اختر لونًا",
+    "remove": "إزالة اللون"
+  },
+  "composerTags": {
+    "contactLoadError": "تعذّر تحميل وسوم جهة الاتصال هذه.",
+    "title": "الوسوم",
+    "searchLabel": "البحث في الوسوم",
+    "searchPlaceholder": "البحث في الوسوم",
+    "expand": "عرض الكل",
+    "collapse": "عرض أقل",
+    "loadMore": "تحميل المزيد",
+    "loadError": "تعذّر تحميل الوسوم.",
+    "empty": "لا توجد وسوم بعد. أنشئ وسومًا من صفحة الوسوم.",
+    "noMatch": "لا توجد وسوم تطابق بحثك.",
+    "addFailed": "تعذّرت إضافة الوسم \"{name}\".",
+    "removeFailed": "تعذّرت إزالة الوسم \"{name}\".",
+    "disabledNoContact": "لا توجد جهة اتصال في هذه المحادثة لإضافة وسوم إليها.",
+    "disabledBlocked": "جهة الاتصال هذه محظورة، لذا لا يمكن تغيير وسومها.",
+    "disabledNoAccess": "ليس لديك صلاحية تغيير وسوم جهة الاتصال هذه."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {وسم آخر #} other {# وسوم أخرى}}"
   },
   "posts": {
     "title": "المنشورات",

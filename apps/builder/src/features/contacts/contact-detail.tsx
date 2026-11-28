@@ -7,7 +7,6 @@ import {
   offsetFromStoredTimezone,
 } from "@chatbotx.io/business/contact-locale"
 import type {
-  ChannelType,
   CustomFieldType,
   FillableContactKey,
 } from "@chatbotx.io/database/partials"
@@ -40,14 +39,13 @@ import {
   FingerprintIcon,
   IdCardIcon,
   LanguagesIcon,
-  type LucideIcon,
   MegaphoneIcon,
   PhoneIcon,
   TextIcon,
   UserRoundIcon,
 } from "lucide-react"
-import { useTranslations } from "next-intl"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useFormatter, useTranslations } from "next-intl"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 import { contactDisplayName } from "@/features/contacts/lib/contact-display-name"
 import { RequestCallPermissionDialog } from "@/features/integration-whatsapp/calling/request-call-permission-dialog"
@@ -61,9 +59,11 @@ import type { ContactInboxResource } from "../contact-inboxes/schema/resource"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
 import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custom-field-display-value"
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
+import { MessagingWindowRow } from "./components/messaging-window-row"
 import { EditContactField } from "./edit-contact-field"
 import { resolveSourceIdentity } from "./lib/channel-identity"
 import { toHttpUrl } from "./lib/http-url"
+import { buildScopedIdentityFields } from "./lib/scoped-identity-rows"
 import { ResetContactCustomFieldsDialog } from "./reset-contact-custom-fields-dialog"
 import type { GetContactResponse } from "./schema/query"
 import type { ContactEditableField } from "./schema/resource"
@@ -150,35 +150,6 @@ const getLanguageLabel = (
   return option ? t(option.labelKey) : language
 }
 
-type ScopedIdentityRowConfig = {
-  key: "sourceUserId" | "sourceUsername"
-  icon: LucideIcon
-  labelKey: string
-}
-
-/**
- * Per-channel display config for the channel-scoped identity columns on
- * ContactInbox (`sourceUserId`/`sourceUsername`). Labels are channel-branded,
- * so each channel that populates these columns declares its own rows here —
- * adding a channel is one config entry, no branching.
- */
-const scopedIdentityRowsByChannel: Partial<
-  Record<ChannelType, readonly ScopedIdentityRowConfig[]>
-> = {
-  [channelTypes.enum.whatsapp]: [
-    {
-      key: "sourceUserId",
-      icon: FingerprintIcon,
-      labelKey: "fields.channelIdentity.bsuid",
-    },
-    {
-      key: "sourceUsername",
-      icon: AtSignIcon,
-      labelKey: "fields.waUserName.label",
-    },
-  ],
-}
-
 const buildSourceIdField = (
   contactInbox: ContactInboxResource | undefined,
   t: (key: string) => string,
@@ -197,33 +168,6 @@ const buildSourceIdField = (
       readOnly: true,
     },
   ]
-}
-
-const buildScopedIdentityFields = (
-  contactInbox: ContactInboxResource | undefined,
-  t: (key: string) => string,
-): ContactEditableField[] => {
-  const parsedChannel = channelTypes.safeParse(contactInbox?.channel)
-  if (!(contactInbox && parsedChannel.success)) {
-    return []
-  }
-  const rows = scopedIdentityRowsByChannel[parsedChannel.data] ?? []
-  return rows.flatMap((row): ContactEditableField[] => {
-    const value = contactInbox[row.key]
-    if (!value) {
-      return []
-    }
-    return [
-      {
-        key: row.key,
-        icon: row.icon,
-        label: t(row.labelKey),
-        value,
-        type: "shortText",
-        readOnly: true,
-      },
-    ]
-  })
 }
 
 /**
@@ -396,6 +340,11 @@ export const ContactDetail = ({
   onCustomFieldsReset?: () => void
 }) => {
   const t = useTranslations()
+  const formatter = useFormatter()
+  const formatNumber = useCallback(
+    (value: number) => formatter.number(value),
+    [formatter],
+  )
 
   const workspaceId = useWorkspaceId()
   const { conversations, updateContact } = useChatStore((state) => state)
@@ -596,7 +545,7 @@ export const ContactDetail = ({
             readOnly: true,
           },
           ...buildSourceIdField(activeContactInbox, t),
-          ...buildScopedIdentityFields(activeContactInbox, t),
+          ...buildScopedIdentityFields(activeContactInbox, { t, formatNumber }),
           ...(adSourceUrl
             ? [
                 {
@@ -715,6 +664,7 @@ export const ContactDetail = ({
     languageOptions,
     timezone,
     t,
+    formatNumber,
   ])
 
   return contact ? (
@@ -800,6 +750,15 @@ export const ContactDetail = ({
         </div>
       )}
       <div className="flex flex-col gap-1 font-medium text-[12px] text-gray-600">
+        {activeConversationForCall?.contactInboxes[0] && (
+          <MessagingWindowRow
+            channel={activeConversationForCall.contactInboxes[0].channel}
+            isDirect={activeConversationForCall.sourceId == null}
+            lastIncomingMessageAt={
+              activeConversationForCall.contactInboxes[0].lastIncomingMessageAt
+            }
+          />
+        )}
         {contactFields.map((editable) => {
           const fieldValue =
             editable.value && editable.value.length > 0 ? (

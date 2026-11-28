@@ -13,6 +13,13 @@ export const addContactTagRequest = z.object({
 })
 export type AddContactTagRequest = z.infer<typeof addContactTagRequest>
 
+/** One tag on one contact, both by id (what the Inbox composer grid sends). */
+export const contactTagByIdRequest = z.object({
+  contactId: zodBigintAsString(),
+  tagId: zodBigintAsString(),
+})
+export type ContactTagByIdRequest = z.infer<typeof contactTagByIdRequest>
+
 const bulkTagNames = z.array(z.string().trim().min(1)).min(1)
 const excludedContactIds = z.array(zodBigintAsString()).default([])
 

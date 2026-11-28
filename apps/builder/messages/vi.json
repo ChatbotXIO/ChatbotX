@@ -1899,6 +1899,20 @@
       "channelId": "ID kênh",
       "lineUserId": "LINE User ID"
     },
+    "channelProfile": {
+      "followsBusiness": "Theo dõi doanh nghiệp",
+      "followerCount": "Người theo dõi",
+      "yes": "Có",
+      "no": "Không",
+      "messagingWindow": {
+        "label": "Cửa sổ nhắn tin",
+        "open": "Đang mở • {time}",
+        "humanAgentOpen": "Cửa sổ nhân viên • {time}",
+        "closed": "Đã đóng",
+        "tooltip": "Được trả lời trong 24 giờ sau tin nhắn cuối của khách hàng.",
+        "tooltipHumanAgent": "Được trả lời trong 24 giờ sau tin nhắn cuối của khách hàng. Sau đó, nhân viên vẫn có thể trả lời tối đa 7 ngày."
+      }
+    },
     "flow": {
       "label": "Luồng"
     },
@@ -3359,7 +3373,8 @@
       "moreOptions": "Tùy chọn khác",
       "findPlacesNearMe": "Tìm địa điểm gần tôi",
       "callPhoneNumber": "Gọi số điện thoại",
-      "copyText": "Sao chép văn bản"
+      "copyText": "Sao chép văn bản",
+      "sendChannelPost": "Gửi bài viết"
     },
     "externalRequest": {
       "errors": {
@@ -3700,6 +3715,29 @@
       "limitHint": "Tối đa {max} ký tự sau khi điền biến.",
       "fallbackHint": "Ở kênh không hỗ trợ sao chép, khách sẽ nhận nội dung này dưới dạng tin nhắn trả lời.",
       "viewerTitle": "Sao chép nội dung này"
+    },
+    "sendChannelPost": {
+      "title": "Gửi bài viết",
+      "description": "Chọn một bài viết của bạn để gửi cho khách hàng.",
+      "inbox": "Hộp thư",
+      "inboxPlaceholder": "Chọn hộp thư",
+      "noInboxes": "Hãy kết nối hộp thư Instagram hoặc Messenger để gửi bài viết.",
+      "search": "Tìm bài viết",
+      "empty": "Chưa có bài viết nào cho hộp thư này.",
+      "loadError": "Không thể tải bài viết.",
+      "retry": "Thử lại",
+      "loadMore": "Tải thêm",
+      "select": "Chọn một bài viết",
+      "unavailable": "Bài viết này không còn khả dụng.",
+      "noCaption": "Không có chú thích",
+      "openPost": "Mở bài viết",
+      "sendFailed": "Không thể gửi bài viết.",
+      "reasons": {
+        "typeNotShareable": "Loại bài viết này không thể gửi ở đây",
+        "linkUnavailable": "Bài viết này không có liên kết để gửi",
+        "linkTooLong": "Liên kết quá dài để gửi",
+        "shareUnsupported": "Kênh này không thể gửi bài viết"
+      }
     }
   },
   "folders": {
@@ -4623,6 +4661,7 @@
     "sendFailed": "Gửi thất bại",
     "repliedToStory": "Đã trả lời story của bạn",
     "sentAttachments": "Đã gửi {count, plural, one {1 tệp đính kèm} other {# tệp đính kèm}}",
+    "sentPost": "Đã gửi một bài viết",
     "deleteComment": "Xóa bình luận",
     "deleteCommentConfirmation": "Bạn có chắc muốn xóa bình luận này? Các bình luận trả lời cũng sẽ bị xóa, cả trong hộp thư và trên Facebook. Hành động này không thể hoàn tác.",
     "deleteMessageSuccess": "Đã xóa tin nhắn",
@@ -4812,7 +4851,8 @@
       "continue": "Tiếp tục gửi",
       "discard": "Hủy các tin đang chờ",
       "dismiss": "Bỏ qua"
-    }
+    },
+    "sendChannelPostPostRequired": "Hãy chọn một bài viết để gửi."
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",
@@ -7842,6 +7882,7 @@
     "locked": {
       "flowBanner": "Luồng này được cài từ một mẫu chỉ xem. Bạn có thể xem nhưng không thể chỉnh sửa.",
       "badge": "Chỉ xem",
+      "tagEditorBanner": "Mục này được cài từ mẫu chỉ xem. Chỉ có thể đổi màu.",
       "editorBanner": "Mục này được cài từ một mẫu chỉ xem. Bạn có thể xem nhưng không thể chỉnh sửa.",
       "badgeHint": "Được cài từ một mẫu chỉ xem"
     },
@@ -8658,6 +8699,28 @@
   "contactAdReferrals": {
     "title": "Lịch sử quảng cáo",
     "empty": "Chưa ghi nhận lượt click quảng cáo nào của liên hệ này."
+  },
+  "contactTouchpoints": {
+    "title": "Tham gia qua",
+    "empty": "Chưa ghi nhận lượt tham gia nào của khách hàng này.",
+    "kinds": {
+      "postComment": "Bình luận bài viết",
+      "form": "Biểu mẫu"
+    },
+    "details": {
+      "played": "{count, plural, one {# lượt chơi} other {# lượt chơi}}",
+      "lastPrize": "Giải gần nhất: {prize}",
+      "score": "Điểm: {score}",
+      "completed": "Đã hoàn thành",
+      "inProgress": "Đang thực hiện",
+      "submissions": "{count, plural, one {# lượt gửi} other {# lượt gửi}}",
+      "pollChoice": "Đã bình chọn cho {name}",
+      "leads": "{count, plural, one {# lead} other {# lead}}",
+      "requests": "{count, plural, one {# yêu cầu} other {# yêu cầu}}",
+      "replies": "{count, plural, one {# phản hồi} other {# phản hồi}}",
+      "visits": "{count, plural, one {# lượt truy cập} other {# lượt truy cập}}",
+      "clicks": "{count, plural, one {# lượt nhấp} other {# lượt nhấp}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "Chưa có broadcast nào được gửi tới liên hệ này.",
@@ -12613,7 +12676,34 @@
     "label": "Ai đã trả lời trong hội thoại này",
     "unnamedMember": "Thành viên",
     "loadMoreFailed": "Không thể tải thêm thành viên",
-    "lastMessageBy": "Tin nhắn cuối của {name}"
+    "lastMessageBy": "Tin nhắn cuối của {name}",
+    "namesOverflow": "{names} +{count}"
+  },
+  "tagColor": {
+    "label": "Màu sắc",
+    "choose": "Chọn màu",
+    "remove": "Xóa màu"
+  },
+  "composerTags": {
+    "contactLoadError": "Không thể tải thẻ của liên hệ này.",
+    "title": "Thẻ",
+    "searchLabel": "Tìm thẻ",
+    "searchPlaceholder": "Tìm thẻ",
+    "expand": "Hiện tất cả",
+    "collapse": "Thu gọn",
+    "loadMore": "Tải thêm",
+    "loadError": "Không thể tải thẻ.",
+    "empty": "Chưa có thẻ nào. Hãy tạo thẻ ở trang Thẻ.",
+    "noMatch": "Không có thẻ nào khớp với tìm kiếm.",
+    "addFailed": "Không thể thêm thẻ \"{name}\".",
+    "removeFailed": "Không thể xóa thẻ \"{name}\".",
+    "disabledNoContact": "Cuộc trò chuyện này không có liên hệ để gắn thẻ.",
+    "disabledBlocked": "Liên hệ này đã bị chặn nên không thể thay đổi thẻ.",
+    "disabledNoAccess": "Bạn không có quyền thay đổi thẻ của liên hệ này."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {thêm # thẻ} other {thêm # thẻ}}"
   },
   "posts": {
     "title": "Bài viết",

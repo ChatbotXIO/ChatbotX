@@ -46,6 +46,16 @@ export type ChannelPostManagementCursor = {
   sortValue: string
 }
 
+/**
+ * One channel's rule for which posts it can send (`channelPostShare` in its
+ * flow policy): the content types it takes, and whether it needs the permalink.
+ */
+export type ChannelPostShareCriterion = {
+  channel: string
+  contentTypes: ChannelPostContentType[]
+  requirePermalink: boolean
+}
+
 export type ChannelPostManagementFilters = {
   /** Only posts created by these authors (`authorExternalId`). */
   authorIds?: string[]
@@ -68,6 +78,11 @@ export type ChannelPostManagementFilters = {
   publishedTo?: Date
   /** Matches the caption or permalink as text, or the external post id exactly. */
   search?: string
+  /**
+   * Keep only posts one of these channel rules can send. An empty list keeps
+   * none: no channel can send posts.
+   */
+  shareable?: ChannelPostShareCriterion[]
   skipComments?: boolean
   topicIds?: string[]
 }
@@ -202,6 +217,24 @@ const authorIdsCondition = (authorIds: string[]): SQL | undefined => {
   return pairs.length ? or(plain, ...pairs) : plain
 }
 
+const shareableCondition = (criteria: ChannelPostShareCriterion[]): SQL => {
+  const perChannel = criteria
+    .filter((criterion) => criterion.contentTypes.length > 0)
+    .map((criterion) =>
+      and(
+        eq(channelPostModel.channel, criterion.channel),
+        inArray(channelPostModel.contentType, criterion.contentTypes),
+        criterion.requirePermalink
+          ? and(
+              isNotNull(channelPostModel.permalink),
+              sql`btrim(${channelPostModel.permalink}) <> ''`,
+            )
+          : undefined,
+      ),
+    )
+  return or(...perChannel) ?? sql`false`
+}
+
 const buildFilterConditions = (
   workspaceId: string,
   filters: ChannelPostManagementFilters,
@@ -219,6 +252,9 @@ const buildFilterConditions = (
   }
   if (filters.contentTypes?.length) {
     conditions.push(inArray(channelPostModel.contentType, filters.contentTypes))
+  }
+  if (filters.shareable) {
+    conditions.push(shareableCondition(filters.shareable))
   }
   if (filters.hideComments !== undefined) {
     conditions.push(eq(channelPostModel.hideComments, filters.hideComments))

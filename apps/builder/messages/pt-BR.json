@@ -1699,6 +1699,20 @@
       "channelId": "ID do canal",
       "lineUserId": "LINE User ID"
     },
+    "channelProfile": {
+      "followsBusiness": "Segue a empresa",
+      "followerCount": "Seguidores",
+      "yes": "Sim",
+      "no": "Não",
+      "messagingWindow": {
+        "label": "Janela de mensagens",
+        "open": "Aberta • {time}",
+        "humanAgentOpen": "Janela de atendente humano • {time}",
+        "closed": "Fechada",
+        "tooltip": "É possível responder por 24 horas após a última mensagem do cliente.",
+        "tooltipHumanAgent": "É possível responder por 24 horas após a última mensagem do cliente. Depois disso, um atendente humano ainda pode responder por até 7 dias."
+      }
+    },
     "flow": {
       "label": "Fluxo"
     },
@@ -3160,7 +3174,8 @@
       "moreOptions": "Mais opções",
       "findPlacesNearMe": "Encontrar lugares perto de mim",
       "callPhoneNumber": "Ligar para um número de telefone",
-      "copyText": "Copiar texto"
+      "copyText": "Copiar texto",
+      "sendChannelPost": "Enviar uma publicação"
     },
     "externalRequest": {
       "errors": {
@@ -3501,6 +3516,29 @@
       "limitHint": "Até {max} caracteres depois de preencher as variáveis.",
       "fallbackHint": "Em canais que não copiam texto, o contato recebe este texto como resposta.",
       "viewerTitle": "Copia este texto"
+    },
+    "sendChannelPost": {
+      "title": "Enviar uma publicação",
+      "description": "Escolha uma das suas publicações para enviar ao cliente.",
+      "inbox": "Caixa de entrada",
+      "inboxPlaceholder": "Selecione uma caixa de entrada",
+      "noInboxes": "Conecte uma caixa do Instagram ou Messenger para enviar publicações.",
+      "search": "Buscar publicações",
+      "empty": "Ainda não há publicações para esta caixa.",
+      "loadError": "Não foi possível carregar as publicações.",
+      "retry": "Tentar novamente",
+      "loadMore": "Carregar mais",
+      "select": "Selecionar uma publicação",
+      "unavailable": "Esta publicação não está mais disponível.",
+      "noCaption": "Sem legenda",
+      "openPost": "Abrir publicação",
+      "sendFailed": "Não foi possível enviar a publicação.",
+      "reasons": {
+        "typeNotShareable": "Este tipo de publicação não pode ser enviado aqui",
+        "linkUnavailable": "Esta publicação não tem link para enviar",
+        "linkTooLong": "O link é longo demais para ser enviado",
+        "shareUnsupported": "Este canal não pode enviar publicações"
+      }
     }
   },
   "folders": {
@@ -4558,6 +4596,7 @@
     "sendFailed": "Falha ao enviar",
     "repliedToStory": "Respondeu ao seu story",
     "sentAttachments": "Enviou {count, plural, one {1 anexo} other {# anexos}}",
+    "sentPost": "Enviou uma publicação",
     "deleteComment": "Excluir comentário",
     "deleteCommentConfirmation": "Tem certeza de que deseja excluir este comentário? As respostas também serão excluídas, tanto da sua caixa de entrada quanto do Facebook. Esta ação não pode ser desfeita.",
     "deleteMessageSuccess": "Mensagem excluída",
@@ -4747,7 +4786,8 @@
       "continue": "Continuar enviando",
       "discard": "Descartar mensagens na fila",
       "dismiss": "Dispensar"
-    }
+    },
+    "sendChannelPostPostRequired": "Escolha uma publicação para enviar."
   },
   "instagram": {
     "description": "Esta integração permite criar bots do Instagram.",
@@ -7608,6 +7648,7 @@
     "locked": {
       "flowBanner": "Este fluxo foi instalado de um modelo somente visualização. Você pode vê-lo, mas não editá-lo.",
       "badge": "Somente visualização",
+      "tagEditorBanner": "Isto foi instalado de um modelo somente leitura. Só a cor pode ser alterada.",
       "editorBanner": "Isto foi instalado de um modelo somente visualização. Você pode vê-lo, mas não editá-lo.",
       "badgeHint": "Instalado a partir de um modelo somente para visualização"
     },
@@ -8303,6 +8344,28 @@
   "contactAdReferrals": {
     "title": "Histórico de anúncios",
     "empty": "Nenhum clique em anúncio registrado para este contato ainda."
+  },
+  "contactTouchpoints": {
+    "title": "Entrou por",
+    "empty": "Nenhuma participação registrada para este contato ainda.",
+    "kinds": {
+      "postComment": "Comentário em publicação",
+      "form": "Formulário"
+    },
+    "details": {
+      "played": "{count, plural, one {# jogada} other {# jogadas}}",
+      "lastPrize": "Último prêmio: {prize}",
+      "score": "Pontuação: {score}",
+      "completed": "Concluído",
+      "inProgress": "Em andamento",
+      "submissions": "{count, plural, one {# envio} other {# envios}}",
+      "pollChoice": "Votou em {name}",
+      "leads": "{count, plural, one {# lead} other {# leads}}",
+      "requests": "{count, plural, one {# solicitação} other {# solicitações}}",
+      "replies": "{count, plural, one {# resposta} other {# respostas}}",
+      "visits": "{count, plural, one {# visita} other {# visitas}}",
+      "clicks": "{count, plural, one {# clique} other {# cliques}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "Nenhuma transmissão foi enviada a este contato ainda.",
@@ -12613,7 +12676,34 @@
     "label": "Quem respondeu nesta conversa",
     "unnamedMember": "Membro",
     "loadMoreFailed": "Não foi possível carregar mais membros",
-    "lastMessageBy": "Última mensagem de {name}"
+    "lastMessageBy": "Última mensagem de {name}",
+    "namesOverflow": "{names} +{count}"
+  },
+  "tagColor": {
+    "label": "Cor",
+    "choose": "Escolher uma cor",
+    "remove": "Remover cor"
+  },
+  "composerTags": {
+    "contactLoadError": "Não foi possível carregar as tags deste contato.",
+    "title": "Tags",
+    "searchLabel": "Buscar tags",
+    "searchPlaceholder": "Buscar tags",
+    "expand": "Mostrar todas",
+    "collapse": "Mostrar menos",
+    "loadMore": "Carregar mais",
+    "loadError": "Não foi possível carregar as tags.",
+    "empty": "Ainda não há tags. Crie tags na página Tags.",
+    "noMatch": "Nenhuma tag corresponde à sua busca.",
+    "addFailed": "Não foi possível adicionar a tag \"{name}\".",
+    "removeFailed": "Não foi possível remover a tag \"{name}\".",
+    "disabledNoContact": "Esta conversa não tem um contato para etiquetar.",
+    "disabledBlocked": "Este contato está bloqueado, então suas tags não podem ser alteradas.",
+    "disabledNoAccess": "Você não tem acesso para alterar as tags deste contato."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {mais # tag} other {mais # tags}}"
   },
   "posts": {
     "title": "Publicações",

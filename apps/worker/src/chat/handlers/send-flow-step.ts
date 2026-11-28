@@ -6,9 +6,11 @@ import {
 } from "@chatbotx.io/analytics"
 import {
   appointmentCalendarService,
+  channelPostShareService,
   contactInboxService,
   conversationService,
   messageService,
+  type PreparedChannelPostShare,
   type PreparedProductMessage,
   productMessageService,
   publishGuestRealtimeEvent,
@@ -53,6 +55,7 @@ import {
   messageEventTypeSchema,
   postCommentRefFromMetadata,
   type SendCardStepSchema,
+  type SendChannelPostStepSchema,
   sendsAsNativeCopyButton,
   stepSupport,
   stepTypes,
@@ -496,6 +499,68 @@ async function resolveProductMessageForStep(props: {
   return prepared
 }
 
+/** A resolved post, and the step a channel is handed for it. */
+type ChannelPostDelivery = {
+  prepared: PreparedChannelPostShare
+  deliveryStep: SendFlowStepData
+}
+
+/**
+ * The step a channel is handed for a resolved post, by share mode. The authored
+ * step id stays, so analytics still counts the original `sendChannelPost` step.
+ * A `textLink` channel gets an ordinary text step (buttons are required by the
+ * schema, so the empty list is explicit) and needs no code of its own.
+ */
+const channelPostDeliveryStep: {
+  [Mode in PreparedChannelPostShare["content"]["mode"]]: (
+    step: SendChannelPostStepSchema,
+    content: Extract<PreparedChannelPostShare["content"], { mode: Mode }>,
+  ) => SendFlowStepData
+} = {
+  nativeMedia: (step, content) => ({
+    ...step,
+    externalPostId: content.externalPostId,
+  }),
+  textLink: (step, content) => ({
+    id: step.id,
+    ...(step.nodeId ? { nodeId: step.nodeId } : {}),
+    stepType: stepTypes.enum.sendText,
+    text: content.text,
+    buttons: [],
+  }),
+}
+
+/**
+ * A `sendChannelPost` step stores a post id; the post and what is sent for it
+ * are resolved here, once, before any Message row exists, so a post that cannot
+ * be sent (removed, another inbox's, no link) leaves no phantom message behind.
+ * Throws `ChannelPostShareRefusedError`, which the caller's terminal catch
+ * records once, in the Error Log, like an unresolvable product message.
+ */
+async function resolveChannelPostForStep(props: {
+  step: SendFlowStepData
+  conversation: Pick<ConversationModel, "workspaceId">
+  contactInbox: Pick<ContactInboxModel, "channel" | "inboxId">
+}): Promise<ChannelPostDelivery | undefined> {
+  const { step, conversation, contactInbox } = props
+  if (step.stepType !== stepTypes.enum.sendChannelPost) {
+    return
+  }
+  const prepared = await channelPostShareService.prepareOutgoing({
+    workspaceId: conversation.workspaceId,
+    inboxId: contactInbox.inboxId,
+    channel: contactInbox.channel,
+    channelPostId: step.channelPostId,
+  })
+  // Each builder takes the content of its own mode; the lookup by `mode` cannot
+  // be correlated by the type checker.
+  const build = channelPostDeliveryStep[prepared.content.mode] as (
+    step: SendChannelPostStepSchema,
+    content: PreparedChannelPostShare["content"],
+  ) => SendFlowStepData
+  return { prepared, deliveryStep: build(step, prepared.content) }
+}
+
 export async function sendFlowStep({
   conversationId,
   contactInboxId,
@@ -766,13 +831,21 @@ export async function sendFlowStep({
     return
   }
 
-  const storedContent = resolveStoredStepContent(
-    resolvedStep as SendFlowStepData,
-  )
-
   let message: MessageModel | MessageWithAttachments | undefined
 
   try {
+    // Before the stored content, so the row stores the real text and post card.
+    const channelPostDelivery = await resolveChannelPostForStep({
+      step: resolvedStep as SendFlowStepData,
+      conversation,
+      contactInbox: targetContactInbox,
+    })
+    const deliveryStep: SendFlowStepData =
+      channelPostDelivery?.deliveryStep ?? (resolvedStep as SendFlowStepData)
+    const storedContent = resolveStoredStepContent(
+      deliveryStep,
+      channelPostDelivery?.prepared,
+    )
     const preparedProductMessage = await resolveProductMessageForStep({
       step: resolvedStep as SendFlowStepData,
       conversation,
@@ -790,7 +863,7 @@ export async function sendFlowStep({
       workspaceId: conversation.workspaceId,
       flowId,
       channel: targetContactInbox.channel,
-      step: resolvedStep as SendFlowStepData,
+      step: deliveryStep,
     })
     warnUncopyableCopyTextButtons({
       workspaceId: conversation.workspaceId,

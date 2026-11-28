@@ -1699,6 +1699,20 @@
       "channelId": "ID do canal",
       "lineUserId": "LINE User ID"
     },
+    "channelProfile": {
+      "followsBusiness": "Segue a empresa",
+      "followerCount": "Seguidores",
+      "yes": "Sim",
+      "no": "Não",
+      "messagingWindow": {
+        "label": "Janela de mensagens",
+        "open": "Aberta • {time}",
+        "humanAgentOpen": "Janela de agente humano • {time}",
+        "closed": "Fechada",
+        "tooltip": "É possível responder durante 24 horas após a última mensagem do cliente.",
+        "tooltipHumanAgent": "É possível responder durante 24 horas após a última mensagem do cliente. Depois disso, um agente humano ainda pode responder até 7 dias."
+      }
+    },
     "flow": {
       "label": "Fluxo"
     },
@@ -3160,7 +3174,8 @@
       "moreOptions": "Mais opções",
       "findPlacesNearMe": "Encontrar locais perto de mim",
       "callPhoneNumber": "Ligar para um número de telefone",
-      "copyText": "Copiar texto"
+      "copyText": "Copiar texto",
+      "sendChannelPost": "Enviar uma publicação"
     },
     "externalRequest": {
       "errors": {
@@ -3501,6 +3516,29 @@
       "limitHint": "Até {max} caracteres depois de preenchidas as variáveis.",
       "fallbackHint": "Em canais que não copiam texto, o contacto recebe este texto como resposta.",
       "viewerTitle": "Copia este texto"
+    },
+    "sendChannelPost": {
+      "title": "Enviar uma publicação",
+      "description": "Escolha uma das suas publicações para enviar ao cliente.",
+      "inbox": "Caixa de entrada",
+      "inboxPlaceholder": "Selecione uma caixa de entrada",
+      "noInboxes": "Ligue uma caixa do Instagram ou Messenger para enviar publicações.",
+      "search": "Pesquisar publicações",
+      "empty": "Ainda não há publicações para esta caixa.",
+      "loadError": "Não foi possível carregar as publicações.",
+      "retry": "Tentar novamente",
+      "loadMore": "Carregar mais",
+      "select": "Selecionar uma publicação",
+      "unavailable": "Esta publicação já não está disponível.",
+      "noCaption": "Sem legenda",
+      "openPost": "Abrir publicação",
+      "sendFailed": "Não foi possível enviar a publicação.",
+      "reasons": {
+        "typeNotShareable": "Este tipo de publicação não pode ser enviado aqui",
+        "linkUnavailable": "Esta publicação não tem ligação para enviar",
+        "linkTooLong": "A ligação é demasiado longa para ser enviada",
+        "shareUnsupported": "Este canal não pode enviar publicações"
+      }
     }
   },
   "folders": {
@@ -4581,6 +4619,7 @@
     "sendFailed": "Falha ao enviar",
     "repliedToStory": "Respondeu ao seu story",
     "sentAttachments": "Enviou {count, plural, one {1 anexo} other {# anexos}}",
+    "sentPost": "Enviou uma publicação",
     "deleteComment": "Eliminar comentário",
     "deleteCommentConfirmation": "Tem a certeza de que pretende eliminar este comentário? As respetivas respostas também serão eliminadas, tanto da sua caixa de entrada como do Facebook. Esta ação não pode ser anulada.",
     "deleteMessageSuccess": "Mensagem eliminada",
@@ -4770,7 +4809,8 @@
       "continue": "Continuar a enviar",
       "discard": "Descartar mensagens em fila",
       "dismiss": "Dispensar"
-    }
+    },
+    "sendChannelPostPostRequired": "Escolha uma publicação para enviar."
   },
   "instagram": {
     "description": "Esta integração permite-lhe criar bots do Instagram.",
@@ -7608,6 +7648,7 @@
     "locked": {
       "flowBanner": "Este fluxo foi instalado a partir de um modelo apenas de visualização. Pode vê-lo, mas não editá-lo.",
       "badge": "Apenas visualização",
+      "tagEditorBanner": "Isto foi instalado a partir de um modelo só de leitura. Só a cor pode ser alterada.",
       "editorBanner": "Isto foi instalado a partir de um modelo apenas de visualização. Pode vê-lo, mas não editá-lo.",
       "badgeHint": "Instalado a partir de um modelo apenas de visualização"
     },
@@ -8303,6 +8344,28 @@
   "contactAdReferrals": {
     "title": "Histórico de anúncios",
     "empty": "Ainda não foram registados cliques em anúncios para este contacto."
+  },
+  "contactTouchpoints": {
+    "title": "Aderiu através de",
+    "empty": "Ainda não há participações registadas para este contacto.",
+    "kinds": {
+      "postComment": "Comentário em publicação",
+      "form": "Formulário"
+    },
+    "details": {
+      "played": "{count, plural, one {# jogada} other {# jogadas}}",
+      "lastPrize": "Último prémio: {prize}",
+      "score": "Pontuação: {score}",
+      "completed": "Concluído",
+      "inProgress": "Em curso",
+      "submissions": "{count, plural, one {# submissão} other {# submissões}}",
+      "pollChoice": "Votou em {name}",
+      "leads": "{count, plural, one {# lead} other {# leads}}",
+      "requests": "{count, plural, one {# pedido} other {# pedidos}}",
+      "replies": "{count, plural, one {# resposta} other {# respostas}}",
+      "visits": "{count, plural, one {# visita} other {# visitas}}",
+      "clicks": "{count, plural, one {# clique} other {# cliques}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "Ainda não foi enviada nenhuma transmissão a este contacto.",
@@ -12613,7 +12676,34 @@
     "label": "Quem respondeu nesta conversa",
     "unnamedMember": "Membro",
     "loadMoreFailed": "Não foi possível carregar mais membros",
-    "lastMessageBy": "Última mensagem de {name}"
+    "lastMessageBy": "Última mensagem de {name}",
+    "namesOverflow": "{names} +{count}"
+  },
+  "tagColor": {
+    "label": "Cor",
+    "choose": "Escolher uma cor",
+    "remove": "Remover cor"
+  },
+  "composerTags": {
+    "contactLoadError": "Não foi possível carregar as etiquetas deste contacto.",
+    "title": "Etiquetas",
+    "searchLabel": "Pesquisar etiquetas",
+    "searchPlaceholder": "Pesquisar etiquetas",
+    "expand": "Mostrar todas",
+    "collapse": "Mostrar menos",
+    "loadMore": "Carregar mais",
+    "loadError": "Não foi possível carregar as etiquetas.",
+    "empty": "Ainda não existem etiquetas. Crie etiquetas na página Etiquetas.",
+    "noMatch": "Nenhuma etiqueta corresponde à sua pesquisa.",
+    "addFailed": "Não foi possível adicionar a etiqueta \"{name}\".",
+    "removeFailed": "Não foi possível remover a etiqueta \"{name}\".",
+    "disabledNoContact": "Esta conversa não tem um contacto para etiquetar.",
+    "disabledBlocked": "Este contacto está bloqueado, por isso as suas etiquetas não podem ser alteradas.",
+    "disabledNoAccess": "Não tem acesso para alterar as etiquetas deste contacto."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {mais # etiqueta} other {mais # etiquetas}}"
   },
   "posts": {
     "title": "Publicações",

@@ -138,6 +138,7 @@ export const stepTypes = z.enum([
   "whatsappFlow",
   "sendProducts",
   "sendCollection",
+  "sendChannelPost",
 
   "sendMessengerTemplateMessage",
 

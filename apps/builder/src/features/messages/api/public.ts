@@ -5,6 +5,7 @@ import {
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import {
+  CHANNEL_POST_SHARE_REFUSED_CODE,
   IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE,
   PRODUCT_MESSAGE_UNRESOLVABLE_CODE,
 } from "@chatbotx.io/database/partials"
@@ -31,6 +32,7 @@ import { withMessageTranslations } from "@/features/translation/lib/message-tran
 import { sendOutgoing } from "@/features/translation/lib/send-outgoing"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
+  channelPostShareRefused,
   imagesNotSupportedOnChannel,
   possibleErrorsOnClosedMessagingWindow,
   possibleErrorsOnCreatingResource,
@@ -255,7 +257,7 @@ export const messagesPublicRouter = {
       path: "/v1/conversations/{conversationId}/messages",
       summary: "Send message on conversation",
       description:
-        "Use this to reply in an existing conversation by conversationId. Sends an outgoing text, media or catalog product message (`products`, on channels with product messages such as WhatsApp; ids from `products.listSendable`) on an existing conversation. To message a contact without first resolving their conversation id, use `contacts.sendMessage` instead. Images are refused with `imagesNotSupportedOnChannel` (422, `data.reason`/`data.max`) where the channel can't carry them: Threads, Instagram and TikTok comment replies, or more than one image on a Messenger comment reply. To send a saved reply, pass its `text` and its `images[].mediaLibraryFileId` as `mediaFileIds` (from `savedReplies.list`). A send past the channel's messaging window is refused up front with `messagingWindowClosed` (409): read `contactInboxes[].messagingWindow` from `conversations.get`/`conversations.list` first; on WhatsApp send a template with `messages.sendWhatsappTemplate` instead. Delivery is asynchronous: if the channel finally rejects the message (after any retries), it is removed from the conversation — reading it by id then returns 404 — and the error is written to the workspace Error Log (`errorLogs.list`). Only messages a member sends from the Inbox are kept with their error.",
+        "Use this to reply in an existing conversation by conversationId. Sends an outgoing text, media or catalog product message (`products`, on channels with product messages such as WhatsApp; ids from `products.listSendable`) or post (`channelPost`, on channels that can send posts: Instagram sends the post card, Messenger a text with the post's name and link; ids from `channelPostManagement.list` with `shareableOnly=true`, refused with `channelPostShareRefused`, 422, `data.reason`) on an existing conversation. To message a contact without first resolving their conversation id, use `contacts.sendMessage` instead. Images are refused with `imagesNotSupportedOnChannel` (422, `data.reason`/`data.max`) where the channel can't carry them: Threads, Instagram and TikTok comment replies, or more than one image on a Messenger comment reply. To send a saved reply, pass its `text` and its `images[].mediaLibraryFileId` as `mediaFileIds` (from `savedReplies.list`). A send past the channel's messaging window is refused up front with `messagingWindowClosed` (409): read `contactInboxes[].messagingWindow` from `conversations.get`/`conversations.list` first; on WhatsApp send a template with `messages.sendWhatsappTemplate` instead. Delivery is asynchronous: if the channel finally rejects the message (after any retries), it is removed from the conversation — reading it by id then returns 404 — and the error is written to the workspace Error Log (`errorLogs.list`). Only messages a member sends from the Inbox are kept with their error.",
       successStatus: 201,
       tags: ["Messages"],
     })
@@ -264,6 +266,7 @@ export const messagesPublicRouter = {
     .errors({
       ...possibleErrorsOnCreatingResource,
       [PRODUCT_MESSAGE_UNRESOLVABLE_CODE]: productMessageUnresolvable,
+      [CHANNEL_POST_SHARE_REFUSED_CODE]: channelPostShareRefused,
       [IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE]: imagesNotSupportedOnChannel,
       EMAIL_REPLY_PARENT_NOT_FOUND: emailReplyParentNotFound,
       ...possibleErrorsOnTranslatedSend,

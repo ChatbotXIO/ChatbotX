@@ -422,6 +422,20 @@
       "channelId": "頻道 ID",
       "lineUserId": "LINE User ID"
     },
+    "channelProfile": {
+      "followsBusiness": "已追蹤商家",
+      "followerCount": "粉絲數",
+      "yes": "是",
+      "no": "否",
+      "messagingWindow": {
+        "label": "訊息視窗",
+        "open": "開放中 • {time}",
+        "humanAgentOpen": "真人客服視窗 • {time}",
+        "closed": "已關閉",
+        "tooltip": "客戶最後一則訊息後的 24 小時內可以回覆。",
+        "tooltipHumanAgent": "客戶最後一則訊息後的 24 小時內可以回覆。之後真人客服仍可在最多 7 天內回覆。"
+      }
+    },
     "flow": {
       "label": "流程"
     },
@@ -1795,6 +1809,7 @@
     },
     "realtimeRevokeWarning": "無法立即確認存取權限的撤銷操作，該操作將在成員下次重新連線時生效。",
     "sentAttachments": "已傳送 {count, plural, one {1 個附件} other {# 個附件}}",
+    "sentPost": "已傳送一則貼文",
     "moveFeature": "移動 {feature}",
     "poweredBy": "由 {name} 提供技術支援",
     "noGiphyApiKey": "找不到 GIPHY API 金鑰。請在平台設定新增一個。",
@@ -2019,7 +2034,8 @@
       "continue": "繼續傳送",
       "discard": "捨棄佇列中的訊息",
       "dismiss": "忽略"
-    }
+    },
+    "sendChannelPostPostRequired": "請選擇要傳送的貼文。"
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",
@@ -3600,7 +3616,8 @@
       "moreOptions": "更多選項",
       "findPlacesNearMe": "尋找我附近的地點",
       "callPhoneNumber": "撥打電話號碼",
-      "copyText": "複製文字"
+      "copyText": "複製文字",
+      "sendChannelPost": "傳送貼文"
     },
     "externalRequest": {
       "errors": {
@@ -3941,6 +3958,29 @@
       "limitHint": "填入變數後最多 {max} 個字元。",
       "fallbackHint": "在無法複製文字的頻道上，聯絡人會以回覆的形式收到此文字。",
       "viewerTitle": "複製此文字"
+    },
+    "sendChannelPost": {
+      "title": "傳送貼文",
+      "description": "選擇您的一則貼文傳送給客戶。",
+      "inbox": "收件匣",
+      "inboxPlaceholder": "選擇收件匣",
+      "noInboxes": "請連結 Instagram 或 Messenger 收件匣以傳送貼文。",
+      "search": "搜尋貼文",
+      "empty": "此收件匣尚無貼文。",
+      "loadError": "無法載入貼文。",
+      "retry": "重試",
+      "loadMore": "載入更多",
+      "select": "選擇貼文",
+      "unavailable": "此貼文已無法使用。",
+      "noCaption": "無說明文字",
+      "openPost": "開啟貼文",
+      "sendFailed": "無法傳送貼文。",
+      "reasons": {
+        "typeNotShareable": "此類貼文無法在此傳送",
+        "linkUnavailable": "此貼文沒有可傳送的連結",
+        "linkTooLong": "連結過長，無法傳送",
+        "shareUnsupported": "此管道無法傳送貼文"
+      }
     }
   },
   "folders": {
@@ -7654,6 +7694,7 @@
     "locked": {
       "flowBanner": "此流程來自僅檢視的範本。你可以檢視，但無法編輯。",
       "badge": "僅檢視",
+      "tagEditorBanner": "這是從僅檢視範本安裝的。只能變更顏色。",
       "editorBanner": "這是從僅檢視範本安裝的。你可以檢視，但不能編輯。",
       "badgeHint": "從僅檢視範本安裝"
     },
@@ -8349,6 +8390,28 @@
   "contactAdReferrals": {
     "title": "廣告歷史",
     "empty": "尚未記錄此聯絡人的廣告點擊。"
+  },
+  "contactTouchpoints": {
+    "title": "透過以下方式加入",
+    "empty": "此聯絡人尚無參與紀錄。",
+    "kinds": {
+      "postComment": "貼文留言",
+      "form": "表單"
+    },
+    "details": {
+      "played": "{count, plural, one {#次遊玩} other {#次遊玩}}",
+      "lastPrize": "最近獎品：{prize}",
+      "score": "得分：{score}",
+      "completed": "已完成",
+      "inProgress": "進行中",
+      "submissions": "{count, plural, one {#次提交} other {#次提交}}",
+      "pollChoice": "投票給 {name}",
+      "leads": "{count, plural, one {#筆潛在客戶} other {#筆潛在客戶}}",
+      "requests": "{count, plural, one {#個請求} other {#個請求}}",
+      "replies": "{count, plural, one {#則回覆} other {#則回覆}}",
+      "visits": "{count, plural, one {#次造訪} other {#次造訪}}",
+      "clicks": "{count, plural, one {#次點擊} other {#次點擊}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "尚未向此聯絡人發送任何廣播。",
@@ -12613,7 +12676,34 @@
     "label": "誰在此對話中回覆過",
     "unnamedMember": "成員",
     "loadMoreFailed": "無法載入更多成員",
-    "lastMessageBy": "{name} 的最後一則訊息"
+    "lastMessageBy": "{name} 的最後一則訊息",
+    "namesOverflow": "{names} +{count}"
+  },
+  "tagColor": {
+    "label": "顏色",
+    "choose": "選擇顏色",
+    "remove": "移除顏色"
+  },
+  "composerTags": {
+    "contactLoadError": "無法載入此聯絡人的標籤。",
+    "title": "標籤",
+    "searchLabel": "搜尋標籤",
+    "searchPlaceholder": "搜尋標籤",
+    "expand": "顯示全部",
+    "collapse": "收合",
+    "loadMore": "載入更多",
+    "loadError": "無法載入標籤。",
+    "empty": "尚無標籤。請在「標籤」頁面建立標籤。",
+    "noMatch": "沒有符合搜尋的標籤。",
+    "addFailed": "無法新增標籤「{name}」。",
+    "removeFailed": "無法移除標籤「{name}」。",
+    "disabledNoContact": "此對話沒有可加上標籤的聯絡人。",
+    "disabledBlocked": "此聯絡人已被封鎖，無法變更其標籤。",
+    "disabledNoAccess": "你沒有權限變更此聯絡人的標籤。"
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {另有 # 個標籤} other {另有 # 個標籤}}"
   },
   "posts": {
     "title": "貼文",

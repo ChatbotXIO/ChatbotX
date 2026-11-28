@@ -12,8 +12,11 @@ import type { GetContactResponse } from "@/features/contacts/schema/query"
  */
 
 const translate = (key: string) => key
+// Stable identity: the field-building effect depends on the formatter.
+const formatter = { number: (value: number) => String(value) }
 vi.mock("next-intl", () => ({
   useTranslations: () => translate,
+  useFormatter: () => formatter,
 }))
 
 vi.mock("sonner", () => ({

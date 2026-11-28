@@ -29,7 +29,9 @@ import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
 import { useInvalidateTags } from "@/features/tags/provider/tag-hook"
 import { useIsLocked } from "@/features/templates/components/lock-context"
 import { updateTagAction } from "./actions/update-tag-action"
+import { buildUpdateTagPayload } from "./lib/update-tag-payload"
 import { updateTagSchema } from "./schema/action"
+import { TagColorField } from "./tag-color-field"
 
 export function UpdateTagDialog({
   workspaceId,
@@ -49,9 +51,9 @@ export function UpdateTagDialog({
 
   const {
     form,
-    handleSubmitWithAction,
+    action,
     resetFormAndAction,
-    form: { setValue },
+    form: { reset },
   } = useHookFormAction(
     updateTagAction.bind(null, workspaceId, tag?.id ?? ""),
     zodResolver(updateTagSchema),
@@ -83,9 +85,22 @@ export function UpdateTagDialog({
 
   useEffect(() => {
     if (tag) {
-      setValue("name", tag.name)
+      // Real defaults, so `dirtyFields` says what the agent changed.
+      reset({ name: tag.name, color: tag.color ?? null })
     }
-  }, [tag, setValue])
+  }, [tag, reset])
+
+  // Read during render so the form subscribes to it.
+  const { dirtyFields } = form.formState
+  const onSubmit = form.handleSubmit((values) =>
+    action.execute(
+      buildUpdateTagPayload({
+        values,
+        dirtyFields,
+        isLocked,
+      }),
+    ),
+  )
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -98,11 +113,11 @@ export function UpdateTagDialog({
         </DialogHeader>
         <div className="flex items-center space-x-2">
           <Form {...form}>
-            <form
-              className="flex-1 space-y-4"
-              onSubmit={handleSubmitWithAction}
-            >
-              <LockedDialogFieldset resourceId={tag?.id}>
+            <form className="flex-1 space-y-4" onSubmit={onSubmit}>
+              <LockedDialogFieldset
+                bannerKey="tagEditorBanner"
+                resourceId={tag?.id}
+              >
                 <FormField
                   control={form.control}
                   name="name"
@@ -120,6 +135,8 @@ export function UpdateTagDialog({
                   )}
                 />
               </LockedDialogFieldset>
+              {/* Color stays editable on a View-only copy: the lock policy covers the name only. */}
+              <TagColorField key={tag?.id} />
               <div className="flex justify-end gap-4">
                 <Button
                   onClick={() => onOpenChange(false)}
@@ -130,8 +147,7 @@ export function UpdateTagDialog({
                 </Button>
                 <Button
                   disabled={
-                    isLocked ||
-                    !form.formState.isValid ||
+                    !(form.formState.isDirty && form.formState.isValid) ||
                     form.formState.isSubmitting
                   }
                   type="submit"

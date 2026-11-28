@@ -265,6 +265,41 @@ describe("compileFlowSpec — one node per step type", () => {
     expect(result.success).toBe(false)
   })
 
+  test("sendChannelPost compiles to a publishable instagram or messenger step", () => {
+    for (const channel of ["instagram", "messenger"] as const) {
+      const compiled = compileFlowSpec(
+        spec([{ type: "sendChannelPost", channelPostId: "4242" }], { channel }),
+        emptyCtx,
+      )
+      const node = compiled.nodes[0]
+      expect(node?.type).toBe(nodeTypeSchema.enum.sendMessage)
+      if (node?.type === "sendMessage") {
+        expect(node.data.details.beforeStep.channel).toBe(channel)
+        expect(node.data.details.steps[0]).toMatchObject({
+          stepType: stepTypes.enum.sendChannelPost,
+          channelPostId: "4242",
+        })
+      }
+      expectPublishable(compiled.nodes, compiled.edges)
+    }
+  })
+
+  test("sendChannelPost is rejected at publish on a channel that cannot send posts, and omnichannel", () => {
+    for (const channel of ["whatsapp", "telegram", undefined] as const) {
+      const compiled = compileFlowSpec(
+        spec([{ type: "sendChannelPost", channelPostId: "4242" }], {
+          ...(channel ? { channel } : {}),
+        }),
+        emptyCtx,
+      )
+      const result = z
+        .array(flowVersionSchema)
+        .superRefine(refineStepsByChannel)
+        .safeParse(compiled.nodes)
+      expect(result.success).toBe(false)
+    }
+  })
+
   test("send uses the flow channel or defaults to omnichannel", () => {
     const whatsapp = compileFlowSpec(
       spec([{ type: "send", text: "Hello!" }], { channel: "whatsapp" }),

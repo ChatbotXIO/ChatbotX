@@ -1,0 +1,72 @@
+{
+  "type": "diff",
+  "version": "10",
+  "dialect": "postgres",
+  "id": "732199cc-782e-4b5a-a3ba-1caa8779ecf7",
+  "prevIds": [
+    "a392c48d-c4a6-4ead-aa6e-f1b9f5db332c"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "MagicLinkStat",
+        "MagicLinkStat_workspaceId_contactId_occurredAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.MagicLinkStat_workspaceId_contactId_occurredAt_idx",
+        "n|idx|public.MagicLinkStat_workspaceId_contactId_occurredAt_idx",
+        "e|idx|public.MagicLinkStat_workspaceId_contactId_occurredAt_idx",
+        "n|rel|public.MagicLinkStat_workspaceId_contactId_occurredAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.MagicLinkStat",
+        "n|sch|public",
+        "n|col|public.MagicLinkStat.workspaceId",
+        "n|col|public.MagicLinkStat.contactId",
+        "n|col|public.MagicLinkStat.occurredAt"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "MagicLinkStat",
+        "name": "MagicLinkStat_workspaceId_contactId_occurredAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "workspaceId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "contactId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "occurredAt",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": true,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

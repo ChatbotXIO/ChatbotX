@@ -155,9 +155,9 @@ chatbotx response-sla delete                         # Stop tracking; open deadl
 
 ```bash
 chatbotx tags list                                   # Get all tags [--name --folderId --sort]
-chatbotx tags create --name <name>                   # Create tag [--folderId]
+chatbotx tags create --name <name>                   # Create tag [--folderId --color '#RRGGBB']
 chatbotx tags get <idOrName>                         # Get tag
-chatbotx tags update <id> --name <name>              # Rename tag [--folderId to move it]
+chatbotx tags update <id> --name <name>              # Rename tag [--folderId to move it; --color '#RRGGBB' sets it, omit to keep it]
 chatbotx tags delete <id>                            # Delete tag
 ```
 
@@ -222,12 +222,13 @@ chatbotx contacts filter-fields                      # Field/operator reference 
                                                      # [--surface flowCondition] also lists flow-only fields (isWithinWorkingHours)
                                                      # `pipelineItems` = pipelines + stages and the shapes of `pipelineItem` conditions
 chatbotx contacts ad-referrals <identifier>           # Ads the contact came from [--perPage --cursor]
+chatbotx contacts touchpoints <identifier>            # How the contact came in and the tools they took part in, newest first [--perPage --cursor --kinds poll,minigame]
 chatbotx contacts broadcasts list <identifier>        # Broadcasts sent to the contact, newest first [--perPage --cursor --search]
 
 # Discover IDs accepted by contactFilter.commentedOnPost
 chatbotx channel-posts list                           # [--limit --search --inboxId --cursor]
 chatbotx channel-posts options-by-ids --ids <ids>     # Resolve saved-filter post labels
-chatbotx channel-posts list-managed                    # [--channels --inboxIds --authorIds --contentTypes --liveStatus --topicIds --publishedFrom --publishedTo --search --hasComments --sort --limit --cursor] scope `posts`
+chatbotx channel-posts list-managed                    # [--channels --inboxIds --authorIds --contentTypes --liveStatus --topicIds --publishedFrom --publishedTo --search --hasComments --shareableOnly --sort --limit --cursor] scope `posts`
 chatbotx channel-posts get-managed <id>
 chatbotx channel-posts update-managed <id>              # --topicIds replaces the post's topics
 chatbotx channel-posts bulk-update-managed --ids <ids>  # [--addTopicIds --removeTopicIds], up to 100 posts, all or nothing
@@ -348,6 +349,7 @@ chatbotx contacts messages list <identifier>         # [--perPage --cursor]
 chatbotx contacts message get <identifier> <messageId>
 chatbotx contacts message send <identifier>          # [--text --files --mediaFile --mediaFileId --mediaFileIds
                                                      #  --products (JSON catalog products; ids from `products sendable`)
+                                                     #  --channelPost (JSON {"channelPostId"}; id from `channel-posts list-managed --shareableOnly true`)
                                                      #  --flowId --nodeId --inboxId --clientId
                                                      #  --replyToMessageId --replyToMessageCreatedAt --isPrivateReply]
 chatbotx contacts flow add <identifier> --flowId <flowId>  # [--inboxId]
@@ -385,6 +387,7 @@ chatbotx conversations flow-response get <conversationId> <messageId> --createdA
                                                      # file answers: kind "files", each {status: stored (url, size) | failed (failureReason) | unprocessed (no stored copy)}
 chatbotx conversations message send <conversationId>   # [--text --files --mediaFile --mediaFileId --mediaFileIds
                                                      #  --products (JSON catalog products; ids from `products sendable`)
+                                                     #  --channelPost (JSON {"channelPostId"}; id from `channel-posts list-managed --shareableOnly true`)
                                                      #  --flowId --nodeId --inboxId --clientId
                                                      #  --replyToMessageId --replyToMessageCreatedAt --isPrivateReply]
 chatbotx conversations messages update <conversationId> <messageId> --createdAt <createdAt> --newText <newText>

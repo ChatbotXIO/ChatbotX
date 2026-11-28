@@ -216,6 +216,7 @@ export async function tagAdReferralOnlyContact(
       return
     }
     const linked = await tagService.linkTagToContactsReturningNewUnscoped({
+      workspaceId: inbox.workspaceId,
       tagId,
       contactIds: [contactInbox.contactId],
     })

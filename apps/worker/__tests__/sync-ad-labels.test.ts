@@ -214,6 +214,7 @@ describe("tagAdReferralOnlyContact — tagging", () => {
       name: `ad_id.${AD_ID}`,
     })
     expect(linkTagToContactsReturningNewUnscoped).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
       tagId: "tag-ad",
       contactIds: ["contact-1"],
     })

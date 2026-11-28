@@ -1856,6 +1856,20 @@
       "channelId": "Kanal Kimliği",
       "lineUserId": "LINE User ID"
     },
+    "channelProfile": {
+      "followsBusiness": "İşletmeyi takip ediyor",
+      "followerCount": "Takipçiler",
+      "yes": "Evet",
+      "no": "Hayır",
+      "messagingWindow": {
+        "label": "Mesajlaşma penceresi",
+        "open": "Açık • {time}",
+        "humanAgentOpen": "İnsan temsilci penceresi • {time}",
+        "closed": "Kapalı",
+        "tooltip": "Müşterinin son mesajından sonra 24 saat boyunca yanıt verilebilir.",
+        "tooltipHumanAgent": "Müşterinin son mesajından sonra 24 saat boyunca yanıt verilebilir. Sonrasında bir insan temsilci 7 güne kadar yanıt verebilir."
+      }
+    },
     "flow": {
       "label": "Akış"
     },
@@ -3317,7 +3331,8 @@
       "moreOptions": "Daha fazla seçenek",
       "findPlacesNearMe": "Yakınımdaki yerleri bul",
       "callPhoneNumber": "Telefon numarasını ara",
-      "copyText": "Metni kopyala"
+      "copyText": "Metni kopyala",
+      "sendChannelPost": "Gönderi gönder"
     },
     "externalRequest": {
       "errors": {
@@ -3658,6 +3673,29 @@
       "limitHint": "Değişkenler doldurulduktan sonra en fazla {max} karakter.",
       "fallbackHint": "Metin kopyalayamayan kanallarda kişi bu metni yanıt olarak alır.",
       "viewerTitle": "Bu metni kopyalar"
+    },
+    "sendChannelPost": {
+      "title": "Gönderi gönder",
+      "description": "Müşteriye göndermek için gönderilerinizden birini seçin.",
+      "inbox": "Gelen kutusu",
+      "inboxPlaceholder": "Bir gelen kutusu seçin",
+      "noInboxes": "Gönderi göndermek için bir Instagram veya Messenger gelen kutusu bağlayın.",
+      "search": "Gönderi ara",
+      "empty": "Bu gelen kutusu için henüz gönderi yok.",
+      "loadError": "Gönderiler yüklenemedi.",
+      "retry": "Tekrar dene",
+      "loadMore": "Daha fazla yükle",
+      "select": "Bir gönderi seçin",
+      "unavailable": "Bu gönderi artık mevcut değil.",
+      "noCaption": "Açıklama yok",
+      "openPost": "Gönderiyi aç",
+      "sendFailed": "Gönderi gönderilemedi.",
+      "reasons": {
+        "typeNotShareable": "Bu tür gönderi burada gönderilemez",
+        "linkUnavailable": "Bu gönderinin gönderilecek bağlantısı yok",
+        "linkTooLong": "Bağlantı gönderilemeyecek kadar uzun",
+        "shareUnsupported": "Bu kanal gönderi gönderemez"
+      }
     }
   },
   "folders": {
@@ -4581,6 +4619,7 @@
     "sendFailed": "Gönderilemedi",
     "repliedToStory": "Hikayenize yanıt verdi",
     "sentAttachments": "{count, plural, one {1 ek} other {# ek}} gönderildi",
+    "sentPost": "Bir gönderi gönderildi",
     "deleteComment": "Yorumu sil",
     "deleteCommentConfirmation": "Bu yorumu silmek istediğinizden emin misiniz? Yanıtları da hem gelen kutunuzdan hem de Facebook'tan silinecektir. Bu işlem geri alınamaz.",
     "deleteMessageSuccess": "Mesaj silindi",
@@ -4770,7 +4809,8 @@
       "continue": "Göndermeye devam et",
       "discard": "Kuyruktaki mesajları sil",
       "dismiss": "Kapat"
-    }
+    },
+    "sendChannelPostPostRequired": "Göndermek için bir gönderi seçin."
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",
@@ -7608,6 +7648,7 @@
     "locked": {
       "flowBanner": "Bu akış salt görüntüleme şablonundan yüklendi. Görebilirsiniz ancak düzenleyemezsiniz.",
       "badge": "Salt görüntüleme",
+      "tagEditorBanner": "Bu, salt görüntülenebilir bir şablondan yüklendi. Yalnızca renk değiştirilebilir.",
       "editorBanner": "Bu, salt görüntüleme şablonundan yüklendi. Görebilirsiniz ancak düzenleyemezsiniz.",
       "badgeHint": "Salt görüntülenebilir bir şablondan yüklendi"
     },
@@ -8303,6 +8344,28 @@
   "contactAdReferrals": {
     "title": "Reklam geçmişi",
     "empty": "Bu kişi için henüz reklam tıklaması kaydedilmedi."
+  },
+  "contactTouchpoints": {
+    "title": "Şunun üzerinden katıldı",
+    "empty": "Bu kişi için henüz kayıtlı katılım yok.",
+    "kinds": {
+      "postComment": "Gönderi yorumu",
+      "form": "Form"
+    },
+    "details": {
+      "played": "{count, plural, one {# oyun} other {# oyun}}",
+      "lastPrize": "Son ödül: {prize}",
+      "score": "Puan: {score}",
+      "completed": "Tamamlandı",
+      "inProgress": "Devam ediyor",
+      "submissions": "{count, plural, one {# gönderim} other {# gönderim}}",
+      "pollChoice": "{name} için oy verdi",
+      "leads": "{count, plural, one {# potansiyel müşteri} other {# potansiyel müşteri}}",
+      "requests": "{count, plural, one {# istek} other {# istek}}",
+      "replies": "{count, plural, one {# yanıt} other {# yanıt}}",
+      "visits": "{count, plural, one {# ziyaret} other {# ziyaret}}",
+      "clicks": "{count, plural, one {# tıklama} other {# tıklama}}"
+    }
   },
   "contactBroadcasts": {
     "empty": "Bu kişiye henüz toplu gönderim yapılmadı.",
@@ -12613,7 +12676,34 @@
     "label": "Bu görüşmede kimler yanıt verdi",
     "unnamedMember": "Üye",
     "loadMoreFailed": "Daha fazla üye yüklenemedi",
-    "lastMessageBy": "{name} tarafından son mesaj"
+    "lastMessageBy": "{name} tarafından son mesaj",
+    "namesOverflow": "{names} +{count}"
+  },
+  "tagColor": {
+    "label": "Renk",
+    "choose": "Renk seç",
+    "remove": "Rengi kaldır"
+  },
+  "composerTags": {
+    "contactLoadError": "Bu kişinin etiketleri yüklenemedi.",
+    "title": "Etiketler",
+    "searchLabel": "Etiket ara",
+    "searchPlaceholder": "Etiket ara",
+    "expand": "Tümünü göster",
+    "collapse": "Daha az göster",
+    "loadMore": "Daha fazla yükle",
+    "loadError": "Etiketler yüklenemedi.",
+    "empty": "Henüz etiket yok. Etiketler sayfasında etiket oluşturun.",
+    "noMatch": "Aramanızla eşleşen etiket yok.",
+    "addFailed": "\"{name}\" etiketi eklenemedi.",
+    "removeFailed": "\"{name}\" etiketi kaldırılamadı.",
+    "disabledNoContact": "Bu görüşmede etiketlenecek bir kişi yok.",
+    "disabledBlocked": "Bu kişi engellendiği için etiketleri değiştirilemez.",
+    "disabledNoAccess": "Bu kişinin etiketlerini değiştirme erişiminiz yok."
+  },
+  "conversationTags": {
+    "more": "+{count}",
+    "moreLabel": "{count, plural, one {# etiket daha} other {# etiket daha}}"
   },
   "posts": {
     "title": "Gönderiler",

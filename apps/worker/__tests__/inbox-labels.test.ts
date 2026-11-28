@@ -280,6 +280,7 @@ describe("handleChannelLabelWebhook — messenger", () => {
     )
 
     expect(linkTagToContactsReturningNewUnscoped).toHaveBeenCalledWith({
+      workspaceId: WS_ID,
       tagId: "tag-1",
       contactIds: ["c-1"],
     })
@@ -318,6 +319,7 @@ describe("handleChannelLabelWebhook — messenger", () => {
       externalLabelId: LABEL_ID,
     })
     expect(linkTagToContactsReturningNewUnscoped).toHaveBeenCalledWith({
+      workspaceId: WS_ID,
       tagId: "tag-new",
       contactIds: ["c-1"],
     })
@@ -371,6 +373,7 @@ describe("handleChannelLabelWebhook — messenger", () => {
       contactInboxIds: ["ci-1"],
     })
     expect(detachTagFromContactsUnscoped).toHaveBeenCalledWith({
+      workspaceId: WS_ID,
       tagId: "tag-1",
       contactIds: ["c-1"],
     })
@@ -420,6 +423,7 @@ describe("handleChannelLabelWebhook — messenger", () => {
       sourceId: PSID,
     })
     expect(linkTagToContactsReturningNewUnscoped).toHaveBeenCalledWith({
+      workspaceId: WS_ID,
       tagId: "tag-1",
       contactIds: ["c-new"],
     })
@@ -559,6 +563,7 @@ describe("handleChannelLabelWebhook — messenger", () => {
       expect.objectContaining({ externalLabelId: NEW_LABEL_ID }),
     )
     expect(detachTagFromContactsUnscoped).toHaveBeenCalledWith({
+      workspaceId: WS_ID,
       tagId: "tag-1",
       contactIds: ["c-1"],
     })
@@ -613,6 +618,7 @@ describe("handleChannelLabelWebhook — zalo", () => {
     )
 
     expect(linkTagToContactsReturningNewUnscoped).toHaveBeenCalledWith({
+      workspaceId: WS_ID,
       tagId: "tag-1",
       contactIds: ["c-1", "c-2"],
     })
@@ -670,6 +676,7 @@ describe("handleChannelLabelWebhook — zalo", () => {
       contactInboxIds: ["ci-1", "ci-2"],
     })
     expect(detachTagFromContactsUnscoped).toHaveBeenCalledWith({
+      workspaceId: WS_ID,
       tagId: "tag-1",
       contactIds: ["c-1", "c-2"],
     })

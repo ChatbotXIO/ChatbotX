@@ -12,13 +12,14 @@ export const TRANSLATE_NON_TEXT_FIELDS = [
   "mediaFileId",
   "mediaFileIds",
   "products",
+  "channelPost",
   "flowId",
   "replyToMessageId",
   "isPrivateReply",
 ] as const
 
 export const TRANSLATE_PLAIN_TEXT_ONLY_MESSAGE =
-  "`translate` only applies to a plain text message: no files, media, products, flow, reply or private reply"
+  "`translate` only applies to a plain text message: no files, media, products, post, flow, reply or private reply"
 
 export const updateTranslationSettingsRequest = z.object({
   enabled: z

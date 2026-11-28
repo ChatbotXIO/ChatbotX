@@ -14,6 +14,8 @@ export type PickerPost = {
   message?: string
   full_picture?: string
   created_time: string
+  /** Set when the post cannot be picked: the card is disabled and shows this. */
+  disabledReason?: string
 }
 
 const SKELETON_KEYS = ["sk-1", "sk-2", "sk-3", "sk-4"]
@@ -93,12 +95,18 @@ function PostCard({
 }) {
   return (
     <button
+      aria-disabled={post.disabledReason ? true : undefined}
       className={cn(
-        "relative w-full cursor-pointer rounded-md border p-2 text-start transition-colors",
-        selected
-          ? "border-primary bg-primary/5"
-          : "border-border hover:bg-muted",
+        "relative w-full rounded-md border p-2 text-start transition-colors",
+        post.disabledReason
+          ? "cursor-not-allowed border-border opacity-60"
+          : "cursor-pointer",
+        !post.disabledReason &&
+          (selected
+            ? "border-primary bg-primary/5"
+            : "border-border hover:bg-muted"),
       )}
+      disabled={Boolean(post.disabledReason)}
       onClick={onToggle}
       type="button"
     >
@@ -122,6 +130,9 @@ function PostCard({
       <p className="mt-1 text-muted-foreground text-xs">
         {new Date(post.created_time).toLocaleDateString()}
       </p>
+      {post.disabledReason && (
+        <p className="mt-1 text-destructive text-xs">{post.disabledReason}</p>
+      )}
     </button>
   )
 }

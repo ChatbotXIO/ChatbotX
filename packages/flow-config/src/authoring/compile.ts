@@ -41,6 +41,7 @@ import {
   pipelineStepDefaultFn,
 } from "../steps/pipeline"
 import { removeContactTagStepDefaultFn } from "../steps/remove-contact-tag"
+import { sendChannelPostStepDefaultFn } from "../steps/send-channel-post"
 import { sendFileStepDefaultFn } from "../steps/send-file"
 import { sendImageStepDefaultFn } from "../steps/send-image"
 import { sendProductsStepDefaultFn } from "../steps/send-products"
@@ -102,6 +103,7 @@ const ENDS_STEP_LIST: Record<FlowStepSpec["type"], boolean> = {
   send: false,
   sendTemplate: false,
   sendProducts: false,
+  sendChannelPost: false,
   sendViewCatalog: false,
   wait: false,
   branch: true,
@@ -225,6 +227,7 @@ function childChains(step: FlowStepSpec): ChildChain[] {
       ]
     case "sendTemplate":
     case "sendProducts":
+    case "sendChannelPost":
     case "sendViewCatalog":
     case "wait":
     case "action":
@@ -511,6 +514,25 @@ function compileSendProductsStep(
       },
     }),
     [sendProductsStepDefaultFn({ ...content, sections: sections ?? [] })],
+  )
+
+  return registerNode(state, step.id, node, stepPath)
+}
+
+function compileSendChannelPostStep(
+  step: Extract<FlowStepSpec, { type: "sendChannelPost" }>,
+  stepPath: string,
+  state: CompileState,
+): string {
+  const node = withSteps(
+    sendMessageNodeDefaultFn({
+      detailProps: {
+        beforeStep: chooseChannelStepDefaultFn({
+          channel: state.channel ?? "omnichannel",
+        }),
+      },
+    }),
+    [sendChannelPostStepDefaultFn({ channelPostId: step.channelPostId })],
   )
 
   return registerNode(state, step.id, node, stepPath)
@@ -1135,6 +1157,8 @@ function compileStep(
       return compileSendTemplateStep(step, stepPath, state)
     case "sendProducts":
       return compileSendProductsStep(step, stepPath, state)
+    case "sendChannelPost":
+      return compileSendChannelPostStep(step, stepPath, state)
     case "sendViewCatalog":
       return compileSendViewCatalogStep(step, stepPath, state)
     case "wait":

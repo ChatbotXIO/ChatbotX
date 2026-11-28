@@ -16,6 +16,7 @@ import {
   ListIcon,
   MapPinIcon,
   MessageSquareIcon,
+  NewspaperIcon,
   PaperclipIcon,
   PhoneIcon,
   PictureInPicture2Icon,
@@ -117,6 +118,11 @@ const ALL_MENU_ITEMS = (
     icon: ShoppingCartIcon,
     stepType: stepTypes.enum.sendProducts,
   },
+  sendChannelPost: {
+    label: t("flows.actions.sendChannelPost"),
+    icon: NewspaperIcon,
+    stepType: stepTypes.enum.sendChannelPost,
+  },
   sendCollection: {
     label: t("flows.actions.sendCollection"),
     icon: GalleryHorizontalIcon,
@@ -169,6 +175,7 @@ const BASE_MENU_ORDER = [
   "sendTemplateMessage",
   "sendProducts",
   "sendCollection",
+  "sendChannelPost",
   "typing",
   "sendFile",
   "actions",

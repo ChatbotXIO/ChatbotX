@@ -133,6 +133,9 @@ vi.mock("@/hooks/routing", () => ({ useWorkspaceId: () => "1" }))
 vi.mock("@/features/messages/actions/create-webchat-message.action", () => ({
   createWebchatMessageAction: {},
 }))
+vi.mock("@/features/messages/components/composer-tag-grid", () => ({
+  ComposerTagGrid: () => null,
+}))
 vi.mock("@/features/messages/components/file-upload", () => ({
   FileUploadPreview: forwardRef<HTMLInputElement>((_, ref) => (
     <input ref={ref} />

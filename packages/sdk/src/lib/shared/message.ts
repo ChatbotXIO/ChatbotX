@@ -2,6 +2,7 @@ import type { ButtonPayload } from "@chatbotx.io/flow-config"
 import type {
   ChannelPostContentType,
   ChannelPostLiveStatus,
+  ChannelPostShareMode,
 } from "@chatbotx.io/utils/channel-post"
 import { z } from "zod"
 import type { ChannelError } from "../channel-error"
@@ -1359,6 +1360,35 @@ export const isMessageProductEntity = (
   "payload" in value &&
   typeof value.payload === "object" &&
   value.payload !== null
+
+/**
+ * An outgoing message that shares one of the business's own posts, as stored on
+ * the message row. The inbox renders it as a post card from the snapshot; the
+ * channel integration sends the post itself (`nativeMedia`, by `externalPostId`)
+ * or the text the row already carries (`textLink`).
+ */
+export type MessageChannelPostEntity = {
+  type: "channel_post"
+  shareMode: ChannelPostShareMode
+  channelPostId: string
+  /** The platform's own id of the post: what a `nativeMedia` share is sent by. */
+  externalPostId: string
+  permalink: string | null
+  thumbnail: string | null
+  caption: string | null
+}
+
+export const isMessageChannelPostEntity = (
+  value: unknown,
+): value is MessageChannelPostEntity =>
+  typeof value === "object" &&
+  value !== null &&
+  "type" in value &&
+  value.type === "channel_post" &&
+  "externalPostId" in value &&
+  typeof value.externalPostId === "string" &&
+  "shareMode" in value &&
+  (value.shareMode === "nativeMedia" || value.shareMode === "textLink")
 
 /**
  * A catalog product as the contact's channel names it: raw identity only. An

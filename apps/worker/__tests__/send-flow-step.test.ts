@@ -23,6 +23,7 @@ const {
   mockProcessWhatsappTemplate,
   mockProcessMessengerTemplate,
   mockRecordOutboundFlowStep,
+  mockPrepareChannelPost,
   mockRecordOutboundMessageActivity,
   mockRecordSendFailure,
   mockInvalidateTracking,
@@ -139,6 +140,7 @@ const {
     mockSignAppointmentWebviewToken: vi.fn().mockResolvedValue("webview-token"),
     mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
     mockPrepareProductMessage: vi.fn(),
+    mockPrepareChannelPost: vi.fn(),
     mockLogProviderErrorForChannel: vi.fn().mockResolvedValue(undefined),
   }
 })
@@ -240,6 +242,7 @@ vi.mock("@chatbotx.io/business", () => ({
     markReadByOutbound: mockMarkReadByOutbound,
   },
   productMessageService: { prepareOutgoing: mockPrepareProductMessage },
+  channelPostShareService: { prepareOutgoing: mockPrepareChannelPost },
   resolveCollectionStep: mockResolveCollectionStep,
   resolveTenantSettings: mockresolveTenantSettings,
   messageService: {
@@ -377,6 +380,7 @@ vi.mock("../src/chat/handlers/send-whatsapp-template", () => ({
 import {
   BROADCAST_PAYLOAD_TYPE,
   SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
+  sendTextStepSchema,
 } from "@chatbotx.io/flow-config"
 import type { ChatJobSendFlowStep } from "@chatbotx.io/worker-config"
 import { logger } from "../src/lib/logger"
@@ -2955,5 +2959,212 @@ describe("sendFlowStep — product collection", () => {
 
     expect(mockResolveCollectionStep).not.toHaveBeenCalled()
     expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+  })
+})
+
+describe("sendFlowStep — sendChannelPost", () => {
+  const POST_LINK = "https://example.com/p/1"
+  const postStep = {
+    id: "7001",
+    nodeId: "node-post",
+    stepType: "sendChannelPost",
+    channelPostId: "post-1",
+  } as unknown as SendFlowStepData["step"]
+
+  const cardEntity = (shareMode: "nativeMedia" | "textLink") => ({
+    type: "channel_post" as const,
+    shareMode,
+    channelPostId: "post-1",
+    externalPostId: "ext-1",
+    permalink: POST_LINK,
+    thumbnail: "https://cdn.example.com/1.jpg",
+    caption: "Summer sale",
+  })
+  const nativePrepared = {
+    post: { id: "post-1" },
+    content: { mode: "nativeMedia" as const, externalPostId: "ext-1" },
+    text: null,
+    contentAttributes: cardEntity("nativeMedia"),
+  }
+  const textLinkPrepared = {
+    post: { id: "post-1" },
+    content: {
+      mode: "textLink" as const,
+      text: `Summer sale\n${POST_LINK}`,
+    },
+    text: `Summer sale\n${POST_LINK}`,
+    contentAttributes: cardEntity("textLink"),
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFindConversation.mockResolvedValue(fakeConversation)
+    mockFindContactInbox.mockResolvedValue(fakeContactInbox)
+    mockCreateMessageRepository.mockResolvedValue({
+      create: mockRepositoryCreate,
+      createWithAttachments: mockRepositoryCreateWithAttachments,
+    })
+    mockresolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://storage.example.com",
+      appUrl: "https://app.example.test",
+    })
+    mockResolveContactVariables.mockImplementation(
+      (_contactId: string, step: unknown) => Promise.resolve(step),
+    )
+    mockRepositoryCreate.mockResolvedValue({
+      id: "msg-post",
+      contactInboxId: "ci-1",
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      messageType: "outgoing",
+      contentType: "text",
+      senderType: "bot",
+      sourceId: null,
+      text: null,
+      contentAttributes: {},
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      updatedAt: new Date("2026-01-01T00:00:00Z"),
+    })
+    mockSendFlowStepToChannel.mockResolvedValue({
+      messageIds: ["provider-1"],
+      sentCount: 1,
+    })
+    mockEmit.mockResolvedValue(undefined)
+    mockPrepareChannelPost.mockResolvedValue(textLinkPrepared)
+  })
+
+  const run = (extra: Record<string, unknown> = {}) =>
+    sendFlowStep({
+      conversationId: "conv-1",
+      flowId: "flow-1",
+      flowVersionId: "fv-1",
+      step: postStep,
+      ...extra,
+    })
+
+  test("resolves the post once, for the contact's inbox and channel, before any row exists", async () => {
+    await run()
+
+    expect(mockPrepareChannelPost).toHaveBeenCalledTimes(1)
+    expect(mockPrepareChannelPost).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      inboxId: "inbox-1",
+      channel: "messenger",
+      channelPostId: "post-1",
+    })
+    expect(mockPrepareChannelPost.mock.invocationCallOrder[0]).toBeLessThan(
+      mockRepositoryCreate.mock.invocationCallOrder[0] ?? 0,
+    )
+  })
+
+  test("a text-link share is handed over as a valid sendText step with the authored id and no buttons", async () => {
+    await run()
+
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledTimes(1)
+    const { step } = mockSendFlowStepToChannel.mock.calls[0]?.[0] as {
+      step: Record<string, unknown>
+    }
+    expect(step).toEqual({
+      id: "7001",
+      nodeId: "node-post",
+      stepType: "sendText",
+      text: `Summer sale\n${POST_LINK}`,
+      buttons: [],
+    })
+    expect(sendTextStepSchema.safeParse(step).success).toBe(true)
+  })
+
+  test("a native share is handed over as the authored step plus the platform id", async () => {
+    mockPrepareChannelPost.mockResolvedValue(nativePrepared)
+
+    await run()
+
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        step: expect.objectContaining({
+          id: "7001",
+          stepType: "sendChannelPost",
+          channelPostId: "post-1",
+          externalPostId: "ext-1",
+        }),
+      }),
+    )
+  })
+
+  test("the row stores the real text and the post card, keeping the authored step id", async () => {
+    await run()
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: textLinkPrepared.text,
+        contentAttributes: expect.objectContaining({
+          ...cardEntity("textLink"),
+          stepId: "7001",
+          flowId: "flow-1",
+        }),
+      }),
+    )
+  })
+
+  test("a native share stores no text, only the card", async () => {
+    mockPrepareChannelPost.mockResolvedValue(nativePrepared)
+
+    await run()
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: null,
+        contentAttributes: expect.objectContaining(cardEntity("nativeMedia")),
+      }),
+    )
+  })
+
+  test("analytics and the flow position keep the original sendChannelPost step id", async () => {
+    await run()
+
+    expect(mockRecordOutboundFlowStep).toHaveBeenCalledWith(
+      expect.objectContaining({ currentStep: "7001" }),
+    )
+  })
+
+  test("passes the comment anchor through, spent or not, like any text step", async () => {
+    const unspent = {
+      commentId: "c-1",
+      replyChannel: "private",
+      spent: false,
+    }
+    await run({ commentAnchor: unspent })
+    expect(mockSendFlowStepToChannel).toHaveBeenLastCalledWith(
+      expect.objectContaining({ commentAnchor: unspent }),
+    )
+
+    await run({ commentAnchor: { ...unspent, spent: true } })
+    expect(mockSendFlowStepToChannel).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        commentAnchor: expect.objectContaining({ spent: true }),
+      }),
+    )
+  })
+
+  test("an unresolvable post creates no message, sends nothing and is recorded once", async () => {
+    mockPrepareChannelPost.mockRejectedValue(
+      new Error("The post cannot be sent: channelPostNotFound"),
+    )
+
+    await run()
+
+    expect(mockRepositoryCreate).not.toHaveBeenCalled()
+    expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+    expect(mockRecordOutboundFlowStep).not.toHaveBeenCalled()
+    const failed = mockEmit.mock.calls.filter(
+      ([type]) => type === "message:failed",
+    )
+    expect(failed).toHaveLength(1)
+    expect(failed[0]?.[1]).toMatchObject({
+      action: { messageId: "", flowId: "flow-1" },
+      willRetry: false,
+      context: { channel: "messenger" },
+    })
+    expect(mockEmit).not.toHaveBeenCalledWith("message:sent", expect.anything())
   })
 })

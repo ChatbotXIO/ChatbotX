@@ -70,3 +70,29 @@ export const CHANNEL_POST_LIVE_STALE_AFTER_MS = 10 * 60 * 1000
  */
 export const channelPostLiveStates = z.enum(["live", "ended", "unknown"])
 export type ChannelPostLiveState = z.infer<typeof channelPostLiveStates>
+
+/**
+ * How a channel delivers one of the business's own posts into a conversation.
+ * - `nativeMedia`: the platform's own post share (a post card the contact can
+ *   open), sent by the post's platform id.
+ * - `textLink`: a plain text message holding the post's name and permalink.
+ *   Any channel without a verified native share uses it.
+ */
+export const channelPostShareModes = ["nativeMedia", "textLink"] as const
+export type ChannelPostShareMode = (typeof channelPostShareModes)[number]
+
+/**
+ * Why a post cannot be sent into a conversation. Each is a typed refusal: the
+ * composer shows it, the public API returns it as `data.reason`, and a flow
+ * run records it in the Error Log.
+ */
+export const channelPostShareRefusalReasons = [
+  "channelPostNotFound",
+  "channelPostInboxMismatch",
+  "channelPostTypeNotShareable",
+  "channelPostShareUnsupported",
+  "channelPostLinkUnavailable",
+  "channelPostLinkTooLong",
+] as const
+export type ChannelPostShareRefusalReason =
+  (typeof channelPostShareRefusalReasons)[number]

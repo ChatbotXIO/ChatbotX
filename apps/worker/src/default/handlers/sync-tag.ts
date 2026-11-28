@@ -480,6 +480,7 @@ async function deleteTagOnChannel(props: {
 
         if (contactIds.length > 0) {
           await tagSyncService.deleteContactTagsForContacts({
+            workspaceId,
             tagId,
             contactIds,
           })
@@ -535,6 +536,7 @@ async function deleteTagOnChannels(props: {
       callback: async (batch) => {
         const contactIds = batch.map((row) => row.id)
         await tagSyncService.deleteContactTagsForContacts({
+          workspaceId,
           tagId,
           contactIds,
         })

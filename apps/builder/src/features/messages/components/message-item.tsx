@@ -14,6 +14,7 @@ import {
   getWhatsappCallPermissionReply,
   getWhatsappFlowResponse,
   getWhatsappPaymentMethod,
+  isMessageChannelPostEntity,
   isMessageProductEntity,
 } from "@chatbotx.io/sdk"
 import {
@@ -76,6 +77,7 @@ import {
   isThreadControlEcho,
 } from "../lib/thread-control-content"
 import type { MessageResourceWithRelations } from "../schema/resource"
+import { ChannelPostCard } from "./channel-post-card"
 import { InboundOrderBubble } from "./inbound-order-bubble"
 import { MessageActions, MessageActionsEditor } from "./message-actions"
 import { MessageBubble } from "./message-bubble"
@@ -1080,6 +1082,15 @@ const RenderContentAttributes = (
   )
   if (threadControlContext) {
     return <ThreadControlContextCard data={threadControlContext} />
+  }
+
+  if (isMessageChannelPostEntity(message.contentAttributes)) {
+    return (
+      <ChannelPostCard
+        post={message.contentAttributes}
+        sentText={message.text}
+      />
+    )
   }
 
   if (isMessageProductEntity(message.contentAttributes)) {

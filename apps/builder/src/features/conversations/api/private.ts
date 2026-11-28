@@ -1,4 +1,4 @@
-import { conversationService } from "@chatbotx.io/business"
+import { conversationService, tagService } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
@@ -9,6 +9,7 @@ import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { CONVERSATIONS_LIST_POST_PATH } from "../lib/api-paths"
+import { ROW_TAG_PREVIEW_LIMIT } from "../lib/tag-preview"
 import { getPostDetailsQuery } from "../queries/get-post-details.query"
 import {
   findConversation,
@@ -21,6 +22,8 @@ import { listConversationsRequest } from "../schema/query"
 import {
   findConversationRequest,
   findConversationResponse,
+  listContactTagPreviewsRequest,
+  listContactTagPreviewsResponse,
   listConversationParticipantsResponse,
   listConversationsResponse,
 } from "../schema/resource"
@@ -118,6 +121,37 @@ export const conversationsAuthenticatedAPI = {
         cursor: input.cursor,
         perPage: input.perPage,
       })
+    }),
+
+  // UI refresh helper, not a capability: the same previews are public through
+  // `conversations.list` (contact.tagPreview) and `contacts.listTags`. It only
+  // patches rows after a `contactTagsChanged` realtime event, which API clients
+  // never receive (AGENTS.md invariant 23, "UI-only plumbing (realtime)").
+  listContactTagPreviewsAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "POST",
+      path: "/workspaces/{workspaceId}/conversations/contact-tag-previews",
+      summary: "List tag previews for contacts shown in the inbox list",
+      tags: ["Conversations"],
+    })
+    .input(listContactTagPreviewsRequest)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listContactTagPreviewsResponse)
+    .handler(async ({ input }) => {
+      // Same rule as the private conversation list, which every workspace
+      // member may read unscoped: previews only for contacts that have a
+      // conversation in this workspace.
+      const previews = await tagService.listTagPreviewsForConversationContacts({
+        workspaceId: input.workspaceId,
+        contactIds: input.contactIds,
+        limit: ROW_TAG_PREVIEW_LIMIT,
+      })
+      return {
+        data: [...previews].map(([contactId, preview]) => ({
+          contactId,
+          ...preview,
+        })),
+      }
     }),
 
   getPostDetailsAuthenticatedAPI: authorizedAPI

@@ -2,6 +2,8 @@ import { BROADCAST_PLAN_LIMIT_CODE } from "@chatbotx.io/business/errors"
 import type { CONTACT_SYNC_ERROR_CODES } from "@chatbotx.io/database/partials"
 import {
   broadcastPlanLimitDataSchema,
+  CHANNEL_POST_SHARE_REFUSED_CODE,
+  channelPostShareRefusedDataSchema,
   contactSyncAlreadyRunningDataSchema,
   contactSyncCooldownDataSchema,
   contactSyncMappingInvalidDataSchema,
@@ -48,6 +50,16 @@ export const productMessageUnresolvable = {
 }
 
 /**
+ * A post that cannot be sent into the conversation. `data.reason` says why
+ * (removed, another inbox's, a kind or channel that cannot send it, no link).
+ */
+export const channelPostShareRefused = {
+  message: "The post cannot be sent",
+  status: 422,
+  data: channelPostShareRefusedDataSchema,
+}
+
+/**
  * The conversation's channel can't carry the message's images (Threads,
  * Instagram/TikTok comment replies) or not that many (a Messenger comment
  * reply takes one). `data.reason` and `data.max` say which.
@@ -61,6 +73,7 @@ export const imagesNotSupportedOnChannel = {
 export const STRUCTURED_ERROR_CODES: ReadonlySet<string> = new Set([
   BROADCAST_PLAN_LIMIT_CODE,
   PRODUCT_MESSAGE_UNRESOLVABLE_CODE,
+  CHANNEL_POST_SHARE_REFUSED_CODE,
   IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE,
   // Literals checked against the code table at compile time only: no
   // module-scope read of a value a narrow test mock may leave out.
@@ -707,6 +720,7 @@ export const possibleErrorsOnClosedMessagingWindow = {
 export const possibleErrorsOnSendingMessage = {
   ...possibleErrorsOnMutatingResource,
   [PRODUCT_MESSAGE_UNRESOLVABLE_CODE]: productMessageUnresolvable,
+  [CHANNEL_POST_SHARE_REFUSED_CODE]: channelPostShareRefused,
   [IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE]: imagesNotSupportedOnChannel,
   ...possibleErrorsOnClosedMessagingWindow,
 } satisfies ErrorMap

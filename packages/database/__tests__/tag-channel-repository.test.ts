@@ -292,6 +292,69 @@ describe("deleteLinksForChannel / deleteContactTagsForContacts", () => {
   })
 })
 
+describe("changed contact-tag links", () => {
+  const labelInput = {
+    workspaceId: "ws-1",
+    channelType: "messenger",
+    integrationId: "int-1",
+    label: { externalLabelId: "ext-1", name: "VIP" },
+    contactInbox: { id: "ci-1", contactId: "c-1" },
+  }
+  const upsertWith = (contactTagRows: unknown[]) => {
+    mocks.insert
+      .mockReturnValueOnce(insertChain([{ id: "tag-1" }]))
+      .mockReturnValueOnce(insertChain([{ id: "tc-1" }]))
+      .mockReturnValueOnce(insertChain(contactTagRows))
+      .mockReturnValueOnce(insertChain([]))
+  }
+
+  test("upsertLabelMapping reports a newly inserted contact-tag link", async () => {
+    upsertWith([{ contactId: "c-1" }])
+
+    expect(await tagChannelRepository.upsertLabelMapping(labelInput)).toBe(true)
+  })
+
+  test("upsertLabelMapping reports no change when the contact already had the tag", async () => {
+    upsertWith([])
+
+    expect(await tagChannelRepository.upsertLabelMapping(labelInput)).toBe(
+      false,
+    )
+  })
+
+  test("upsertLabelMapping reports no change when it exits early", async () => {
+    mocks.insert.mockReturnValueOnce(insertChain([]))
+
+    expect(await tagChannelRepository.upsertLabelMapping(labelInput)).toBe(
+      false,
+    )
+  })
+
+  test("deleteContactTagsForContacts resolves the contacts that really had the tag", async () => {
+    mocks.deleteFn.mockReturnValue({
+      where: vi.fn(() => ({
+        returning: vi.fn(async () => [{ contactId: "c-2" }]),
+      })),
+    })
+
+    expect(
+      await tagChannelRepository.deleteContactTagsForContacts({
+        tagId: "tag-1",
+        contactIds: ["c-1", "c-2"],
+      }),
+    ).toEqual(["c-2"])
+  })
+
+  test("deleteContactTagsForContacts resolves no contact for an empty id list", async () => {
+    expect(
+      await tagChannelRepository.deleteContactTagsForContacts({
+        tagId: "tag-1",
+        contactIds: [],
+      }),
+    ).toEqual([])
+  })
+})
+
 describe("listContactInboxIdsForChannelPage", () => {
   test("pages by contactInboxId ascending, keyed off tagChannelId", async () => {
     mocks.findMany.mockResolvedValue([{ contactInboxId: "ci-1" }])

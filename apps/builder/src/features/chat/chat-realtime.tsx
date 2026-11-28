@@ -3,16 +3,22 @@
 import { resolveMessageAuthorUserId } from "@chatbotx.io/database/partials"
 import { getWhatsappCallPermissionReply } from "@chatbotx.io/sdk"
 import { useQueryClient } from "@tanstack/react-query"
-import { useEffect, useRef } from "react"
+import { useContext, useEffect, useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
 import type { RealtimeHandlerMap } from "@/features/realtime/types"
 import { useWorkspaceRealtimeEvents } from "@/features/realtime/use-workspace-realtime-events"
 import { useWorkspaceId } from "@/hooks/routing"
 import { createBoundedSeenSet } from "@/lib/bounded-seen-set"
 import { logger } from "@/lib/log"
+import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
 import { useConversationIdParam } from "../conversations/hooks/use-conversation-id-param"
 import { conversationParticipantsQueryOptions } from "../conversations/hooks/use-conversation-participants"
 import { mergeParticipantReplyIntoPages } from "../conversations/lib/merge-participant-reply"
+import {
+  createTagPreviewRefresher,
+  type TagPreviewRefresher,
+} from "../conversations/lib/tag-preview-refresher"
 import type { ConversationParticipantResource } from "../conversations/schema/resource"
 import { outboundCallModeQueryKeys } from "../integration-whatsapp/calling/voip/outbound-call-mode-query-key"
 import { useWhatsappVoipCallStore } from "../integration-whatsapp/calling/voip/voip-call-store"
@@ -23,7 +29,7 @@ import {
   useWorkspaceMembers,
   workspaceMembersQueryOptions,
 } from "../users/provider/user-hook"
-import { useChatStore } from "./store/chat-store-provider"
+import { ChatStoreContext, useChatStore } from "./store/chat-store-provider"
 
 /** Cap for the bubble-to-top dedupe set below. */
 const SEEN_WHATSAPP_CALL_IDS_CAPACITY = 500
@@ -112,6 +118,53 @@ export function ChatRealtime() {
       updateMessageText: state.updateMessageText,
     })),
   )
+  // `contactTagsChanged` -> refresh the tag chips of the loaded rows. Not a
+  // request per event: ids are intersected with the loaded rows, coalesced and
+  // fetched one batch at a time (see `createTagPreviewRefresher`).
+  const chatStoreApi = useContext(ChatStoreContext)
+  const tagPreviewRefresherRef = useRef<TagPreviewRefresher | null>(null)
+  const getActiveContactId = (): string | null => {
+    const state = chatStoreApi?.getState()
+    return (
+      state?.conversations.find(
+        (conversation) => conversation.id === state.activeConversationId,
+      )?.contactId ?? null
+    )
+  }
+  useEffect(() => {
+    if (!chatStoreApi) {
+      return
+    }
+    const refresher = createTagPreviewRefresher({
+      isLoaded: (contactId) =>
+        chatStoreApi
+          .getState()
+          .conversations.some(
+            (conversation) => conversation.contactId === contactId,
+          ),
+      fetchBatch: async (contactIds) =>
+        (
+          await client.conversationsAPI.listContactTagPreviewsAuthenticatedAPI({
+            workspaceId,
+            contactIds,
+          })
+        ).data,
+      apply: ({ contactId, tagCount, tagPreview }) =>
+        chatStoreApi
+          .getState()
+          .updateContact(contactId, { tagCount, tagPreview }),
+      onGiveUp: (contactIds, error) =>
+        logger.warn(
+          { err: error, contactCount: contactIds.length },
+          "[chat-realtime] gave up refreshing contact tag previews",
+        ),
+    })
+    tagPreviewRefresherRef.current = refresher
+    return () => {
+      refresher.dispose()
+      tagPreviewRefresherRef.current = null
+    }
+  }, [chatStoreApi, workspaceId])
   const { data: members } = useWorkspaceMembers(workspaceId)
   const conversationIdParam = useConversationIdParam()
   const responseSlaEnabled = useResponseSlaEnabled()
@@ -490,6 +543,21 @@ export function ChatRealtime() {
         event.data.messageId,
         event.data.contentAttributes,
       )
+    },
+    contactTagsChanged: (event) => {
+      tagPreviewRefresherRef.current?.notify(event.data.contactIds)
+      // The composer grid reads the open contact's tags from its own query:
+      // refresh that one contact only (never a query per loaded row). The
+      // toggle hook's pending/held overlay keeps winning while a click of this
+      // agent is in flight.
+      const activeContactId = getActiveContactId()
+      if (activeContactId && event.data.contactIds.includes(activeContactId)) {
+        queryClient.invalidateQueries({
+          queryKey: orpc.contactsAPIs.getContactAuthenticatedAPI.queryOptions({
+            input: { workspaceId, contactId: activeContactId },
+          }).queryKey,
+        })
+      }
     },
     contactBlocked: (event) => {
       updateContact(event.data.contactId, { blockedAt: new Date() })

@@ -102,6 +102,30 @@ export function getTagColumns({
       enableSorting: true,
     },
     {
+      id: "color",
+      accessorKey: "color",
+      header: t("tagColor.label"),
+      cell: ({ row }) =>
+        row.original.color ? (
+          <span
+            aria-label={row.original.color}
+            className="inline-block size-5 rounded-full border border-border"
+            role="img"
+            style={{ backgroundColor: row.original.color }}
+            title={row.original.color}
+          />
+        ) : (
+          <span aria-hidden className="text-muted-foreground">
+            —
+          </span>
+        ),
+      size: 60,
+      meta: {
+        label: t("tagColor.label"),
+      },
+      enableSorting: false,
+    },
+    {
       id: "contacts",
       accessorKey: "contacts",
       header: ({ column }) => (

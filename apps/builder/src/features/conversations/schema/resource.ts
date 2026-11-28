@@ -13,6 +13,10 @@ import { contactInboxResource } from "@/features/contact-inboxes/schema/resource
 import { contactResource } from "@/features/contacts/schema/resource"
 import { messageResourceWithRelations } from "@/features/messages/schema/resource"
 import { userResource } from "@/features/users/schema/resource"
+import {
+  ROW_TAG_PREVIEW_LIMIT,
+  TAG_PREVIEW_REFRESH_BATCH_SIZE,
+} from "../lib/tag-preview"
 
 export const conversationResource = createSelectSchema(conversationModel, {
   id: z.string(),
@@ -145,6 +149,62 @@ export type ListConversationParticipantsResponse = z.infer<
   typeof listConversationParticipantsResponse
 >
 
+/** One tag shown on a conversation row. */
+export const conversationContactTagResource = z.object({
+  id: z.string().describe("Id of the tag."),
+  name: z.string().describe("Name of the tag."),
+  color: z
+    .string()
+    .nullable()
+    .default(null)
+    .describe("Color of the tag as `#RRGGBB`, or null when it has none."),
+})
+export type ConversationContactTagResource = z.infer<
+  typeof conversationContactTagResource
+>
+
+/** A contact's tag summary on a conversation: a few tags, plus how many there are. */
+export const contactTagPreviewResource = z.object({
+  tagPreview: z
+    .array(conversationContactTagResource)
+    .describe(
+      `The first ${ROW_TAG_PREVIEW_LIMIT} tags of the contact, ordered by name. Preview only: use \`contacts.listTags\` for every tag.`,
+    ),
+  tagCount: z
+    .number()
+    .int()
+    .describe("How many tags the contact has in total."),
+})
+export type ContactTagPreviewResource = z.infer<
+  typeof contactTagPreviewResource
+>
+
+/** Refreshes the tag previews of contacts already shown in the inbox list. */
+export const listContactTagPreviewsRequest = z.object({
+  workspaceId: zodBigintAsString(),
+  contactIds: z
+    .array(zodBigintAsString())
+    .min(1)
+    .max(TAG_PREVIEW_REFRESH_BATCH_SIZE),
+})
+export type ListContactTagPreviewsRequest = z.infer<
+  typeof listContactTagPreviewsRequest
+>
+
+export const listContactTagPreviewsResponse = z.object({
+  data: z.array(contactTagPreviewResource.extend({ contactId: z.string() })),
+})
+export type ListContactTagPreviewsResponse = z.infer<
+  typeof listContactTagPreviewsResponse
+>
+
+export const conversationContactResource = contactResource.extend(
+  contactTagPreviewResource.shape,
+)
+export type ConversationContactResource = z.infer<
+  typeof conversationContactResource
+>
+
 export const listConversationsItemResource = conversationResource.extend({
   recentParticipants: z
     .array(conversationParticipantResource)
@@ -153,7 +213,7 @@ export const listConversationsItemResource = conversationResource.extend({
     ),
   contactInboxes: z.array(conversationContactInboxResource),
   messages: z.array(messageResourceWithRelations),
-  contact: contactResource.nullable(),
+  contact: conversationContactResource.nullable(),
   assignedUser: userResource.nullable(),
   assignedInboxTeam: inboxTeamResource.nullable(),
 })

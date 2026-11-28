@@ -151,6 +151,11 @@ vi.mock("../src/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn(), debug: vi.fn(), info: vi.fn() },
 }))
 
+// The realtime publisher is Redis-backed and irrelevant here (see tag-service-contact-tags-changed.test.ts).
+vi.mock("../src/tag/realtime", () => ({
+  publishContactTagsChanged: vi.fn(async () => undefined),
+}))
+
 const { tagService } = await import("../src/tag/service")
 
 // A DELETE resolves to nothing; with `.returning()` it reports every

@@ -1,7 +1,9 @@
+import type { PreparedChannelPostShare } from "@chatbotx.io/business"
 import { type ContentType, contentTypes } from "@chatbotx.io/database/partials"
 import type { WhatsappLocationStepSchema } from "@chatbotx.io/flow-config"
 import { stepTypes } from "@chatbotx.io/flow-config"
 import type {
+  MessageChannelPostEntity,
   MessageLocationEntity,
   MessageViewCatalogEntity,
   SendFlowStepData,
@@ -17,6 +19,7 @@ export type StoredStepContent = {
         address?: string
       })
     | { viewCatalog: MessageViewCatalogEntity }
+    | MessageChannelPostEntity
 }
 
 /**
@@ -38,9 +41,22 @@ const toStoredLocation = (
   },
 })
 
+/**
+ * `channelPost` is the post a `sendChannelPost` step resolved to. When there is
+ * one, the row stores its real text (the built text of a `textLink` share) and
+ * the post card, whatever step the channel is handed.
+ */
 export const resolveStoredStepContent = (
   step: SendFlowStepData,
+  channelPost?: Pick<PreparedChannelPostShare, "text" | "contentAttributes">,
 ): StoredStepContent => {
+  if (channelPost) {
+    return {
+      contentType: contentTypes.enum.text,
+      text: channelPost.text,
+      contentAttributes: channelPost.contentAttributes,
+    }
+  }
   switch (step.stepType) {
     case stepTypes.enum.sendText:
     case stepTypes.enum.whatsappCallButton:
