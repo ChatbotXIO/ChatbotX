@@ -74,3 +74,25 @@ describe("ChannelPostCard", () => {
     expect(view.textContent).toContain("Second line")
   })
 })
+
+describe("ChannelPostCard permalink", () => {
+  const link = (permalink: string | null) => {
+    const view = render(
+      <ChannelPostCard post={{ ...post("nativeMedia"), permalink }} />,
+    )
+    return view.querySelector("a")
+  }
+
+  test("links an http(s) permalink", () => {
+    expect(link("https://example.com/p/1")?.getAttribute("href")).toBe(
+      "https://example.com/p/1",
+    )
+  })
+
+  test("hides the link for a missing or non-http permalink", () => {
+    expect(link(null)).toBeNull()
+    act(() => root?.unmount())
+    container?.remove()
+    expect(link("javascript:alert(1)")).toBeNull()
+  })
+})

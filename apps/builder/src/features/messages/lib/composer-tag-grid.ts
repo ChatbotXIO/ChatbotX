@@ -76,17 +76,3 @@ const CONTACT_ACCESS_STATUSES: ReadonlySet<number> = new Set([403, 404])
  */
 export const isContactAccessError = (error: unknown): boolean =>
   error instanceof ORPCError && CONTACT_ACCESS_STATUSES.has(error.status)
-
-/** Keeps the first occurrence of each id: pages can overlap when tags change between fetches. */
-export const dedupeById = <T extends { id: string }>(
-  items: readonly T[],
-): T[] => {
-  const seen = new Set<string>()
-  return items.filter((item) => {
-    if (seen.has(item.id)) {
-      return false
-    }
-    seen.add(item.id)
-    return true
-  })
-}

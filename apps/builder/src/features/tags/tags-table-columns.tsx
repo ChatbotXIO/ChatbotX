@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
+import { UNKNOWN_VALUE_PLACEHOLDER } from "@/features/contacts/lib/scoped-identity-rows"
 import { LockBadge } from "@/features/templates/components/lock-badge"
 import { UndeletableGuard } from "@/features/templates/components/lock-context"
 
@@ -116,7 +117,7 @@ export function getTagColumns({
           />
         ) : (
           <span aria-hidden className="text-muted-foreground">
-            —
+            {UNKNOWN_VALUE_PLACEHOLDER}
           </span>
         ),
       size: 60,

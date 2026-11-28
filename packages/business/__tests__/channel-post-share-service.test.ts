@@ -7,6 +7,12 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   channelPostRepository: { findForInbox: mockFindForInbox },
 }))
 
+vi.mock("../src/platform/settings", () => ({
+  resolveTenantSettings: vi
+    .fn()
+    .mockResolvedValue({ storageUrl: "https://cdn.test/bucket" }),
+}))
+
 vi.mock("../src/base.service", () => ({ BaseService: class {} }))
 
 const { buildTextLinkShareText, channelPostShareService } = await import(
@@ -223,6 +229,20 @@ describe("channelPostShareService.prepareOutgoing", () => {
       thumbnail: "https://cdn.example.com/1.jpg",
       caption: "Summer sale\nAll week long",
     })
+  })
+
+  test("resolves a storage-path thumbnail to a public URL", async () => {
+    mockFindForInbox.mockResolvedValue(
+      post({ thumbnail: "public/space/ws-1/thumb.jpg" }),
+    )
+
+    const prepared = await channelPostShareService.prepareOutgoing(
+      input("messenger"),
+    )
+
+    expect(prepared.contentAttributes.thumbnail).toBe(
+      "https://cdn.test/bucket/public/space/ws-1/thumb.jpg",
+    )
   })
 
   test("a native share stores no text", async () => {

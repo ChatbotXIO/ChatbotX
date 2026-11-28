@@ -1,6 +1,9 @@
 "use server"
 import { conversationService } from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
+import {
+  ChannelPostShareRefusedError,
+  ChatbotXException,
+} from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { TranslationNotSentException } from "@/features/translation/lib/errors"
@@ -78,6 +81,11 @@ export const createMessageAction = workspaceActionClient
           error.code,
           error.httpStatusCode,
         )
+      }
+      // Not a failed request either: the composer words the refusal in the
+      // agent's language from the typed reason (the message is for API clients).
+      if (error instanceof ChannelPostShareRefusedError) {
+        return { channelPostRefused: { reason: error.reason } }
       }
       throw error
     }

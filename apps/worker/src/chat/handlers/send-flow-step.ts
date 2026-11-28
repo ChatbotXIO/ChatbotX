@@ -511,23 +511,24 @@ type ChannelPostDelivery = {
  * A `textLink` channel gets an ordinary text step (buttons are required by the
  * schema, so the empty list is explicit) and needs no code of its own.
  */
-const channelPostDeliveryStep: {
-  [Mode in PreparedChannelPostShare["content"]["mode"]]: (
-    step: SendChannelPostStepSchema,
-    content: Extract<PreparedChannelPostShare["content"], { mode: Mode }>,
-  ) => SendFlowStepData
-} = {
-  nativeMedia: (step, content) => ({
-    ...step,
-    externalPostId: content.externalPostId,
-  }),
-  textLink: (step, content) => ({
-    id: step.id,
-    ...(step.nodeId ? { nodeId: step.nodeId } : {}),
-    stepType: stepTypes.enum.sendText,
-    text: content.text,
-    buttons: [],
-  }),
+const buildChannelPostDeliveryStep = (
+  step: SendChannelPostStepSchema,
+  content: PreparedChannelPostShare["content"],
+): SendFlowStepData => {
+  switch (content.mode) {
+    case "nativeMedia":
+      return { ...step, externalPostId: content.externalPostId }
+    case "textLink":
+      return {
+        id: step.id,
+        ...(step.nodeId ? { nodeId: step.nodeId } : {}),
+        stepType: stepTypes.enum.sendText,
+        text: content.text,
+        buttons: [],
+      }
+    default:
+      return content satisfies never
+  }
 }
 
 /**
@@ -552,13 +553,10 @@ async function resolveChannelPostForStep(props: {
     channel: contactInbox.channel,
     channelPostId: step.channelPostId,
   })
-  // Each builder takes the content of its own mode; the lookup by `mode` cannot
-  // be correlated by the type checker.
-  const build = channelPostDeliveryStep[prepared.content.mode] as (
-    step: SendChannelPostStepSchema,
-    content: PreparedChannelPostShare["content"],
-  ) => SendFlowStepData
-  return { prepared, deliveryStep: build(step, prepared.content) }
+  return {
+    prepared,
+    deliveryStep: buildChannelPostDeliveryStep(step, prepared.content),
+  }
 }
 
 export async function sendFlowStep({

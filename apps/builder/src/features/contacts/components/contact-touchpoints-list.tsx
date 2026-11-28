@@ -18,6 +18,7 @@ import Link from "next/link"
 import { useFormatter, useTranslations } from "next-intl"
 import { channelLabel } from "@/features/inboxes/lib/channel-label"
 import { TOOLS_CONFIG } from "@/features/tools/tools-list"
+import { dedupeBy } from "@/lib/dedupe-by"
 import { orpc } from "@/lib/orpc/query"
 import { toHttpUrl } from "../lib/http-url"
 import type { ContactTouchpointResource } from "../schema/touchpoint"
@@ -28,10 +29,6 @@ const TOUCHPOINTS_PER_PAGE = 20
 type ToolConfig = (typeof TOOLS_CONFIG)[number]
 type ToolId = ToolConfig["id"]
 type Translate = ReturnType<typeof useTranslations>
-type TouchpointOfKind<Kind extends ContactTouchpointKind> = Extract<
-  ContactTouchpointResource,
-  { kind: Kind }
->
 
 /** The Tools card that owns each kind; the inbox source and post comment have no tool. */
 const TOOL_ID_OF_KIND: Partial<Record<ContactTouchpointKind, ToolId>> = {
@@ -73,78 +70,82 @@ const OWN_ICON_OF_KIND: Partial<Record<ContactTouchpointKind, LucideIcon>> = {
   form: ClipboardListIcon,
 }
 
-type DetailFormatters = {
-  [Kind in ContactTouchpointKind]: (
-    item: TouchpointOfKind<Kind>,
-    t: Translate,
-  ) => string[]
-}
-
-/** One short line per fact the row's kind reports. */
-const DETAIL_FORMATTERS: DetailFormatters = {
-  inboxSource: () => [],
-  postComment: () => [],
-  minigame: (item, t) => [
-    t("contactTouchpoints.details.played", { count: item.details.played }),
-    ...(item.details.lastPrizeName
-      ? [
-          t("contactTouchpoints.details.lastPrize", {
-            prize: item.details.lastPrizeName,
-          }),
-        ]
-      : []),
-  ],
-  leaderboard: (item, t) => [
-    t("contactTouchpoints.details.score", { score: item.details.score }),
-  ],
-  questionnaire: (item, t) => [
-    item.details.status === "completed"
-      ? t("contactTouchpoints.details.completed")
-      : t("contactTouchpoints.details.inProgress"),
-    t("contactTouchpoints.details.submissions", {
-      count: item.details.submissions,
-    }),
-  ],
-  miniApp: (item, t) => [
-    t("contactTouchpoints.details.submissions", {
-      count: item.details.submissions,
-    }),
-  ],
-  poll: (item, t) =>
-    item.details.candidateName
-      ? [
-          t("contactTouchpoints.details.pollChoice", {
-            name: item.details.candidateName,
-          }),
-        ]
-      : [],
-  leadForm: (item, t) => [
-    t("contactTouchpoints.details.leads", { count: item.details.leads }),
-  ],
-  inboundWebhook: (item, t) => [
-    t("contactTouchpoints.details.requests", { count: item.details.requests }),
-  ],
-  commentAutomation: (item, t) => [
-    t("contactTouchpoints.details.replies", { count: item.details.replies }),
-  ],
-  refLink: (item, t) => [
-    t("contactTouchpoints.details.visits", { count: item.details.visits }),
-  ],
-  magicLink: (item, t) => [
-    t("contactTouchpoints.details.clicks", { count: item.details.clicks }),
-  ],
-  form: () => [],
-}
-
-type DetailFormatter = (
+/** One short line per fact the row's kind reports; the switch narrows `item.details` per kind. */
+const formatDetails = (
   item: ContactTouchpointResource,
   t: Translate,
-) => string[]
-
-// The map pairs every kind with a formatter of exactly that kind; indexing it
-// by a union-typed `item.kind` loses that pairing, so it is restored here.
-const formatDetails: DetailFormatter = (item, t) =>
-  (DETAIL_FORMATTERS[item.kind] as DetailFormatter)(item, t)
+): string[] => {
+  switch (item.kind) {
+    case "inboxSource":
+    case "postComment":
+    case "form":
+      return []
+    case "minigame":
+      return [
+        t("contactTouchpoints.details.played", { count: item.details.played }),
+        ...(item.details.lastPrizeName
+          ? [
+              t("contactTouchpoints.details.lastPrize", {
+                prize: item.details.lastPrizeName,
+              }),
+            ]
+          : []),
+      ]
+    case "leaderboard":
+      return [
+        t("contactTouchpoints.details.score", { score: item.details.score }),
+      ]
+    case "questionnaire":
+      return [
+        item.details.status === "completed"
+          ? t("contactTouchpoints.details.completed")
+          : t("contactTouchpoints.details.inProgress"),
+        t("contactTouchpoints.details.submissions", {
+          count: item.details.submissions,
+        }),
+      ]
+    case "miniApp":
+      return [
+        t("contactTouchpoints.details.submissions", {
+          count: item.details.submissions,
+        }),
+      ]
+    case "poll":
+      return item.details.candidateName
+        ? [
+            t("contactTouchpoints.details.pollChoice", {
+              name: item.details.candidateName,
+            }),
+          ]
+        : []
+    case "leadForm":
+      return [
+        t("contactTouchpoints.details.leads", { count: item.details.leads }),
+      ]
+    case "inboundWebhook":
+      return [
+        t("contactTouchpoints.details.requests", {
+          count: item.details.requests,
+        }),
+      ]
+    case "commentAutomation":
+      return [
+        t("contactTouchpoints.details.replies", {
+          count: item.details.replies,
+        }),
+      ]
+    case "refLink":
+      return [
+        t("contactTouchpoints.details.visits", { count: item.details.visits }),
+      ]
+    case "magicLink":
+      return [
+        t("contactTouchpoints.details.clicks", { count: item.details.clicks }),
+      ]
+    default:
+      return item satisfies never
+  }
+}
 
 /** Why the row is in the list: the tool's title, or the source the conversation started from. */
 const kindLabel = (
@@ -174,17 +175,7 @@ const rowKey = (item: ContactTouchpointResource): string =>
  */
 export const dedupeByRowKey = (
   items: ContactTouchpointResource[],
-): ContactTouchpointResource[] => {
-  const seen = new Set<string>()
-  return items.filter((item) => {
-    const key = rowKey(item)
-    if (seen.has(key)) {
-      return false
-    }
-    seen.add(key)
-    return true
-  })
-}
+): ContactTouchpointResource[] => dedupeBy(items, rowKey)
 
 const TouchpointRow = ({
   item,

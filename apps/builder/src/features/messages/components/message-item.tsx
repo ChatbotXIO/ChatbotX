@@ -243,7 +243,8 @@ export const MessageItem = (props: MessageItemProps) => {
       paymentMethod ||
       hasPaymentRequests ||
       threadControlActivity ||
-      threadControlContext,
+      threadControlContext ||
+      (!isDeleted && isMessageChannelPostEntity(message.contentAttributes)),
   )
 
   // A call card defaults to the centered `full` variant, but a call still has
@@ -1084,7 +1085,11 @@ const RenderContentAttributes = (
     return <ThreadControlContextCard data={threadControlContext} />
   }
 
-  if (isMessageChannelPostEntity(message.contentAttributes)) {
+  // A deleted share keeps only the deleted placeholder, not the post card.
+  if (
+    message.deletedAt == null &&
+    isMessageChannelPostEntity(message.contentAttributes)
+  ) {
     return (
       <ChannelPostCard
         post={message.contentAttributes}

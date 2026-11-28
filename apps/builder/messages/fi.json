@@ -3537,8 +3537,11 @@
         "typeNotShareable": "Tämän tyyppistä julkaisua ei voi lähettää täällä",
         "linkUnavailable": "Tällä julkaisulla ei ole lähetettävää linkkiä",
         "linkTooLong": "Linkki on liian pitkä lähetettäväksi",
-        "shareUnsupported": "Tämä kanava ei voi lähettää julkaisuja"
-      }
+        "shareUnsupported": "Tämä kanava ei voi lähettää julkaisuja",
+        "postNotFound": "Tätä julkaisua ei enää ole",
+        "inboxMismatch": "Tämä julkaisu kuuluu toiseen saapuneet-kansioon"
+      },
+      "noMatch": "Haulla ei löytynyt julkaisuja."
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "Jäsen",
     "loadMoreFailed": "Lisää jäseniä ei voitu ladata",
     "lastMessageBy": "Viimeisin viesti: {name}",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "Väri",

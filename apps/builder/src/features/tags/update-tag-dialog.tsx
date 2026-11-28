@@ -29,7 +29,10 @@ import { LockedDialogFieldset } from "@/components/locked-dialog-fieldset"
 import { useInvalidateTags } from "@/features/tags/provider/tag-hook"
 import { useIsLocked } from "@/features/templates/components/lock-context"
 import { updateTagAction } from "./actions/update-tag-action"
-import { buildUpdateTagPayload } from "./lib/update-tag-payload"
+import {
+  buildUpdateTagPayload,
+  isEmptyUpdateTagPayload,
+} from "./lib/update-tag-payload"
 import { updateTagSchema } from "./schema/action"
 import { TagColorField } from "./tag-color-field"
 
@@ -92,15 +95,15 @@ export function UpdateTagDialog({
 
   // Read during render so the form subscribes to it.
   const { dirtyFields } = form.formState
-  const onSubmit = form.handleSubmit((values) =>
-    action.execute(
-      buildUpdateTagPayload({
-        values,
-        dirtyFields,
-        isLocked,
-      }),
-    ),
-  )
+  const onSubmit = form.handleSubmit((values) => {
+    const payload = buildUpdateTagPayload({ values, dirtyFields, isLocked })
+    // Nothing changed: there is nothing to save, so just close.
+    if (isEmptyUpdateTagPayload(payload)) {
+      onOpenChange(false)
+      return
+    }
+    action.execute(payload)
+  })
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>

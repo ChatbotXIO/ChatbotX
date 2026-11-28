@@ -1,7 +1,7 @@
 /** What the agent last asked for on one tag. */
 export type TagToggleIntent = "add" | "remove"
 
-/** Result of one settled request, passed to `onError` / `onIdle`. */
+/** One failed request, passed to `onError`. */
 export type TagToggleFailure = {
   tagId: string
   intent: TagToggleIntent
@@ -33,6 +33,8 @@ export type TagToggleQueue = {
   request: (tagId: string, intent: TagToggleIntent) => void
   /** The intent the tag is heading to, if any request is unsettled. */
   pendingIntent: (tagId: string) => TagToggleIntent | undefined
+  /** Every tag with an unsettled request and the intent it is heading to. */
+  pending: () => ReadonlyMap<string, TagToggleIntent>
 }
 
 type TagEntry = {
@@ -83,6 +85,7 @@ export const createTagToggleQueue = (
   }
 
   return {
+    pending: snapshot,
     pendingIntent: (tagId) => {
       const entry = entries.get(tagId)
       return entry ? (entry.queued ?? entry.inFlight) : undefined
@@ -107,3 +110,135 @@ export const createTagToggleQueue = (
     },
   }
 }
+
+/**
+ * What happens whether or not a view is mounted: the request itself, telling
+ * the agent a request failed, and reconciling with the server once a tag has
+ * nothing left in flight. The latest subscriber's functions are the ones used.
+ */
+export type TagToggleWork = {
+  send: TagToggleQueueOptions["send"]
+  onFailure: (failure: TagToggleFailure & { name: string }) => void
+  /** Resolves when the server's state has been re-read. */
+  settle: (
+    tagId: string,
+    lastIntent: TagToggleIntent,
+    lastIntentSucceeded: boolean,
+  ) => Promise<unknown>
+}
+
+/** What a mounted view shows: the unsettled intents and the ones held until the re-read. */
+export type TagToggleSubscriber = {
+  onChange: TagToggleQueueOptions["onChange"]
+  /** The tag's last request worked: keep its intent on screen until `onRelease`. */
+  onHold: (tagId: string, intent: TagToggleIntent) => void
+  onRelease: (tagId: string) => void
+}
+
+type SharedQueue = {
+  queue: TagToggleQueue
+  subscriber: TagToggleSubscriber | null
+  work: TagToggleWork
+  /** Names for the failure message; a tag's name goes when the tag is idle. */
+  names: Map<string, string>
+  /**
+   * Token of the latest settlement per tag (unique, so a finished one can't be mistaken for a later one). A re-read releases the tag's held intent only
+   * if no newer settlement has started, so an older re-read can't release a
+   * newer held intent.
+   */
+  settlements: Map<string, symbol>
+}
+
+const sharedQueues = new Map<string, SharedQueue>()
+
+export type TagToggleSubscription = {
+  queue: TagToggleQueue
+  /** Records the latest intent for a tag (see `createTagToggleQueue`). */
+  request: (tag: { id: string; name: string }, intent: TagToggleIntent) => void
+  /** Stops delivering events to this subscriber; requests keep running. */
+  unsubscribe: () => void
+}
+
+/** Drops the entry once no view shows it and nothing is in flight or queued. */
+const releaseIfUnused = (key: string, shared: SharedQueue): void => {
+  if (
+    sharedQueues.get(key) === shared &&
+    shared.subscriber === null &&
+    shared.queue.pending().size === 0
+  ) {
+    sharedQueues.delete(key)
+  }
+}
+
+/**
+ * One queue per workspace + contact, shared by every view of that contact
+ * (a view that unmounts and mounts again included), so a request still in
+ * flight from an earlier view can never run beside, and override, the latest
+ * intent. The entry lives while a view is subscribed or a request is
+ * unsettled, and only that exact entry is ever removed. The newest subscriber
+ * receives the view events and the current pending set; `work` keeps running
+ * with no view mounted.
+ */
+export const subscribeTagToggleQueue = (
+  key: string,
+  work: TagToggleWork,
+  subscriber: TagToggleSubscriber,
+): TagToggleSubscription => {
+  let shared = sharedQueues.get(key)
+  if (!shared) {
+    const created: SharedQueue = {
+      subscriber: null,
+      work,
+      names: new Map(),
+      settlements: new Map(),
+      queue: createTagToggleQueue({
+        send: (tagId, intent) => created.work.send(tagId, intent),
+        onError: (failure) =>
+          created.work.onFailure({
+            ...failure,
+            name: created.names.get(failure.tagId) ?? "",
+          }),
+        onChange: (next) => created.subscriber?.onChange(next),
+        onIdle: (tagId, lastIntent, lastIntentSucceeded) => {
+          created.names.delete(tagId)
+          const token = Symbol(tagId)
+          created.settlements.set(tagId, token)
+          if (lastIntentSucceeded) {
+            created.subscriber?.onHold(tagId, lastIntent)
+          }
+          created.work
+            .settle(tagId, lastIntent, lastIntentSucceeded)
+            .finally(() => {
+              if (created.settlements.get(tagId) === token) {
+                created.settlements.delete(tagId)
+                created.subscriber?.onRelease(tagId)
+              }
+            })
+          releaseIfUnused(key, created)
+        },
+      }),
+    }
+    sharedQueues.set(key, created)
+    shared = created
+  }
+  const current = shared
+  current.work = work
+  current.subscriber = subscriber
+  subscriber.onChange(current.queue.pending())
+  return {
+    queue: current.queue,
+    request: (tag, intent) => {
+      current.names.set(tag.id, tag.name)
+      current.queue.request(tag.id, intent)
+    },
+    unsubscribe: () => {
+      if (current.subscriber === subscriber) {
+        current.subscriber = null
+      }
+      releaseIfUnused(key, current)
+    },
+  }
+}
+
+/** Number of shared queues alive; for tests. */
+export const sharedTagToggleQueueCount = (): number => sharedQueues.size

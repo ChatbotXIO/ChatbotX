@@ -35,6 +35,7 @@ import {
 } from "../media"
 import { messageService } from "../message/service"
 import { resolveTenantSettings } from "../platform/settings"
+import { publishContactTagsChanged } from "../tag/realtime"
 import { tagService } from "../tag/service"
 import { toPublicStorageUrl } from "../utils"
 import { workspaceService } from "../workspace/service"
@@ -320,7 +321,7 @@ class SystemFieldService extends BaseService {
       await this.deleteById({ id: context.row.id, tx })
     })
     if (removedTags) {
-      await tagService.publishTagsChanged({
+      await publishContactTagsChanged({
         workspaceId: context.payload.workspaceId,
         contactIds: [context.payload.contactId],
       })

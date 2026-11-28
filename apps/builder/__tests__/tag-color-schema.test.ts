@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest"
 import { conversationContactTagResource } from "@/features/conversations/schema/resource"
 import {
   createTagRequest,
+  updateTagPublicRequest,
   updateTagSchema,
 } from "@/features/tags/schema/action"
 import { publicTagResource, tagResource } from "@/features/tags/schema/resource"
@@ -27,6 +28,27 @@ describe("tag color in request schemas", () => {
   test("update keeps omitted and null apart (omitted = unchanged, null = clear)", () => {
     expect("color" in updateTagSchema.parse({ name: "a" })).toBe(false)
     expect(updateTagSchema.parse({ name: "a", color: null }).color).toBeNull()
+  })
+})
+
+describe("empty tag updates", () => {
+  test("the form schema requires at least one of name or color", () => {
+    expect(updateTagSchema.safeParse({}).success).toBe(false)
+    expect(updateTagSchema.safeParse({ color: null }).success).toBe(true)
+    expect(updateTagSchema.safeParse({ name: "a" }).success).toBe(true)
+  })
+
+  test("the public schema accepts a color-only update but not an empty one", () => {
+    expect(
+      updateTagPublicRequest.safeParse({ id: "1", color: "#112233" }).success,
+    ).toBe(true)
+    expect(
+      updateTagPublicRequest.safeParse({ id: "1", folderId: null }).success,
+    ).toBe(true)
+    expect(updateTagPublicRequest.safeParse({ id: "1" }).success).toBe(false)
+    expect(updateTagPublicRequest.safeParse({ color: "#112233" }).success).toBe(
+      false,
+    )
   })
 })
 

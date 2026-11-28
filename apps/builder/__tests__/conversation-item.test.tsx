@@ -50,10 +50,11 @@ vi.mock(
   }),
 )
 
+const selectAdBadgeMock = vi.fn<() => unknown>(() => null)
 vi.mock("@/features/conversations/utils/ad-badge", () => ({
-  selectAdBadge: () => null,
+  selectAdBadge: () => selectAdBadgeMock(),
   selectGoogleAdsBadge: () => null,
-  adBadgeLabelKey: () => "whatsapp.calls.ringingBadge",
+  adBadgeLabelKey: () => "fields.adReferral.ads",
   googleAdsBadgeLabelKey: () => "fields.adReferral.googleAds",
 }))
 
@@ -123,12 +124,15 @@ const ringingCall2 = {
   contactName: "Grace Hopper",
 }
 
+const SHRINK_CLASS = /(^|\s)shrink(\s|$)/
+
 describe("ConversationItem", () => {
   let container: HTMLDivElement
   let root: Root
   const onSelect = vi.fn()
 
   beforeEach(() => {
+    selectAdBadgeMock.mockReturnValue(null)
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
     resolveCallPreviewKindMock.mockReturnValue(undefined)
@@ -234,19 +238,85 @@ describe("ConversationItem", () => {
       expect(container.textContent).toContain("more:9")
     })
 
-    test("a colored tag paints its chip with a readable text color; an uncolored one has no inline style", async () => {
+    test("a colored tag is a pastel pill tinted from its color; an uncolored one is neutral gray", async () => {
       await render(withTags(["dark"], 1, "#000000"))
       const darkChip = container.querySelector<HTMLElement>('[title="dark"]')
-      expect(darkChip?.style.backgroundColor).toBe("rgb(0, 0, 0)")
-      expect(darkChip?.style.color).toBe("rgb(255, 255, 255)")
+      expect(darkChip?.style.backgroundColor).toBe("rgb(217, 217, 217)")
+      expect(darkChip?.style.color).toBe("rgb(0, 0, 0)")
 
-      await render(withTags(["light"], 1, "#FDE68A"))
+      await render(withTags(["light"], 1, "#FACC15"))
       const lightChip = container.querySelector<HTMLElement>('[title="light"]')
-      expect(lightChip?.style.color).toBe("rgb(15, 23, 42)")
+      expect(lightChip?.style.backgroundColor).toBe("rgb(254, 247, 220)")
+      // Darkened until readable on that background, not the raw yellow.
+      expect(lightChip?.style.color).not.toBe("rgb(250, 204, 21)")
 
       await render(withTags(["plain"], 1, null))
       const plainChip = container.querySelector<HTMLElement>('[title="plain"]')
-      expect(plainChip?.getAttribute("style")).toBeNull()
+      expect(plainChip?.style.backgroundColor).toBe("rgb(243, 244, 246)")
+      expect(plainChip?.style.color).toBe("rgb(55, 65, 81)")
+    })
+
+    test("tags share the ad pill's shape and sit after it on the bottom badge line", async () => {
+      selectAdBadgeMock.mockReturnValue({ channel: "whatsapp", adTitle: null })
+      await render(withTags(["alpha"], 1, "#3B82F6"))
+
+      const tag = container.querySelector<HTMLElement>('[title="alpha"]')
+      const adPill = Array.from(
+        container.querySelectorAll<HTMLElement>("span, div"),
+      )
+        .filter((element) => element.textContent === "fields.adReferral.ads")
+        .at(-1)
+      if (!(tag && adPill)) {
+        throw new Error("the tag and the ad pill should both render")
+      }
+      // One badge line holds both, and the tag comes after the ad pill.
+      const line = tag.closest("div.flex.min-w-0")
+      expect(line?.contains(adPill)).toBe(true)
+      const lineText = line?.textContent ?? ""
+      expect(lineText.indexOf("fields.adReferral.ads")).toBeLessThan(
+        lineText.indexOf("alpha"),
+      )
+      for (const pill of [tag, adPill]) {
+        expect(pill.className).toContain("text-[10px]")
+      }
+      selectAdBadgeMock.mockReturnValue(null)
+    })
+
+    test("many long tags and an ad pill: the +N shows and the badge line cannot reach the right icons", async () => {
+      selectAdBadgeMock.mockReturnValue({ channel: "whatsapp", adTitle: null })
+      await render(
+        withTags(
+          [
+            "A very long tag name one",
+            "A very long tag name two",
+            "A very long tag name three",
+          ],
+          9,
+          "#3B82F6",
+        ),
+      )
+
+      const more = Array.from(container.querySelectorAll<HTMLElement>("span"))
+        .filter((element) => element.textContent?.startsWith("more:"))
+        .at(-1)
+      expect(more?.textContent).toBe("more:6")
+      expect(more?.className).toContain("shrink-0")
+      const tag = container.querySelector<HTMLElement>(
+        '[title="A very long tag name one"]',
+      )
+      expect(tag?.className).toContain("max-w-20")
+      // Overrides the badge base `shrink-0`, so the pill can truncate.
+      expect(tag?.className).toMatch(SHRINK_CLASS)
+      expect(tag?.className).not.toContain("shrink-0")
+      expect(tag?.firstElementChild?.className).toContain("truncate")
+      const line = tag?.closest("div.flex.min-w-0")
+      expect(line?.className).toContain("flex-1")
+      expect(line?.className).toContain("overflow-hidden")
+      // The right-hand icons are a sibling that never shrinks.
+      expect(line?.nextElementSibling?.className).toContain("shrink-0")
+      // The +N is not inside the clipped tag container.
+      expect(tag?.parentElement?.contains(more ?? null)).toBe(false)
+      selectAdBadgeMock.mockReturnValue(null)
     })
 
     test("a row held from before previews existed renders without chips", async () => {

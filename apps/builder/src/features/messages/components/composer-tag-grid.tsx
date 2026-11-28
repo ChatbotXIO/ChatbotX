@@ -4,7 +4,7 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { readableTextColor } from "@chatbotx.io/utils/color"
+import { tagChipStyle } from "@chatbotx.io/utils/color"
 import {
   keepPreviousData,
   useInfiniteQuery,
@@ -17,10 +17,11 @@ import {
   SearchIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { type FocusEvent, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
-import type { TagResource } from "@/features/tags/schema/resource"
+import type { ListTagOptionsResponse } from "@/features/tags/schema/query"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
+import { dedupeBy } from "@/lib/dedupe-by"
 import { orpc } from "@/lib/orpc/query"
 import { useComposerTagToggle } from "../hooks/use-composer-tag-toggle"
 import {
@@ -28,7 +29,6 @@ import {
   COMPOSER_TAG_PAGE_SIZE,
   COMPOSER_TAG_SEARCH_DEBOUNCE_MS,
   type ComposerTagDisabledReason,
-  dedupeById,
   isContactAccessError,
   isTagShownApplied,
   nextTagPageParam,
@@ -36,7 +36,7 @@ import {
 } from "../lib/composer-tag-grid"
 import type { TagToggleFailure } from "../lib/tag-toggle-queue"
 
-const SKELETON_CHIP_WIDTHS = ["w-16", "w-24", "w-20", "w-14"] as const
+const SKELETON_CHIP_KEYS = ["a", "b", "c", "d", "e", "f"] as const
 
 /** i18n key (under `composerTags`) per reason the grid is read-only. */
 const disabledReasonKey: Record<ComposerTagDisabledReason, string> = {
@@ -52,12 +52,15 @@ type ComposerTagGridProps = {
   isContactBlocked: boolean
 }
 
+type TagOption = ListTagOptionsResponse["data"][number]
+
 type TagChipProps = {
-  tag: TagResource
+  tag: TagOption
   isApplied: boolean
   isDisabled: boolean
   isSettling: boolean
-  onToggle: (tag: TagResource, isApplied: boolean) => void
+  onToggle: (tag: TagOption, isApplied: boolean) => void
+  onFocus: (event: FocusEvent<HTMLButtonElement>) => void
 }
 
 function TagChip({
@@ -66,41 +69,41 @@ function TagChip({
   isDisabled,
   isSettling,
   onToggle,
+  onFocus,
 }: TagChipProps) {
   const color = tag.color
-  const textColor = color ? readableTextColor(color) : undefined
   return (
     <button
       aria-pressed={isApplied}
       className={cn(
-        "inline-flex h-6 max-w-44 items-center gap-1 rounded-full border px-2 text-xs outline-none transition-[opacity,box-shadow] focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed",
-        color ? "border-transparent" : "bg-muted text-foreground",
-        isApplied ? "opacity-100 ring-1 ring-foreground/30" : "opacity-60",
-        !isDisabled && "hover:opacity-100",
+        "relative flex h-7 min-w-0 items-center justify-center rounded-sm px-3 text-center text-xs outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:cursor-not-allowed",
+        !color && "bg-muted text-foreground",
+        !isDisabled && "hover:opacity-80",
         isDisabled && "opacity-40",
-        isSettling && "animate-pulse",
+        isSettling && "animate-pulse opacity-70",
       )}
       data-applied={isApplied}
       disabled={isDisabled}
       onClick={() => onToggle(tag, isApplied)}
-      style={color ? { backgroundColor: color, color: textColor } : undefined}
+      onFocus={onFocus}
+      style={tagChipStyle(color)}
       title={tag.name}
       type="button"
     >
-      <span
-        aria-hidden
-        className={cn(
-          "size-1.5 shrink-0 rounded-full bg-current",
-          !isApplied && "invisible",
-        )}
-      />
-      <span className="truncate">{tag.name}</span>
+      {isApplied && (
+        <span
+          aria-hidden
+          className="absolute top-1 left-1 size-1.5 rounded-full bg-current"
+          data-applied-dot
+        />
+      )}
+      <span className="min-w-0 truncate">{tag.name}</span>
     </button>
   )
 }
 
 /**
- * Every workspace tag as a colored chip above the composer, a dot on the ones
+ * Every workspace tag as a filled, equal-width cell above the composer, a corner dot on the ones
  * the open contact has. A click adds or removes the tag at once; the contact
  * is re-read when the request settles (`useComposerTagToggle`).
  */
@@ -121,7 +124,7 @@ export function ComposerTagGrid({
   )
 
   const tagsQuery = useInfiniteQuery({
-    ...orpc.tagsAPI.privateListWorkspaceTagsAPI.infiniteOptions({
+    ...orpc.tagsAPI.privateListWorkspaceTagOptionsAPI.infiniteOptions({
       getNextPageParam: nextTagPageParam,
       initialPageParam: 1,
       input: (page: number) => ({
@@ -129,7 +132,6 @@ export function ComposerTagGrid({
         page,
         perPage: COMPOSER_TAG_PAGE_SIZE,
         name: search || undefined,
-        sort: [{ id: "name", desc: false }],
       }),
     }),
     // Keep the chips on screen while a new search loads.
@@ -167,7 +169,10 @@ export function ComposerTagGrid({
 
   const tags = useMemo(
     () =>
-      dedupeById((tagsQuery.data?.pages ?? []).flatMap((page) => page.data)),
+      dedupeBy(
+        (tagsQuery.data?.pages ?? []).flatMap((page) => page.data),
+        (tag) => tag.id,
+      ),
     [tagsQuery.data],
   )
   const appliedTagIds = useMemo(
@@ -198,7 +203,19 @@ export function ComposerTagGrid({
   const hasNoTagsAtAll = !(isLoading || tagsQuery.isError) && tags.length === 0
   const showToggle = isOverflowing || isExpanded || tagsQuery.hasNextPage
 
-  const onToggle = (tag: TagResource, isApplied: boolean) =>
+  // A chip clipped by the collapsed height: expand so focus never scrolls
+  // the hidden container.
+  const onFocusChip = (event: FocusEvent<HTMLButtonElement>) => {
+    const target = event.currentTarget
+    if (
+      !isExpanded &&
+      target.offsetTop + target.offsetHeight > COMPOSER_TAG_COLLAPSED_MAX_PX
+    ) {
+      setIsExpanded(true)
+    }
+  }
+
+  const onToggle = (tag: TagOption, isApplied: boolean) =>
     toggle({ id: tag.id, name: tag.name }, isApplied ? "remove" : "add")
 
   return (
@@ -225,7 +242,13 @@ export function ComposerTagGrid({
           <Button
             aria-expanded={isExpanded}
             className="ml-auto h-7 gap-1 px-2 text-xs"
-            onClick={() => setIsExpanded((previous) => !previous)}
+            onClick={() => {
+              if (isExpanded && gridRef.current) {
+                // The expanded grid scrolls; collapse back to the first rows.
+                gridRef.current.scrollTop = 0
+              }
+              setIsExpanded((previous) => !previous)
+            }}
             size="sm"
             type="button"
             variant="ghost"
@@ -247,9 +270,12 @@ export function ComposerTagGrid({
       )}
 
       {isLoading && (
-        <div aria-busy className="flex flex-wrap gap-1.5">
-          {SKELETON_CHIP_WIDTHS.map((width) => (
-            <Skeleton className={cn("h-6 rounded-full", width)} key={width} />
+        <div
+          aria-busy
+          className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-0.5"
+        >
+          {SKELETON_CHIP_KEYS.map((key) => (
+            <Skeleton className="h-7 rounded-sm" key={key} />
           ))}
         </div>
       )}
@@ -282,7 +308,7 @@ export function ComposerTagGrid({
       {tags.length > 0 && (
         <div
           className={cn(
-            "flex flex-wrap content-start gap-1.5",
+            "relative grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] content-start gap-0.5",
             isExpanded ? "max-h-52 overflow-y-auto" : "overflow-hidden",
           )}
           ref={gridRef}
@@ -306,13 +332,14 @@ export function ComposerTagGrid({
               }
               isSettling={unsettled.has(tag.id)}
               key={tag.id}
+              onFocus={onFocusChip}
               onToggle={onToggle}
               tag={tag}
             />
           ))}
           {isExpanded && tagsQuery.hasNextPage && (
             <Button
-              className="h-6 px-2 text-xs"
+              className="col-span-full h-7 px-2 text-xs"
               disabled={tagsQuery.isFetchingNextPage}
               onClick={() => tagsQuery.fetchNextPage()}
               size="sm"

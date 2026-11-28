@@ -3537,8 +3537,11 @@
         "typeNotShareable": "Dit soort bericht kan hier niet worden verstuurd",
         "linkUnavailable": "Dit bericht heeft geen link om te versturen",
         "linkTooLong": "De link is te lang om te versturen",
-        "shareUnsupported": "Dit kanaal kan geen berichten versturen"
-      }
+        "shareUnsupported": "Dit kanaal kan geen berichten versturen",
+        "postNotFound": "Dit bericht bestaat niet meer",
+        "inboxMismatch": "Dit bericht hoort bij een andere inbox"
+      },
+      "noMatch": "Geen berichten komen overeen met je zoekopdracht."
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "Lid",
     "loadMoreFailed": "Kan geen leden meer laden",
     "lastMessageBy": "Laatste bericht van {name}",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "Kleur",

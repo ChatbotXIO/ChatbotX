@@ -286,4 +286,71 @@ describe.skipIf(!databaseUrl)("tag previews by contact", () => {
     expect((await list(3, [])).size).toBe(0)
     expect(statements).toHaveLength(0)
   })
+
+  describe("listOptions", () => {
+    const options = (
+      input: { name?: string | null; page?: number; perPage?: number } = {},
+    ) =>
+      tagRepository.listOptions(
+        {
+          page: 1,
+          perPage: 50,
+          workspaceId: fixture.workspaceId,
+          ...input,
+        },
+        database() as unknown as DatabaseClient,
+      )
+
+    test("lists id, name and color by name, live tags of the workspace only", async () => {
+      const [bravo, alpha, gone] = await createTags(fixture.workspaceId, [
+        "bravo",
+        "alpha",
+        "gone",
+      ])
+      await createTags(fixture.otherWorkspaceId, ["other"])
+      await database()
+        .update(schema.tagModel)
+        .set({ deletedAt: new Date() })
+        .where(eq(schema.tagModel.id, (gone as { id: string }).id))
+
+      const page = await options()
+
+      expect(page.data).toEqual([
+        { id: (alpha as { id: string }).id, name: "alpha", color: null },
+        { id: (bravo as { id: string }).id, name: "bravo", color: null },
+      ])
+      expect(page.pageCount).toBe(1)
+      expect(Object.keys(page.data[0] as object).sort()).toEqual([
+        "color",
+        "id",
+        "name",
+      ])
+    })
+
+    test("pages by offset and filters by a name substring, escaping wildcards", async () => {
+      await createTags(fixture.workspaceId, ["a1", "a2", "a3", "100%", "xyz"])
+
+      const second = await options({ page: 2, perPage: 2 })
+      expect(second.data.map((tag) => tag.name)).toEqual(["a2", "a3"])
+      expect(second.pageCount).toBe(3)
+
+      expect(
+        (await options({ name: "A" })).data.map((tag) => tag.name),
+      ).toEqual(["a1", "a2", "a3"])
+      expect(
+        (await options({ name: "%" })).data.map((tag) => tag.name),
+      ).toEqual(["100%"])
+    })
+
+    test("counts no contacts per tag", async () => {
+      await createTags(fixture.workspaceId, ["solo"])
+      statements = []
+
+      await options()
+
+      expect(
+        statements.some((query) => query.includes("contacts_to_tags")),
+      ).toBe(false)
+    })
+  })
 })

@@ -15,7 +15,10 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
-import { SharePostPicker } from "@/features/channel-posts/components/share-post-picker"
+import {
+  refusalReasonKey,
+  SharePostPicker,
+} from "@/features/channel-posts/components/share-post-picker"
 import { useChatStore } from "@/features/chat/store/chat-store-provider"
 import { disableBotAction } from "@/features/conversations/actions/disable-bot.action"
 import {
@@ -23,6 +26,7 @@ import {
   isConversationActive,
 } from "@/features/conversations/utils/bot-state"
 import { createMessageAction } from "../actions/create-message.action"
+import { getChannelPostRefusal } from "../lib/channel-post-refusal"
 
 type SendChannelPostDialogTriggerProps = {
   /** The inbox the composer was gated on, so the server checks the same one. */
@@ -75,7 +79,14 @@ export function SendChannelPostDialogTrigger({
       conversation?.id ?? "",
     ),
     {
-      onSuccess: () => {
+      onSuccess: ({ data }) => {
+        const refusal = getChannelPostRefusal(data)
+        if (refusal) {
+          toast.error(t("flows.sendChannelPost.sendFailed"), {
+            description: t(refusalReasonKey[refusal.reason]),
+          })
+          return
+        }
         if (conversation && isConversationActive(conversation)) {
           disableBot({ ids: [conversation.id] })
         }
@@ -100,7 +111,13 @@ export function SendChannelPostDialogTrigger({
         bypassThreadControlLock,
       })
       // The dialog stays open on a refusal, so another post can be picked.
-      if (!(result?.serverError || result?.validationErrors)) {
+      if (
+        !(
+          result?.serverError ||
+          result?.validationErrors ||
+          getChannelPostRefusal(result?.data)
+        )
+      ) {
         setOpen(false)
         setSelectedPostId(null)
       }

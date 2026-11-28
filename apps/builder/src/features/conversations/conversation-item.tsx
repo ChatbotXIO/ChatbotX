@@ -46,6 +46,7 @@ import { SlaPill } from "./components/sla-pill"
 import { ThreadControlPill } from "./components/thread-control-pill"
 import { useMarkConversationRead } from "./hooks/use-mark-conversation-read"
 import { isConversationUnread } from "./lib/is-conversation-unread"
+import { ROW_PILL_CLASS } from "./lib/tag-preview"
 import {
   type CallPreviewKind,
   resolveCallPreviewKind,
@@ -184,7 +185,7 @@ function AdBadgePill({
 }) {
   const pill = (
     <Badge
-      className="shrink-0 rounded px-1.5 py-0 font-medium text-[10px] leading-4"
+      className={`${ROW_PILL_CLASS} shrink-0`}
       style={AD_BADGE_STYLE}
       variant="outline"
     >
@@ -394,11 +395,8 @@ export default function ConversationItem({
             )}
             <span className="truncate">{previewText}</span>
           </div>
-          {conversation.contact ? (
-            <ConversationTagPreview contact={conversation.contact} />
-          ) : null}
           <div className="flex items-center justify-between gap-1 text-xs">
-            <div className="flex min-w-0 items-center gap-1">
+            <div className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
               {adBadge && (
                 <AdBadgePill
                   adTitle={adBadge.adTitle}
@@ -417,6 +415,9 @@ export default function ConversationItem({
                 responseDueAt={conversation.responseDueAt}
                 responseSlaBreachingAt={conversation.responseSlaBreachingAt}
               />
+              {conversation.contact ? (
+                <ConversationTagPreview contact={conversation.contact} />
+              ) : null}
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
               {canViewEmailAndPhone && contactPhone ? (

@@ -3537,8 +3537,11 @@
         "typeNotShareable": "Este tipo de publicação não pode ser enviado aqui",
         "linkUnavailable": "Esta publicação não tem link para enviar",
         "linkTooLong": "O link é longo demais para ser enviado",
-        "shareUnsupported": "Este canal não pode enviar publicações"
-      }
+        "shareUnsupported": "Este canal não pode enviar publicações",
+        "postNotFound": "Esta publicação não existe mais",
+        "inboxMismatch": "Esta publicação pertence a outra caixa de entrada"
+      },
+      "noMatch": "Nenhuma publicação corresponde à sua busca."
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "Membro",
     "loadMoreFailed": "Não foi possível carregar mais membros",
     "lastMessageBy": "Última mensagem de {name}",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "Cor",

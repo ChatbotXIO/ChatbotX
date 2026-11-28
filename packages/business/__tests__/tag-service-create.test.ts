@@ -295,6 +295,17 @@ describe("tagService color", () => {
     )
   })
 
+  test("update with nothing to write returns the tag unchanged without an empty set", async () => {
+    const stored = { id: "tag-1", name: "Same" }
+    findOrFail.mockResolvedValue(stored)
+    updateSet.mockClear()
+
+    const result = await tagService.update({ workspaceId: WS, id: "tag-1" }, {})
+
+    expect(result).toBe(stored)
+    expect(updateSet).not.toHaveBeenCalled()
+  })
+
   test("a color-only change is not a locked content key (lock policy stays name)", async () => {
     const { assertResourceEditable } = await import(
       "../src/template/installed-resource.service"

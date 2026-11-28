@@ -4376,8 +4376,11 @@
         "typeNotShareable": "Bu tip paylaşım burada göndərilə bilməz",
         "linkUnavailable": "Bu paylaşımın göndəriləcək linki yoxdur",
         "linkTooLong": "Link göndərmək üçün çox uzundur",
-        "shareUnsupported": "Bu kanal paylaşım göndərə bilməz"
-      }
+        "shareUnsupported": "Bu kanal paylaşım göndərə bilməz",
+        "postNotFound": "Bu paylaşım artıq mövcud deyil",
+        "inboxMismatch": "Bu paylaşım başqa gələnlər qutusuna məxsusdur"
+      },
+      "noMatch": "Axtarışınıza uyğun paylaşım tapılmadı."
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "Üzv",
     "loadMoreFailed": "Daha çox üzv yüklənmədi",
     "lastMessageBy": "{name} tərəfindən son mesaj",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "Rəng",

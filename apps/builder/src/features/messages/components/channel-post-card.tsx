@@ -4,6 +4,7 @@ import type { MessageChannelPostEntity } from "@chatbotx.io/sdk"
 import { ExternalLinkIcon } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
+import { toHttpUrl } from "@/features/contacts/lib/http-url"
 
 type ChannelPostCardProps = {
   post: MessageChannelPostEntity
@@ -20,6 +21,7 @@ export function ChannelPostCard({ post, sentText }: ChannelPostCardProps) {
   const t = useTranslations()
   const caption = post.caption?.trim() || t("flows.sendChannelPost.noCaption")
   const text = sentText?.trim()
+  const permalink = toHttpUrl(post.permalink)
   const sentTextLink = post.shareMode === "textLink" && text ? text : null
 
   return (
@@ -41,10 +43,10 @@ export function ChannelPostCard({ post, sentText }: ChannelPostCardProps) {
         ) : (
           <p className="line-clamp-3 text-sm">{caption}</p>
         )}
-        {post.permalink ? (
+        {permalink ? (
           <a
             className="inline-flex items-center gap-1 text-primary text-xs hover:underline"
-            href={post.permalink}
+            href={permalink}
             rel="noopener noreferrer"
             target="_blank"
           >

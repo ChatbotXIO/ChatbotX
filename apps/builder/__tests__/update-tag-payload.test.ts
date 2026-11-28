@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest"
-import { buildUpdateTagPayload } from "@/features/tags/lib/update-tag-payload"
+import {
+  buildUpdateTagPayload,
+  isEmptyUpdateTagPayload,
+} from "@/features/tags/lib/update-tag-payload"
 
 describe("buildUpdateTagPayload", () => {
   const values = { name: "VIP", color: "#112233" }
@@ -49,5 +52,13 @@ describe("buildUpdateTagPayload", () => {
         isLocked: true,
       }),
     ).toEqual({ color: "#112233" })
+  })
+})
+
+describe("isEmptyUpdateTagPayload", () => {
+  test("is true only when neither name nor color is set", () => {
+    expect(isEmptyUpdateTagPayload({})).toBe(true)
+    expect(isEmptyUpdateTagPayload({ color: null })).toBe(false)
+    expect(isEmptyUpdateTagPayload({ name: "a" })).toBe(false)
   })
 })

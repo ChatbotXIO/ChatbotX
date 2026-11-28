@@ -11,3 +11,7 @@ export const TAG_PREVIEW_REFRESH_BATCH_SIZE = 100
 /** Tags a row hides behind "+N": the contact's total minus the chips shown. */
 export const hiddenTagCount = (tagCount: number, shownCount: number): number =>
   Math.max(0, tagCount - shownCount)
+
+/** The pill shape shared by the row's ad badge and its tag pills. */
+export const ROW_PILL_CLASS =
+  "rounded px-1.5 py-0 font-medium text-[10px] leading-4"

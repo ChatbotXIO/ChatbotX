@@ -3537,8 +3537,11 @@
         "typeNotShareable": "Denne type opslag kan ikke sendes her",
         "linkUnavailable": "Dette opslag har intet link at sende",
         "linkTooLong": "Linket er for langt til at blive sendt",
-        "shareUnsupported": "Denne kanal kan ikke sende opslag"
-      }
+        "shareUnsupported": "Denne kanal kan ikke sende opslag",
+        "postNotFound": "Dette opslag findes ikke længere",
+        "inboxMismatch": "Dette opslag tilhører en anden indbakke"
+      },
+      "noMatch": "Ingen opslag matcher din søgning."
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "Medlem",
     "loadMoreFailed": "Kunne ikke indlæse flere medlemmer",
     "lastMessageBy": "Seneste besked fra {name}",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "Farve",

@@ -20,6 +20,8 @@ import type {
 } from "@chatbotx.io/utils/channel-post"
 import { BaseService } from "../base.service"
 import { ChannelPostShareRefusedError } from "../errors"
+import { resolveTenantSettings } from "../platform/settings"
+import { toPublicStorageUrl } from "../utils"
 
 /** The platform sends the post itself, by its own id. */
 export type NativeChannelPostShare = {
@@ -205,7 +207,10 @@ class ChannelPostShareService extends BaseService {
   async prepareOutgoing(
     input: ChannelPostShareInput,
   ): Promise<PreparedChannelPostShare> {
-    const resolved = await this.resolveForSend(input)
+    const [resolved, { storageUrl }] = await Promise.all([
+      this.resolveForSend(input),
+      resolveTenantSettings({ workspaceId: input.workspaceId }),
+    ])
     return {
       ...resolved,
       text: resolved.content.mode === "textLink" ? resolved.content.text : null,
@@ -215,7 +220,8 @@ class ChannelPostShareService extends BaseService {
         channelPostId: resolved.post.id,
         externalPostId: resolved.post.externalPostId,
         permalink: resolved.post.permalink,
-        thumbnail: resolved.post.thumbnail,
+        // `ChannelPost.thumbnail` is a storage path; the card renders a URL.
+        thumbnail: toPublicStorageUrl(resolved.post.thumbnail, storageUrl),
         caption: resolved.post.caption,
       },
     }

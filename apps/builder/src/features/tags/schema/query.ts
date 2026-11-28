@@ -39,6 +39,28 @@ export const listTagsResponse = z.object({
 })
 export type ListTagsResponse = z.infer<typeof listTagsResponse>
 
+/** Tags per page of the picker list: the most a page can hold. */
+export const TAG_OPTIONS_MAX_PER_PAGE = 50
+
+export const listTagOptionsRequest = z.object({
+  name: z.string().nullish(),
+  page: z.coerce.number().int().min(1).default(1),
+  perPage: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(TAG_OPTIONS_MAX_PER_PAGE)
+    .default(TAG_OPTIONS_MAX_PER_PAGE),
+  workspaceId: zodBigintAsString(),
+})
+export type ListTagOptionsRequest = z.infer<typeof listTagOptionsRequest>
+
+export const listTagOptionsResponse = z.object({
+  data: z.array(tagResource.pick({ id: true, name: true, color: true })),
+  pageCount: z.number().int(),
+})
+export type ListTagOptionsResponse = z.infer<typeof listTagOptionsResponse>
+
 export const listTagsPublicRequest = publicListRequest.extend({
   name: z
     .string()

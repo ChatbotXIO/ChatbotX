@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
+import type { ChannelPostShareRefusalReason } from "@chatbotx.io/utils/channel-post"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { Loader2Icon, SearchIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -35,6 +36,24 @@ export const notShareableReasonKey = (
   reason: ChannelPostNotShareableReason,
 ): `flows.sendChannelPost.reasons.${ChannelPostNotShareableReason}` =>
   `flows.sendChannelPost.reasons.${reason}`
+
+type RefusalReasonKey = `flows.sendChannelPost.reasons.${
+  | ChannelPostNotShareableReason
+  | "postNotFound"
+  | "inboxMismatch"}`
+
+/** The translation key that explains why the server refused to send a post. */
+export const refusalReasonKey: Record<
+  ChannelPostShareRefusalReason,
+  RefusalReasonKey
+> = {
+  channelPostNotFound: "flows.sendChannelPost.reasons.postNotFound",
+  channelPostInboxMismatch: "flows.sendChannelPost.reasons.inboxMismatch",
+  channelPostTypeNotShareable: "flows.sendChannelPost.reasons.typeNotShareable",
+  channelPostShareUnsupported: "flows.sendChannelPost.reasons.shareUnsupported",
+  channelPostLinkUnavailable: "flows.sendChannelPost.reasons.linkUnavailable",
+  channelPostLinkTooLong: "flows.sendChannelPost.reasons.linkTooLong",
+}
 
 type SharePostPickerProps = {
   inboxId: string
@@ -139,7 +158,11 @@ export function SharePostPicker({
         </div>
       ) : (
         <PostGrid
-          emptyText={t("flows.sendChannelPost.empty")}
+          emptyText={t(
+            debouncedSearch
+              ? "flows.sendChannelPost.noMatch"
+              : "flows.sendChannelPost.empty",
+          )}
           loading={posts.isPending}
           onToggle={handleToggle}
           posts={pickerPosts}

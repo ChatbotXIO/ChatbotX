@@ -1,14 +1,17 @@
 import type { AnyPgColumn } from "drizzle-orm/pg-core"
 import {
   and,
+  asc,
   type DatabaseClient,
   db,
   eq,
+  ilike,
   isNull,
   lte,
   sql,
 } from "../../client"
 import { contactsToTagsModel, tagModel } from "../../schema"
+import { likeContains } from "../../utils"
 
 /** One tag shown on a conversation row. */
 export type ContactTagPreviewItem = {
@@ -25,13 +28,62 @@ export type ContactTagPreview = {
 }
 
 /** Contacts read per pair of statements: a longer id list is read in slices of this size. */
-export const TAG_PREVIEW_CONTACT_CHUNK_SIZE = 500
+const TAG_PREVIEW_CONTACT_CHUNK_SIZE = 500
+
+/** A tag as the composer grid lists it: no contact count. */
+export type TagOption = {
+  id: string
+  name: string
+  color: string | null
+}
+
+/** One page of `tagRepository.listOptions`. */
+export type TagOptionPage = {
+  data: TagOption[]
+  pageCount: number
+}
 
 /** One bigint-array parameter: the statement stays one bind however many ids there are. */
 const anyOf = (column: AnyPgColumn, ids: string[]) =>
   sql`${column} = ANY(${sql.param(ids)}::bigint[])`
 
 export const tagRepository = {
+  /**
+   * Live tags of a workspace by name then id, one page at a time, optionally
+   * filtered by a name substring. Unlike the management list it counts no
+   * contacts per tag: id, name and color only.
+   */
+  async listOptions(
+    input: {
+      workspaceId: string
+      name?: string | null
+      page: number
+      perPage: number
+    },
+    tx: DatabaseClient = db,
+  ): Promise<TagOptionPage> {
+    const where = and(
+      eq(tagModel.workspaceId, input.workspaceId),
+      isNull(tagModel.deletedAt),
+      input.name ? ilike(tagModel.name, likeContains(input.name)) : undefined,
+    )
+    const [data, totalRows] = await Promise.all([
+      tx
+        .select({
+          id: tagModel.id,
+          name: tagModel.name,
+          color: tagModel.color,
+        })
+        .from(tagModel)
+        .where(where)
+        .orderBy(asc(tagModel.name), asc(tagModel.id))
+        .limit(input.perPage)
+        .offset((input.page - 1) * input.perPage),
+      tx.$count(tagModel, where),
+    ])
+    return { data, pageCount: Math.ceil(totalRows / input.perPage) }
+  },
+
   /**
    * The first `limit` tags (by name, then id) of each contact, and each
    * contact's total tag count, in two statements per slice of
@@ -81,9 +133,8 @@ async function readTagPreviewSlice(
   tx: DatabaseClient,
 ): Promise<Map<string, ContactTagPreview>> {
   const { contactIds } = input
-  const slice = new Map<string, ContactTagPreview>(
-    contactIds.map((contactId) => [contactId, { tagCount: 0, tagPreview: [] }]),
-  )
+  // Only contacts with a live tag appear here; the caller fills in the rest.
+  const slice = new Map<string, ContactTagPreview>()
   const liveTagOfContacts = and(
     anyOf(contactsToTagsModel.contactId, contactIds),
     eq(tagModel.workspaceId, input.workspaceId),
@@ -129,10 +180,7 @@ async function readTagPreviewSlice(
   ])
 
   for (const row of countRows) {
-    const entry = slice.get(row.contactId)
-    if (entry) {
-      entry.tagCount = row.tagCount
-    }
+    slice.set(row.contactId, { tagCount: row.tagCount, tagPreview: [] })
   }
   for (const row of previewRows) {
     slice.get(row.contactId)?.tagPreview.push({

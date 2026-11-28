@@ -3537,8 +3537,11 @@
         "typeNotShareable": "Jenis postingan ini tidak dapat dikirim di sini",
         "linkUnavailable": "Postingan ini tidak memiliki tautan untuk dikirim",
         "linkTooLong": "Tautan terlalu panjang untuk dikirim",
-        "shareUnsupported": "Kanal ini tidak dapat mengirim postingan"
-      }
+        "shareUnsupported": "Kanal ini tidak dapat mengirim postingan",
+        "postNotFound": "Postingan ini sudah tidak ada",
+        "inboxMismatch": "Postingan ini milik kotak masuk lain"
+      },
+      "noMatch": "Tidak ada postingan yang cocok dengan pencarian Anda."
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "Anggota",
     "loadMoreFailed": "Tidak dapat memuat anggota lainnya",
     "lastMessageBy": "Pesan terakhir dari {name}",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "Warna",

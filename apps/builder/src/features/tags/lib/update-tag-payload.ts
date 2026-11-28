@@ -28,3 +28,7 @@ export const buildUpdateTagPayload = (input: {
     : { name: input.values.name }),
   ...(input.dirtyFields.color ? { color: input.values.color ?? null } : {}),
 })
+
+/** Whether the payload changes nothing (the form was saved untouched). */
+export const isEmptyUpdateTagPayload = (payload: UpdateTagSchema): boolean =>
+  payload.name === undefined && payload.color === undefined

@@ -1,3 +1,4 @@
+import type { ListContactTagPreviewsResponse } from "../schema/resource"
 import { TAG_PREVIEW_REFRESH_BATCH_SIZE } from "./tag-preview"
 
 /** Wait after the first `contactTagsChanged` of a burst, so one request covers it. */
@@ -10,11 +11,7 @@ export const TAG_PREVIEW_RETRY_DELAY_MS = 5000
 export const TAG_PREVIEW_MAX_ATTEMPTS = 3
 
 /** The refreshed tag summary of one contact. */
-export type RefreshedTagPreview = {
-  contactId: string
-  tagCount: number
-  tagPreview: { id: string; name: string; color: string | null }[]
-}
+export type RefreshedTagPreview = ListContactTagPreviewsResponse["data"][number]
 
 export type TagPreviewRefresherOptions = {
   /** Applies one refreshed contact to the loaded rows. */

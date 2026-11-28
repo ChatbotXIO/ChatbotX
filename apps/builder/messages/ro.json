@@ -541,8 +541,11 @@
         "typeNotShareable": "Acest tip de postare nu poate fi trimis aici",
         "linkUnavailable": "Această postare nu are un link de trimis",
         "linkTooLong": "Linkul este prea lung pentru a fi trimis",
-        "shareUnsupported": "Acest canal nu poate trimite postări"
-      }
+        "shareUnsupported": "Acest canal nu poate trimite postări",
+        "postNotFound": "Această postare nu mai există",
+        "inboxMismatch": "Această postare aparține altei căsuțe de mesaje"
+      },
+      "noMatch": "Nicio postare nu corespunde căutării tale."
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "Membru",
     "loadMoreFailed": "Nu s-au putut încărca mai mulți membri",
     "lastMessageBy": "Ultimul mesaj de la {name}",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "Culoare",

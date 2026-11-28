@@ -157,7 +157,7 @@ chatbotx response-sla delete                         # Stop tracking; open deadl
 chatbotx tags list                                   # Get all tags [--name --folderId --sort]
 chatbotx tags create --name <name>                   # Create tag [--folderId --color '#RRGGBB']
 chatbotx tags get <idOrName>                         # Get tag
-chatbotx tags update <id> --name <name>              # Rename tag [--folderId to move it; --color '#RRGGBB' sets it, omit to keep it]
+chatbotx tags update <id>                            # Update tag: give at least one of --name, --color '#RRGGBB' (sets it; omit to keep it), --folderId (move it)
 chatbotx tags delete <id>                            # Delete tag
 ```
 

@@ -4746,8 +4746,11 @@
         "typeNotShareable": "Den här typen av inlägg kan inte skickas här",
         "linkUnavailable": "Det här inlägget har ingen länk att skicka",
         "linkTooLong": "Länken är för lång för att skickas",
-        "shareUnsupported": "Den här kanalen kan inte skicka inlägg"
-      }
+        "shareUnsupported": "Den här kanalen kan inte skicka inlägg",
+        "postNotFound": "Det här inlägget finns inte längre",
+        "inboxMismatch": "Det här inlägget tillhör en annan inkorg"
+      },
+      "noMatch": "Inga inlägg matchar din sökning."
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "Medlem",
     "loadMoreFailed": "Det gick inte att läsa in fler medlemmar",
     "lastMessageBy": "Senaste meddelandet från {name}",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "Färg",

@@ -6,9 +6,9 @@ import type { ListConversationItemResource } from "@/features/conversations/sche
 vi.mock("next-intl", () => ({
   useTranslations:
     () =>
-    (key: string, values?: { names?: string; count?: string | number }) => {
-      if (key === "namesOverflow") {
-        return `${values?.names} [+${values?.count}]`
+    (key: string, values?: { names?: string; overflow?: string | number }) => {
+      if (key === "overflowCount") {
+        return `[+${values?.overflow}]`
       }
       if (key === "joinedShort") {
         return `${values?.names} joined`
@@ -100,13 +100,25 @@ describe("ConversationParticipants names and overflow", () => {
   test("more than 3, no next page: three names then +N of the rest", async () => {
     const text = await renderWith(6, false)
 
-    expect(text).toContain("Name1, Name2, Name3 [+3] joined")
+    expect(text).toContain("Name1, Name2, Name3 joined[+3]")
     expect(text).not.toContain("Name4")
+  })
+
+  test("5 participants: three names then +2, outside the truncated names", async () => {
+    const text = await renderWith(5, false)
+
+    expect(text).toContain("Name1, Name2, Name3 joined[+2]")
+    expect(text).not.toContain("Name4")
+    const overflow = Array.from(container.querySelectorAll("span")).find(
+      (element) => element.textContent === "[+2]",
+    )
+    expect(overflow?.className).toContain("shrink-0")
+    expect(overflow?.closest(".truncate")).toBeNull()
   })
 
   test("more than 3 with a next page: the +N gets a trailing +", async () => {
     const text = await renderWith(6, true)
 
-    expect(text).toContain("Name1, Name2, Name3 [+3+] joined")
+    expect(text).toContain("Name1, Name2, Name3 joined[+3+]")
   })
 })

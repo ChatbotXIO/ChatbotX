@@ -3694,8 +3694,11 @@
         "typeNotShareable": "Bu tür gönderi burada gönderilemez",
         "linkUnavailable": "Bu gönderinin gönderilecek bağlantısı yok",
         "linkTooLong": "Bağlantı gönderilemeyecek kadar uzun",
-        "shareUnsupported": "Bu kanal gönderi gönderemez"
-      }
+        "shareUnsupported": "Bu kanal gönderi gönderemez",
+        "postNotFound": "Bu gönderi artık mevcut değil",
+        "inboxMismatch": "Bu gönderi başka bir gelen kutusuna ait"
+      },
+      "noMatch": "Aramanızla eşleşen gönderi yok."
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "Üye",
     "loadMoreFailed": "Daha fazla üye yüklenemedi",
     "lastMessageBy": "{name} tarafından son mesaj",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "Renk",

@@ -3537,8 +3537,11 @@
         "typeNotShareable": "この種類の投稿はここでは送信できません",
         "linkUnavailable": "この投稿には送信できるリンクがありません",
         "linkTooLong": "リンクが長すぎて送信できません",
-        "shareUnsupported": "このチャネルでは投稿を送信できません"
-      }
+        "shareUnsupported": "このチャネルでは投稿を送信できません",
+        "postNotFound": "この投稿はもう存在しません",
+        "inboxMismatch": "この投稿は別の受信トレイのものです"
+      },
+      "noMatch": "検索に一致する投稿がありません。"
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "メンバー",
     "loadMoreFailed": "メンバーをこれ以上読み込めませんでした",
     "lastMessageBy": "{name} の最後のメッセージ",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "色",

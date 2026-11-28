@@ -388,22 +388,10 @@ const pageBranch = (
   LIMIT ${input.limit}
 )`
 
-type RawTouchpointRow = {
-  kind: ContactTouchpointKind
-  resourceKey: string
-  resourceName: string | null
-  occurredAtKey: string
-  channel: string | null
-  inboxId: string | null
-  details: Record<string, unknown>
-}
+type RawTouchpointRow = Omit<ContactTouchpointRow, "occurredAt">
 
-/**
- * The page statement, or null when `kinds` names nothing. Exported so the
- * query plan of each branch can be inspected (`EXPLAIN`) without a second
- * copy of the SQL.
- */
-export function buildContactTouchpointQuery(
+/** The page statement, or null when `kinds` names nothing. */
+function buildContactTouchpointQuery(
   input: ListContactTouchpointsInput,
 ): SQL | null {
   const kinds = input.kinds?.length

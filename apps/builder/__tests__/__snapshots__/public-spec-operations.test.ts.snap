@@ -3993,8 +3993,13 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/tags",
   },
   {
-    "method": "PUT",
+    "method": "PATCH",
     "operationId": "tags.update",
+    "path": "/v1/tags/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "tags.updateLegacy",
     "path": "/v1/tags/{id}",
   },
   {

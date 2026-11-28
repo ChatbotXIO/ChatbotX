@@ -81,10 +81,6 @@ export function ConversationParticipants({
     participants.slice(0, shownCount).map(givenNameLabelOf),
     LIST_FORMAT,
   )
-  const namesLabel = overflowLabel
-    ? t("namesOverflow", { names: inlineNames, count: overflowLabel })
-    : inlineNames
-
   return (
     <Dialog>
       <DialogTrigger
@@ -108,9 +104,15 @@ export function ConversationParticipants({
             >
               {t("joinedShort", {
                 count: participants.length,
-                names: namesLabel,
+                names: inlineNames,
               })}
             </span>
+            {overflowLabel && (
+              // Outside the truncated names, so a long list never clips it.
+              <span className="shrink-0 font-medium">
+                {t("overflowCount", { overflow: overflowLabel })}
+              </span>
+            )}
             <span aria-hidden>•</span>
             <time
               className="shrink-0"

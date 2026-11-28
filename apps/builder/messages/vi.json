@@ -3736,8 +3736,11 @@
         "typeNotShareable": "Loại bài viết này không thể gửi ở đây",
         "linkUnavailable": "Bài viết này không có liên kết để gửi",
         "linkTooLong": "Liên kết quá dài để gửi",
-        "shareUnsupported": "Kênh này không thể gửi bài viết"
-      }
+        "shareUnsupported": "Kênh này không thể gửi bài viết",
+        "postNotFound": "Bài đăng này không còn tồn tại",
+        "inboxMismatch": "Bài đăng này thuộc hộp thư khác"
+      },
+      "noMatch": "Không có bài đăng nào khớp với tìm kiếm của bạn."
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "Thành viên",
     "loadMoreFailed": "Không thể tải thêm thành viên",
     "lastMessageBy": "Tin nhắn cuối của {name}",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "Màu sắc",

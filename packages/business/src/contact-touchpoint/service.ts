@@ -9,6 +9,7 @@ import {
   type ContactTouchpointRow,
   contactTouchpointRepository,
 } from "@chatbotx.io/database/repositories"
+import { isBigintId } from "@chatbotx.io/database/utils"
 import { z } from "zod"
 import { type ContactAccessScope, contactService } from "../contact/service"
 import { ChatbotXException } from "../errors"
@@ -41,9 +42,6 @@ export type ListContactTouchpointsResult = {
   nextCursor: string | null
 }
 
-const MAX_BIGINT = 9_223_372_036_854_775_807n
-const DIGITS_ONLY = /^\d+$/
-
 /** A real calendar instant: `2026-02-30` parses but rolls over, so it fails the round trip. */
 const isRealInstant = (value: string): boolean => {
   const millis = value.slice(0, 23)
@@ -61,10 +59,9 @@ const cursorSchema = z.object({
     .refine(isRealInstant)
     .describe("occurredAt, microsecond precision, UTC"),
   k: contactTouchpointKinds,
-  r: z
-    .string()
-    .regex(/^\d{1,19}$/)
-    .refine((value) => DIGITS_ONLY.test(value) && BigInt(value) <= MAX_BIGINT),
+  // Zod runs a refine even after a failed regex, and `BigInt` throws on a
+  // non-numeric value, so one digits-length-range check carries the rule.
+  r: z.string().refine(isBigintId),
 })
 
 const encodeCursor = (cursor: ContactTouchpointCursor): string =>

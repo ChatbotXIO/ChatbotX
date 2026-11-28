@@ -3537,8 +3537,11 @@
         "typeNotShareable": "Diese Art von Beitrag kann hier nicht gesendet werden",
         "linkUnavailable": "Dieser Beitrag hat keinen Link zum Senden",
         "linkTooLong": "Der Link ist zu lang zum Senden",
-        "shareUnsupported": "Dieser Kanal kann keine Beiträge senden"
-      }
+        "shareUnsupported": "Dieser Kanal kann keine Beiträge senden",
+        "postNotFound": "Dieser Beitrag existiert nicht mehr",
+        "inboxMismatch": "Dieser Beitrag gehört zu einem anderen Posteingang"
+      },
+      "noMatch": "Keine Beiträge entsprechen deiner Suche."
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "Mitglied",
     "loadMoreFailed": "Weitere Mitglieder konnten nicht geladen werden",
     "lastMessageBy": "Letzte Nachricht von {name}",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "Farbe",

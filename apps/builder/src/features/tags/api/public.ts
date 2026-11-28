@@ -9,21 +9,25 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { createTagRequest } from "../schema/action"
+import {
+  createTagPublicRequest,
+  updateTagPublicRequest,
+} from "../schema/action"
 import { listTagsPublicRequest, publicListTagsResponse } from "../schema/query"
 import { publicTagResource } from "../schema/resource"
 
-const createTagPublicRequest = createTagRequest
-  .pick({ name: true, color: true })
-  .extend({
-    folderId: zodBigintAsString()
-      .nullish()
-      .describe(
-        'Folder id from `folders.list` (folderType "tag"). Pass null or "0" for the root.',
-      ),
-  })
-
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
+
+const updateTag = async (
+  context: { workspace: { id: string } },
+  input: z.infer<typeof updateTagPublicRequest>,
+) => {
+  const { id, ...rest } = input
+  return await tagService.update(
+    { workspaceId: context.workspace.id, id },
+    rest,
+  )
+}
 
 export const tagsPublicRouter = {
   list: workspaceTokenAuthAPI
@@ -97,27 +101,35 @@ export const tagsPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
+      method: "PATCH",
+      path: "/v1/tags/{id}",
+      summary: "Update tag",
+      description:
+        "Renames a tag, sets or clears its `color` (omit to leave it unchanged, null to clear) and, when `folderId` is given, moves it to that folder. Send at least one of `name`, `color` or `folderId`; omitted fields are left unchanged. Use `tags.list` to find its id first.",
+      tags: ["Tags"],
+    })
+    .input(updateTagPublicRequest)
+    .output(publicTagResource)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => await updateTag(context, input)),
+
+  // Deprecated — use `tags.update` instead. Kept for backward compatibility
+  // with the pre-consolidation `PUT` method on this path; hidden from MCP/CLI
+  // tool listings.
+  updateLegacy: workspaceTokenAuthAPI
+    .route({
       method: "PUT",
       path: "/v1/tags/{id}",
       summary: "Update tag",
       description:
-        "Renames a tag, sets or clears its `color` (omit to leave it unchanged, null to clear) and, when `folderId` is given, moves it to that folder. Use `tags.list` to find its id first.",
+        "Deprecated — this route used PUT for the same update `tags.update` (PATCH) performs today; omitted fields are left unchanged.",
+      deprecated: true,
       tags: ["Tags"],
     })
-    .input(
-      createTagPublicRequest.extend({
-        id: zodBigintAsString().describe("Tag id. Get it from `tags.list`."),
-      }),
-    )
+    .input(updateTagPublicRequest)
     .output(publicTagResource)
     .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) => {
-      const { id, ...rest } = input
-      return await tagService.update(
-        { workspaceId: context.workspace.id, id },
-        rest,
-      )
-    }),
+    .handler(async ({ context, input }) => await updateTag(context, input)),
 
   delete: workspaceTokenAuthAPI
     .route({

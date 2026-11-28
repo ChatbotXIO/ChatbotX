@@ -4746,8 +4746,11 @@
         "typeNotShareable": "此类帖子无法在此发送",
         "linkUnavailable": "此帖子没有可发送的链接",
         "linkTooLong": "链接过长，无法发送",
-        "shareUnsupported": "此渠道无法发送帖子"
-      }
+        "shareUnsupported": "此渠道无法发送帖子",
+        "postNotFound": "此帖子已不存在",
+        "inboxMismatch": "此帖子属于另一个收件箱"
+      },
+      "noMatch": "没有与搜索匹配的帖子。"
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "成员",
     "loadMoreFailed": "无法加载更多成员",
     "lastMessageBy": "{name} 的最后一条消息",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "颜色",

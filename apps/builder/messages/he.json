@@ -1104,8 +1104,11 @@
         "typeNotShareable": "לא ניתן לשלוח כאן סוג פוסט זה",
         "linkUnavailable": "לפוסט הזה אין קישור לשליחה",
         "linkTooLong": "הקישור ארוך מדי לשליחה",
-        "shareUnsupported": "הערוץ הזה לא יכול לשלוח פוסטים"
-      }
+        "shareUnsupported": "הערוץ הזה לא יכול לשלוח פוסטים",
+        "postNotFound": "הפוסט הזה כבר לא קיים",
+        "inboxMismatch": "הפוסט הזה שייך לתיבת דואר נכנס אחרת"
+      },
+      "noMatch": "לא נמצאו פוסטים התואמים לחיפוש שלך."
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "חבר",
     "loadMoreFailed": "לא ניתן היה לטעון עוד חברים",
     "lastMessageBy": "ההודעה האחרונה של {name}",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "צבע",

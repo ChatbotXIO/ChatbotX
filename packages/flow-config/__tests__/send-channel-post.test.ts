@@ -163,6 +163,24 @@ describe("sendChannelPost step", () => {
         flowValidationCodes.sendChannelPostPostRequired,
       ])
       expect(issueCodes(channel, "123")).toEqual([])
+      expect(issueCodes(channel, "9223372036854775807")).toEqual([])
+    }
+  })
+
+  test("publish rejects a malformed or overflowing post id", () => {
+    for (const channelPostId of [
+      "abc",
+      "12a",
+      " 123",
+      "123 ",
+      "-1",
+      "1.5",
+      "9223372036854775808",
+      "99999999999999999999",
+    ]) {
+      expect(issueCodes("messenger", channelPostId)).toEqual([
+        flowValidationCodes.sendChannelPostPostRequired,
+      ])
     }
   })
 })

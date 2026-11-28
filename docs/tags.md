@@ -7,10 +7,15 @@ A workspace tag has a `name` (unique per workspace), an optional `folderId` and 
 - `Tag.color` is nullable text, `#RRGGBB` (either case, no alpha). `null` means the default (uncolored) look.
   Validation lives in `@chatbotx.io/utils/color` (`hexColorSchema`, `HEX_COLOR_PATTERN`), which also has
   `readableTextColor(hex)`: dark or light text, whichever has the higher WCAG contrast on that background.
-  Every place that paints a tag (table swatch, conversation row chips, composer grid) uses it.
-- On `tags.create` and `tags.update` (public API `POST /v1/tags`, `PUT /v1/tags/{id}`, and the dialogs):
+  The composer grid paints solid chips with it; the conversation row uses `tintedBadgeStyle(hex)` (same module),
+  a pastel pill like the ad badge whose text is darkened to WCAG AA on its tinted background.
+- On `tags.create` and `tags.update` (public API `POST /v1/tags`, `PATCH /v1/tags/{id}`, and the dialogs; the old `PUT /v1/tags/{id}` is kept as the
+  deprecated `tags.updateLegacy` with the same body):
   `color` omitted keeps the current color, `null` clears it, a string sets it. `tags.get`, `tags.list` and
   `contacts.listTags` return `color`.
+- `tags.update` takes any of `name`, `color`, `folderId`, at least one: a color-only or folder-only update is valid
+  and omitted fields stay unchanged; an empty body is rejected by the form's schema and the public schema, and
+  `tagService.update` treats an empty update as a no-op.
 - The lock policy of a template-installed tag is `["name"]`, so its color stays editable. See
   `docs/templates.md` ("Tag color") for how colors travel in a template.
 - A color change reaches conversation-list rows of other open clients on their next list refresh (the

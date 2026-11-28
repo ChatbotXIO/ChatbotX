@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/orpc/orpc", () => ({
   client: {
-    tagsAPI: { privateListWorkspaceTagsAPI: mocks.listTags },
+    tagsAPI: { privateListWorkspaceTagOptionsAPI: mocks.listTags },
     contactsAPIs: { getContactAuthenticatedAPI: mocks.getContact },
   },
 }))
@@ -126,6 +126,39 @@ describe("ComposerTagGrid", () => {
     expect(chip("beta")?.getAttribute("aria-pressed")).toBe("false")
     expect(chip("alpha")?.style.backgroundColor).toBe("rgb(0, 0, 0)")
     expect(chip("alpha")?.style.color).toBe("rgb(255, 255, 255)")
+  })
+
+  test("lays the tags out as equal-width filled cells with a corner dot on applied ones", async () => {
+    contactTags = [{ id: "t1" }]
+    await render()
+
+    const grid = chip("alpha")?.parentElement
+    expect(grid?.className).toContain("grid")
+    expect(grid?.className).toContain("minmax(5.5rem,1fr)")
+    expect(chip("alpha")?.className).toContain("rounded-sm")
+    expect(chip("alpha")?.querySelector("[data-applied-dot]")).not.toBeNull()
+    expect(chip("alpha")?.querySelector("span.truncate")).not.toBeNull()
+    expect(chip("beta")?.querySelector("[data-applied-dot]")).toBeNull()
+  })
+
+  test("focusing a chip clipped by the collapsed height expands the grid", async () => {
+    await render()
+    const target = chip("beta")
+    if (!target) {
+      throw new Error("beta should render")
+    }
+    Object.defineProperty(target, "offsetTop", { value: 500 })
+    Object.defineProperty(target, "offsetHeight", { value: 28 })
+    await act(async () => target.focus())
+
+    const toggle = container.querySelector("[aria-expanded]")
+    expect(toggle?.getAttribute("aria-expanded")).toBe("true")
+  })
+
+  test("a focus ring on an edge cell is drawn inside it", async () => {
+    await render()
+
+    expect(chip("alpha")?.className).toContain("ring-inset")
   })
 
   test("shows a loading state before the tags arrive", async () => {

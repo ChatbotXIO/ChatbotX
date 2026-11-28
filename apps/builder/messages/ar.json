@@ -3694,8 +3694,11 @@
         "typeNotShareable": "لا يمكن إرسال هذا النوع من المنشورات هنا",
         "linkUnavailable": "ليس لهذا المنشور رابط لإرساله",
         "linkTooLong": "الرابط أطول من أن يُرسل",
-        "shareUnsupported": "لا تستطيع هذه القناة إرسال المنشورات"
-      }
+        "shareUnsupported": "لا تستطيع هذه القناة إرسال المنشورات",
+        "postNotFound": "لم يعد هذا المنشور موجودًا",
+        "inboxMismatch": "ينتمي هذا المنشور إلى صندوق وارد آخر"
+      },
+      "noMatch": "لا توجد منشورات تطابق بحثك."
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "عضو",
     "loadMoreFailed": "تعذّر تحميل المزيد من الأعضاء",
     "lastMessageBy": "آخر رسالة من {name}",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "اللون",

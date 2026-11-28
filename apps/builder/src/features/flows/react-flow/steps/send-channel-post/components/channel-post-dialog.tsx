@@ -85,7 +85,7 @@ export function ChannelPostDialog({
                 onValueChange={(value) =>
                   setChosenInboxId(typeof value === "string" ? value : null)
                 }
-                value={inboxId ?? undefined}
+                value={inboxId}
               >
                 <SelectTrigger id="send-channel-post-inbox">
                   <SelectValue

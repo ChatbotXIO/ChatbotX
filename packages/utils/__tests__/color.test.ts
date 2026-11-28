@@ -5,6 +5,8 @@ import {
   READABLE_TEXT_DARK,
   READABLE_TEXT_LIGHT,
   readableTextColor,
+  tagChipStyle,
+  tintedBadgeStyle,
 } from "../src/color"
 
 describe("hexColorSchema", () => {
@@ -68,5 +70,86 @@ describe("readableTextColor", () => {
 
   test("falls back to dark text for a non-hex value", () => {
     expect(readableTextColor("nope")).toBe(READABLE_TEXT_DARK)
+  })
+})
+
+describe("tagChipStyle", () => {
+  test("pairs the color with readable text", () => {
+    expect(tagChipStyle("#000000")).toEqual({
+      backgroundColor: "#000000",
+      color: "#ffffff",
+    })
+    expect(tagChipStyle("#FFFFFF")).toEqual({
+      backgroundColor: "#FFFFFF",
+      color: "#0f172a",
+    })
+  })
+
+  test("an uncolored tag has no style", () => {
+    expect(tagChipStyle(null)).toBeUndefined()
+    expect(tagChipStyle(undefined)).toBeUndefined()
+  })
+})
+
+describe("tintedBadgeStyle", () => {
+  const luminance = (hex: string): number => {
+    const channel = (start: number): number => {
+      const unit = Number.parseInt(hex.slice(start, start + 2), 16) / 255
+      return unit <= 0.039_28 ? unit / 12.92 : ((unit + 0.055) / 1.055) ** 2.4
+    }
+    return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5)
+  }
+  const contrast = (first: string, second: string): number => {
+    const [a, b] = [luminance(first), luminance(second)]
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+  }
+
+  test.each([
+    "#FACC15",
+    "#FFFF00",
+    "#FFFFFF",
+    "#22C55E",
+    "#3B82F6",
+    "#7C3AED",
+    "#000000",
+    "#1A2B3C",
+  ])("%s reaches WCAG AA on its own pastel background", (hex) => {
+    const style = tintedBadgeStyle(hex)
+
+    expect(contrast(style.color, style.backgroundColor)).toBeGreaterThanOrEqual(
+      4.5,
+    )
+  })
+
+  test("the background is a light tint and the border sits between tint and color", () => {
+    const style = tintedBadgeStyle("#7C3AED")
+
+    expect(style.backgroundColor).toBe("#ebe1fc")
+    expect(style.borderColor).toBe("#d1baf9")
+    expect(luminance(style.backgroundColor)).toBeGreaterThan(
+      luminance(style.borderColor),
+    )
+  })
+
+  test("a dark color keeps its own hue as text when it already has contrast", () => {
+    expect(tintedBadgeStyle("#1A2B3C").color).toBe("#1a2b3c")
+  })
+
+  test("a light color is darkened for its text", () => {
+    const style = tintedBadgeStyle("#FACC15")
+
+    expect(luminance(style.color)).toBeLessThan(luminance("#FACC15"))
+  })
+
+  test("no color or an invalid one gives the neutral gray pastel", () => {
+    const neutral = tintedBadgeStyle(null)
+
+    expect(tintedBadgeStyle(undefined)).toEqual(neutral)
+    expect(tintedBadgeStyle("blue")).toEqual(neutral)
+    expect(neutral).toEqual({
+      backgroundColor: "#f3f4f6",
+      borderColor: "#e5e7eb",
+      color: "#374151",
+    })
   })
 })

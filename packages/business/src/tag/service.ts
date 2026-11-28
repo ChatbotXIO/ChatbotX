@@ -47,10 +47,14 @@ import {
   withDeleteGuard,
   withEditGuard,
 } from "../template/installed-resource.service"
+import { publishUnlessInTransaction } from "./publish-unless-in-transaction"
 import { publishContactTagsChanged } from "./realtime"
 import { tagSyncService } from "./sync.service"
 
 const CONTACT_CHUNK_SIZE = 200
+
+/** One contact/tag link. */
+type TagLinkPair = { contactId: string; tagId: string }
 
 // Mirrors the `contactCacheTags` pattern in `contact-custom-field/service.ts`:
 // `tags` busts the "tags" collection tag `findByKey`/`list` register under,
@@ -123,6 +127,20 @@ class TagService extends BaseService {
         tags: [`tags:${input.workspaceId}`],
       },
     )
+  }
+
+  /**
+   * Live tags as id, name and color, by name, one page at a time and
+   * optionally filtered by a name substring. For pickers: unlike `list` it
+   * counts no contacts per tag and is not cached.
+   */
+  async listOptions(input: {
+    workspaceId: string
+    name?: string | null
+    page: number
+    perPage: number
+  }) {
+    return await tagRepository.listOptions(input)
   }
 
   async create(props: {
@@ -238,19 +256,25 @@ class TagService extends BaseService {
         }),
       changedKeys: (tag) =>
         changedKeysOf(tag, name === undefined ? {} : { name }),
-      write: (tx, tag) =>
-        tx
+      write: (tx, tag) => {
+        const values = {
+          ...(name === undefined ? {} : { name }),
+          ...(folderId === undefined ? {} : { folderId }),
+          ...(parsedInput.color === undefined
+            ? {}
+            : { color: parsedInput.color }),
+        }
+        // Nothing to write: an empty `set` is a SQL error, the tag stays as is.
+        if (Object.keys(values).length === 0) {
+          return Promise.resolve(tag)
+        }
+        return tx
           .update(tagModel)
-          .set({
-            ...(name === undefined ? {} : { name }),
-            ...(folderId === undefined ? {} : { folderId }),
-            ...(parsedInput.color === undefined
-              ? {}
-              : { color: parsedInput.color }),
-          })
+          .set(values)
           .where(eq(tagModel.id, tag.id))
           .returning()
-          .then((result) => result[0]),
+          .then((result) => result[0])
+      },
     })
 
     await this.invalidateCacheTags(tagCacheTags(workspaceId))
@@ -364,93 +388,21 @@ class TagService extends BaseService {
         }
         affectedContactIds.push(...contacts.map((contact) => contact.id))
 
-        const links = contacts.flatMap((contact) =>
-          allTags.map((selectedTag) => ({
-            contactId: contact.id,
-            tagId: selectedTag.id,
-          })),
-        )
-        // RETURNING from ON CONFLICT DO NOTHING returns only newly-inserted rows.
-        const newlyLinkedPairs = await db
-          .insert(contactsToTagsModel)
-          .values(links)
-          .onConflictDoNothing({
-            target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
-          })
-          .returning({
-            contactId: contactsToTagsModel.contactId,
-            tagId: contactsToTagsModel.tagId,
-          })
+        const newlyLinkedPairs = await this.insertContactTagLinks({
+          contactIds: contacts.map((contact) => contact.id),
+          tagIds: allTags.map((tag) => tag.id),
+        })
         changedContactIds.push(
           ...newlyLinkedPairs.map((pair) => pair.contactId),
         )
-
-        // Emit tag applied for all attempted pairs by default (existing callers
-        // depend on it for manual re-apply triggers). Flow-step callers that
-        // loop through an Add-Tag node pass emitFor:"newlyLinked" so replays
-        // don't re-fire triggers/webhooks for tags already on the contact.
-        if (emitFor === "all") {
-          for (const contact of contacts) {
-            for (const tag of allTags) {
-              try {
-                await emitTagApplied(
-                  workspaceId,
-                  contact.id,
-                  tag.id,
-                  contactInbox?.id,
-                )
-              } catch (error) {
-                logger.error({ err: error }, "Failed to emit tagApplied event:")
-              }
-            }
-          }
-        } else {
-          for (const pair of newlyLinkedPairs) {
-            try {
-              await emitTagApplied(
-                workspaceId,
-                pair.contactId,
-                pair.tagId,
-                contactInbox?.id,
-              )
-            } catch (error) {
-              logger.error({ err: error }, "Failed to emit tagApplied event:")
-            }
-          }
-        }
-        // Channel sync + ads conversion `tagApplied` trigger only for newly
-        // attached pairs (not every attempted pair, unlike the emit loop above).
-        for (const pair of newlyLinkedPairs) {
-          await tagSyncService.enqueueAttach({
-            workspaceId,
-            contactId: pair.contactId,
-            tagId: pair.tagId,
-          })
-        }
-        if (newlyLinkedPairs.length > 0) {
-          if (
-            contactInbox &&
-            adsConversionService.isEligibleChannel(contactInbox.channel)
-          ) {
-            await adsConversionService.enqueueTagAppliedEvaluationsForInbox({
-              workspaceId,
-              channel: contactInbox.channel,
-              inboxId: contactInbox.inboxId,
-              contactInboxId: contactInbox.id,
-              tagIds: newlyLinkedPairs.map((pair) => pair.tagId),
-            })
-          } else if (!contactInbox) {
-            // One batch resolve+enqueue call per chunk instead of one per pair
-            // (HIGH-1).
-            await adsConversionService.enqueueTagAppliedEvaluationsBulk({
-              workspaceId,
-              pairs: newlyLinkedPairs.map((pair) => ({
-                contactId: pair.contactId,
-                tagId: pair.tagId,
-              })),
-            })
-          }
-        }
+        await this.afterNamedAttachChunk({
+          workspaceId,
+          contacts,
+          allTags,
+          newlyLinkedPairs,
+          contactInbox,
+          emitFor,
+        })
       }
     } finally {
       await publishContactTagsChanged({
@@ -685,35 +637,13 @@ class TagService extends BaseService {
             tagId: contactsToTagsModel.tagId,
           })
         changedContactIds.push(...removed.map((pair) => pair.contactId))
-
-        // Channel cleanup (unassign + delete ContactToTagChannel) runs in the
-        // queue for every requested pair, as before: it is idempotent, and a
-        // retry after a failed enqueue must still reach the pairs the first
-        // attempt already deleted.
-        for (const contact of contacts) {
-          for (const tagId of allTagIds) {
-            await tagSyncService.enqueueDetach({
-              workspaceId,
-              contactId: contact.id,
-              tagId,
-            })
-          }
-        }
-
-        // tagRemoved only for pairs the DELETE actually removed, so removing a
-        // tag a contact does not have fires no automation.
-        for (const pair of removed) {
-          try {
-            await emitTagRemoved(
-              workspaceId,
-              pair.contactId,
-              pair.tagId,
-              contactInboxId,
-            )
-          } catch (error) {
-            logger.error({ err: error }, "Failed to emit tagRemoved event:")
-          }
-        }
+        await this.afterNamedDetachChunk({
+          workspaceId,
+          contactIds: contactIdsInChunk,
+          tagIds: allTagIds,
+          removed,
+          contactInboxId,
+        })
       }
     } finally {
       await publishContactTagsChanged({
@@ -980,10 +910,11 @@ class TagService extends BaseService {
       })
       .returning({ tagId: contactsToTagsModel.tagId })
 
-    // A caller-owned transaction has not committed yet: that caller publishes.
-    if (newlyAttached.length > 0 && !props.tx) {
-      await publishContactTagsChanged({ workspaceId, contactIds: [contactId] })
-    }
+    await publishUnlessInTransaction(
+      props.tx,
+      workspaceId,
+      newlyAttached.length > 0 ? [contactId] : [],
+    )
 
     for (const pair of newlyAttached) {
       emitTagApplied(workspaceId, contactId, pair.tagId, contactInboxId) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
@@ -1061,23 +992,10 @@ class TagService extends BaseService {
         }
         affectedContactIds.push(...contacts.map((contact) => contact.id))
 
-        const links = contacts.flatMap((contact) =>
-          tags.map((tag) => ({
-            contactId: contact.id,
-            tagId: tag.id,
-          })),
-        )
-
-        const newlyLinkedPairs = await db
-          .insert(contactsToTagsModel)
-          .values(links)
-          .onConflictDoNothing({
-            target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
-          })
-          .returning({
-            contactId: contactsToTagsModel.contactId,
-            tagId: contactsToTagsModel.tagId,
-          })
+        const newlyLinkedPairs = await this.insertContactTagLinks({
+          contactIds: contacts.map((contact) => contact.id),
+          tagIds: tags.map((tag) => tag.id),
+        })
 
         attachedPairCount += newlyLinkedPairs.length
         changedContactIds.push(
@@ -1090,31 +1008,7 @@ class TagService extends BaseService {
               tagIds: tags.map((tag) => tag.id),
             })
           : newlyLinkedPairs
-
-        for (const pair of pairsToSync) {
-          try {
-            await emitTagApplied(workspaceId, pair.contactId, pair.tagId)
-          } catch (error) {
-            logger.error({ err: error }, "Failed to emit tagApplied event")
-          }
-        }
-        // One batch resolve+enqueue call per chunk instead of one per pair
-        // (HIGH-1) — bulkAttachToContacts already chunks contacts at 200.
-        await adsConversionService.enqueueTagAppliedEvaluationsBulk({
-          workspaceId,
-          pairs: pairsToSync.map((pair) => ({
-            contactId: pair.contactId,
-            tagId: pair.tagId,
-          })),
-        })
-
-        await tagSyncService.enqueueAttachMany(
-          pairsToSync.map((pair) => ({
-            workspaceId,
-            contactId: pair.contactId,
-            tagId: pair.tagId,
-          })),
-        )
+        await this.afterBulkAttachChunk(workspaceId, pairsToSync)
       }
     } finally {
       await publishContactTagsChanged({
@@ -1129,6 +1023,156 @@ class TagService extends BaseService {
     }
 
     return { attachedPairCount }
+  }
+
+  /**
+   * Links every contact to every tag; the returned pairs are only the ones
+   * inserted now (RETURNING from ON CONFLICT DO NOTHING skips existing rows).
+   */
+  private async insertContactTagLinks(props: {
+    contactIds: string[]
+    tagIds: string[]
+  }): Promise<TagLinkPair[]> {
+    const links = props.contactIds.flatMap((contactId) =>
+      props.tagIds.map((tagId) => ({ contactId, tagId })),
+    )
+    return await db
+      .insert(contactsToTagsModel)
+      .values(links)
+      .onConflictDoNothing({
+        target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
+      })
+      .returning({
+        contactId: contactsToTagsModel.contactId,
+        tagId: contactsToTagsModel.tagId,
+      })
+  }
+
+  /** Events, channel sync and ads evaluations after one chunk of `attachByNamesToContacts`. */
+  private async afterNamedAttachChunk(props: {
+    workspaceId: string
+    contacts: { id: string }[]
+    allTags: { id: string }[]
+    newlyLinkedPairs: TagLinkPair[]
+    contactInbox?: { id: string; inboxId: string; channel: string | null }
+    emitFor: "all" | "newlyLinked"
+  }): Promise<void> {
+    const { workspaceId, contacts, allTags, newlyLinkedPairs, contactInbox } =
+      props
+    // Emit tag applied for all attempted pairs by default (existing callers
+    // depend on it for manual re-apply triggers). Flow-step callers that
+    // loop through an Add-Tag node pass emitFor:"newlyLinked" so replays
+    // don't re-fire triggers/webhooks for tags already on the contact.
+    const emitPairs =
+      props.emitFor === "all"
+        ? contacts.flatMap((contact) =>
+            allTags.map((tag) => ({ contactId: contact.id, tagId: tag.id })),
+          )
+        : newlyLinkedPairs
+    for (const pair of emitPairs) {
+      try {
+        await emitTagApplied(
+          workspaceId,
+          pair.contactId,
+          pair.tagId,
+          contactInbox?.id,
+        )
+      } catch (error) {
+        logger.error({ err: error }, "Failed to emit tagApplied event:")
+      }
+    }
+    // Channel sync + ads conversion `tagApplied` trigger only for newly
+    // attached pairs (not every attempted pair, unlike the emit loop above).
+    for (const pair of newlyLinkedPairs) {
+      await tagSyncService.enqueueAttach({
+        workspaceId,
+        contactId: pair.contactId,
+        tagId: pair.tagId,
+      })
+    }
+    if (newlyLinkedPairs.length === 0) {
+      return
+    }
+    if (contactInbox) {
+      if (adsConversionService.isEligibleChannel(contactInbox.channel)) {
+        await adsConversionService.enqueueTagAppliedEvaluationsForInbox({
+          workspaceId,
+          channel: contactInbox.channel,
+          inboxId: contactInbox.inboxId,
+          contactInboxId: contactInbox.id,
+          tagIds: newlyLinkedPairs.map((pair) => pair.tagId),
+        })
+      }
+      return
+    }
+    // One batch resolve+enqueue call per chunk instead of one per pair
+    // (HIGH-1).
+    await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+      workspaceId,
+      pairs: newlyLinkedPairs,
+    })
+  }
+
+  /** Channel cleanup and `tagRemoved` events after one chunk of `detachByNamesFromContacts`. */
+  private async afterNamedDetachChunk(props: {
+    workspaceId: string
+    contactIds: string[]
+    tagIds: string[]
+    removed: TagLinkPair[]
+    contactInboxId?: string
+  }): Promise<void> {
+    const { workspaceId, contactIds, tagIds, removed, contactInboxId } = props
+    // Channel cleanup (unassign + delete ContactToTagChannel) runs in the
+    // queue for every requested pair, as before: it is idempotent, and a
+    // retry after a failed enqueue must still reach the pairs the first
+    // attempt already deleted.
+    for (const contactId of contactIds) {
+      for (const tagId of tagIds) {
+        await tagSyncService.enqueueDetach({ workspaceId, contactId, tagId })
+      }
+    }
+
+    // tagRemoved only for pairs the DELETE actually removed, so removing a
+    // tag a contact does not have fires no automation.
+    for (const pair of removed) {
+      try {
+        await emitTagRemoved(
+          workspaceId,
+          pair.contactId,
+          pair.tagId,
+          contactInboxId,
+        )
+      } catch (error) {
+        logger.error({ err: error }, "Failed to emit tagRemoved event:")
+      }
+    }
+  }
+
+  /** Events, ads evaluations and channel sync for the pairs of one `bulkAttachToContacts` chunk. */
+  private async afterBulkAttachChunk(
+    workspaceId: string,
+    pairs: TagLinkPair[],
+  ): Promise<void> {
+    for (const pair of pairs) {
+      try {
+        await emitTagApplied(workspaceId, pair.contactId, pair.tagId)
+      } catch (error) {
+        logger.error({ err: error }, "Failed to emit tagApplied event")
+      }
+    }
+    // One batch resolve+enqueue call per chunk instead of one per pair
+    // (HIGH-1) — bulkAttachToContacts already chunks contacts at 200.
+    await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+      workspaceId,
+      pairs,
+    })
+    await tagSyncService.enqueueAttachMany(
+      pairs.map((pair) => ({
+        workspaceId,
+        contactId: pair.contactId,
+        tagId: pair.tagId,
+      })),
+    )
   }
 
   private async findUnsyncedContactTagPairs(props: {
@@ -1200,10 +1244,11 @@ class TagService extends BaseService {
       )
       .returning({ tagId: contactsToTagsModel.tagId })
 
-    // A caller-owned transaction has not committed yet: that caller publishes.
-    if (removed.length > 0 && !props.tx) {
-      await publishContactTagsChanged({ workspaceId, contactIds: [contactId] })
-    }
+    await publishUnlessInTransaction(
+      props.tx,
+      workspaceId,
+      removed.length > 0 ? [contactId] : [],
+    )
 
     for (const pair of removed) {
       emitTagRemoved(workspaceId, contactId, pair.tagId).catch((error) => {
@@ -1223,7 +1268,7 @@ class TagService extends BaseService {
   /**
    * Resolves `true` when the contact had tags that are now removed. With a
    * caller-owned `tx` nothing is published here (the transaction has not
-   * committed): the caller publishes through `publishTagsChanged` once it has.
+   * committed): the caller publishes through `publishContactTagsChanged` once it has.
    */
   async detachAllFromContact(props: {
     workspaceId: string
@@ -1246,9 +1291,7 @@ class TagService extends BaseService {
       .delete(contactsToTagsModel)
       .where(eq(contactsToTagsModel.contactId, contactId))
 
-    if (!props.tx) {
-      await publishContactTagsChanged({ workspaceId, contactIds: [contactId] })
-    }
+    await publishUnlessInTransaction(props.tx, workspaceId, [contactId])
 
     for (const tag of tags) {
       emitTagRemoved(workspaceId, contactId, tag.id) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
@@ -1283,12 +1326,11 @@ class TagService extends BaseService {
         ),
       )
       .returning({ contactId: contactsToTagsModel.contactId })
-    if (!props.tx) {
-      await publishContactTagsChanged({
-        workspaceId,
-        contactIds: removed.map((row) => row.contactId),
-      })
-    }
+    await publishUnlessInTransaction(
+      props.tx,
+      workspaceId,
+      removed.map((row) => row.contactId),
+    )
   }
 
   /**
@@ -1419,9 +1461,11 @@ class TagService extends BaseService {
       )
       .onConflictDoNothing()
       .returning({ tagId: contactsToTagsModel.tagId })
-    if (newlyLinked.length > 0 && !props.tx) {
-      await publishContactTagsChanged({ workspaceId, contactIds: [contactId] })
-    }
+    await publishUnlessInTransaction(
+      props.tx,
+      workspaceId,
+      newlyLinked.length > 0 ? [contactId] : [],
+    )
     return newlyLinked
   }
 
@@ -1449,9 +1493,11 @@ class TagService extends BaseService {
         ),
       )
       .returning({ tagId: contactsToTagsModel.tagId })
-    if (removed.length > 0 && !props.tx) {
-      await publishContactTagsChanged({ workspaceId, contactIds: [contactId] })
-    }
+    await publishUnlessInTransaction(
+      props.tx,
+      workspaceId,
+      removed.length > 0 ? [contactId] : [],
+    )
   }
 
   /**
@@ -1477,24 +1523,12 @@ class TagService extends BaseService {
       .values(contactIds.map((contactId) => ({ contactId, tagId })))
       .onConflictDoNothing()
       .returning({ contactId: contactsToTagsModel.contactId })
-    if (!props.tx) {
-      await publishContactTagsChanged({
-        workspaceId,
-        contactIds: newlyLinked.map((row) => row.contactId),
-      })
-    }
+    await publishUnlessInTransaction(
+      props.tx,
+      workspaceId,
+      newlyLinked.map((row) => row.contactId),
+    )
     return newlyLinked
-  }
-
-  /**
-   * Publishes `contactTagsChanged` for contacts whose links a caller-owned
-   * transaction changed. Call it after that transaction has committed.
-   */
-  async publishTagsChanged(props: {
-    workspaceId: string
-    contactIds: readonly string[]
-  }): Promise<void> {
-    await publishContactTagsChanged(props)
   }
 
   /**

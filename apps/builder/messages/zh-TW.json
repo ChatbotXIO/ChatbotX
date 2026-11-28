@@ -3979,8 +3979,11 @@
         "typeNotShareable": "此類貼文無法在此傳送",
         "linkUnavailable": "此貼文沒有可傳送的連結",
         "linkTooLong": "連結過長，無法傳送",
-        "shareUnsupported": "此管道無法傳送貼文"
-      }
+        "shareUnsupported": "此管道無法傳送貼文",
+        "postNotFound": "此貼文已不存在",
+        "inboxMismatch": "此貼文屬於另一個收件匣"
+      },
+      "noMatch": "沒有符合搜尋的貼文。"
     }
   },
   "folders": {
@@ -12677,7 +12680,7 @@
     "unnamedMember": "成員",
     "loadMoreFailed": "無法載入更多成員",
     "lastMessageBy": "{name} 的最後一則訊息",
-    "namesOverflow": "{names} +{count}"
+    "overflowCount": "+{overflow}"
   },
   "tagColor": {
     "label": "顏色",
