@@ -3682,8 +3682,8 @@ importers:
         specifier: ^8.6.0
         version: 8.6.0(react@19.2.5)
       framer-motion:
-        specifier: ^12.38.0
-        version: 12.40.0(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        specifier: ^14.14.0
+        version: 14.14.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       frimousse:
         specifier: ^0.3.0
         version: 0.3.0(react@19.2.5)(typescript@5.9.3)
@@ -8580,18 +8580,18 @@ packages:
     resolution: {integrity: sha512-w/XBfkibaTl3YDqASwfDUqkna4Z2p9cFSr1aHDt0WoMTECnRfBOv2WArlZILlqgWlmdIlALXGpM2AOhEk5W3IA==}
     engines: {node: '>=0.8'}
 
-  framer-motion@12.40.0:
-    resolution: {integrity: sha512-uaBd3qC1v3KQqBEjwTUd183K6PbS+j0yR9w9VmEOLWA/tnUcSn8Xa3uck7t4dgpDoUss8xQTcj8W2L07lrnLFg==}
+  framer-motion@14.14.0:
+    resolution: {integrity: sha512-fidRX0VzkZdA9OovFiBSzJtt9/jLcJpna78Z+KCqQQZIWoIpN3tOhEXAhhAw/FObUUh+o3Y18yx1F4BP0mVJ8Q==}
     peerDependencies:
-      '@emotion/is-prop-valid': '*'
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
+      remix: ^3.1.0
     peerDependenciesMeta:
-      '@emotion/is-prop-valid':
-        optional: true
       react:
         optional: true
       react-dom:
+        optional: true
+      remix:
         optional: true
 
   fresh@2.0.0:
@@ -9585,11 +9585,11 @@ packages:
     resolution: {integrity: sha512-FP+p8RB8OWpF3YZBCrP5gtADmtXApB5AMLn+vdyA+PyxCjrCs00mjyUozssO33cwDeT3wNGdLxJ5M//YqtHAJw==}
     hasBin: true
 
-  motion-dom@12.40.0:
-    resolution: {integrity: sha512-HxU3ZaBwNPVQUBQf1xxgq+7JrPNZvjLVxgbpEZL7RrWJnsxOf0/OM+yrHG9ogLQ31Do/r57Oz2gQWPK+6q62mg==}
+  motion-dom@14.14.0:
+    resolution: {integrity: sha512-IAxcKhYkuQA2W0Tlx1AvVgImfqEoF3/t3IovbPQJlYkefmGsmrXjn967lMII5VmFmLpQEab4+ZkHo/ijJ4Esig==}
 
-  motion-utils@12.39.0:
-    resolution: {integrity: sha512-8nadJAJjTtqRkmRF36FoJTrywK9nnFmnPwnSMyxaOCU7GDjN9RTMJIxx9De8ErM+vpPhMccr/6fo5WciyQLnMQ==}
+  motion-utils@14.7.0:
+    resolution: {integrity: sha512-woO0/Nb7ys75f94fjvQi/6leiHGvZUYkeHUPEZ3vxsV+9OpEVhkxp01x8MlRwX0zt31EqgXsKDAoBoJLC148Tw==}
 
   ms@2.0.0:
     resolution: {integrity: sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==}
@@ -11930,7 +11930,7 @@ snapshots:
   '@aws-sdk/types@3.973.11':
     dependencies:
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/util-locate-window@3.965.6':
     dependencies:
@@ -12436,7 +12436,7 @@ snapshots:
   '@dnd-kit/accessibility@3.1.1(react@19.2.5)':
     dependencies:
       react: 19.2.5
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@dnd-kit/core@6.3.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
@@ -12792,7 +12792,7 @@ snapshots:
     dependencies:
       '@formatjs/ecma402-abstract': 2.3.6
       '@formatjs/icu-skeleton-parser': 1.8.16
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@formatjs/icu-messageformat-parser@3.5.11':
     dependencies:
@@ -13879,7 +13879,7 @@ snapshots:
     dependencies:
       '@aws-crypto/crc32': 5.2.0
       '@smithy/types': 4.14.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@smithy/credential-provider-imds@4.3.8':
     dependencies:
@@ -13911,7 +13911,7 @@ snapshots:
 
   '@smithy/types@4.14.3':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@smithy/util-buffer-from@2.2.0':
     dependencies:
@@ -15823,7 +15823,7 @@ snapshots:
 
   file-selector@2.1.2:
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   fill-range@7.1.1:
     dependencies:
@@ -15874,13 +15874,12 @@ snapshots:
 
   frac@1.1.2: {}
 
-  framer-motion@12.40.0(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5):
+  framer-motion@14.14.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5):
     dependencies:
-      motion-dom: 12.40.0
-      motion-utils: 12.39.0
-      tslib: 2.8.1
+      motion-dom: 14.14.0
+      motion-utils: 14.7.0
+      tslib: 2.9.1
     optionalDependencies:
-      '@emotion/is-prop-valid': 1.4.0
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
 
@@ -17220,11 +17219,11 @@ snapshots:
     dependencies:
       minimist: 1.2.8
 
-  motion-dom@12.40.0:
+  motion-dom@14.14.0:
     dependencies:
-      motion-utils: 12.39.0
+      motion-utils: 14.7.0
 
-  motion-utils@12.39.0: {}
+  motion-utils@14.7.0: {}
 
   ms@2.0.0: {}
 
@@ -18121,10 +18120,10 @@ snapshots:
       react-draggable: 4.7.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       tslib: 2.6.2
 
-  react-universal-interface@0.6.2(react@19.2.5)(tslib@2.8.1):
+  react-universal-interface@0.6.2(react@19.2.5)(tslib@2.9.1):
     dependencies:
       react: 19.2.5
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   react-use@17.6.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5):
     dependencies:
@@ -18137,13 +18136,13 @@ snapshots:
       nano-css: 5.6.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
-      react-universal-interface: 0.6.2(react@19.2.5)(tslib@2.8.1)
+      react-universal-interface: 0.6.2(react@19.2.5)(tslib@2.9.1)
       resize-observer-polyfill: 1.5.1
       screenfull: 5.2.0
       set-harmonic-interval: 1.0.1
       throttle-debounce: 3.0.1
       ts-easing: 0.2.0
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   react-virtuoso@4.18.7(react-dom@19.2.5(react@19.2.5))(react@19.2.5):
     dependencies:

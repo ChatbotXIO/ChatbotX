@@ -60,7 +60,7 @@
     "date-fns": "catalog:",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
-    "framer-motion": "^12.38.0",
+    "framer-motion": "^14.14.0",
     "frimousse": "^0.3.0",
     "input-otp": "^1.4.2",
     "lucide-react": "catalog:",
