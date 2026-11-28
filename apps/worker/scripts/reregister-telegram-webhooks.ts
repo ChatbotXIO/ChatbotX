@@ -10,6 +10,9 @@
  *   drops unverified `my_chat_member` updates (a forged one would fire a
  *   trigger).
  *
+ * Run again after `business_message` joined the list, so bots already
+ * connected to a Telegram Business account start receiving its chats.
+ *
  * Usage:
  *   pnpm --filter worker backfill:telegram-webhooks
  *

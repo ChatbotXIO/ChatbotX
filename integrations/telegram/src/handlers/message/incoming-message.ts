@@ -1,6 +1,7 @@
 import {
   type Context,
   contentTypes,
+  echoOrigins,
   getMediaStoragePrefix,
   guessFileTypeFromMimeType,
   type IncomingAttachment,
@@ -27,6 +28,7 @@ import type {
   TelegramUpdate,
 } from "../../schema"
 import { telegramUpdateSchema } from "../../schema"
+import { isTelegramOwnerMessage } from "../webhook"
 
 export const receiveMessage = async ({
   ctx,
@@ -45,11 +47,52 @@ export const receiveMessage = async ({
     return receiveCallbackQuery(update)
   }
 
+  if (update.business_message) {
+    return await getBusinessMessageResult(ctx, update.business_message)
+  }
+
   if (!update.message) {
     throw new TelegramException("No message or callback_query in update")
   }
 
   return await getMessageResult(ctx, update.message)
+}
+
+/**
+ * The contact is the chat (the customer), and the business connection is
+ * kept as the conversation's `channelConversationId` so replies go out
+ * through it. The owner's own messages come back as outgoing echoes.
+ */
+const getBusinessMessageResult = async (
+  ctx: Context<TelegramAuthValue>,
+  message: TelegramMessage,
+): Promise<ReceivedMessageResult> => {
+  const result = await getMessageResult(ctx, message)
+  const contact: IncomingContact = {
+    ...result.contact,
+    sourceId: String(message.chat.id),
+    channelConversationId: message.business_connection_id,
+  }
+
+  if (!isTelegramOwnerMessage(message)) {
+    return { ...result, contact }
+  }
+
+  return {
+    ...result,
+    message: result.message && {
+      ...result.message,
+      messageType: messageTypes.enum.outgoing,
+    },
+    contact: {
+      sourceId: contact.sourceId,
+      firstName: message.chat.first_name,
+      lastName: message.chat.last_name,
+      channelConversationId: contact.channelConversationId,
+    },
+    echoOrigin: echoOrigins.enum.firstParty,
+    ref: null,
+  }
 }
 
 const getMessageResult = async (
@@ -115,6 +158,7 @@ const receiveCallbackQuery = (
     firstName: callbackQuery.from.first_name,
     lastName: callbackQuery.from.last_name,
     locale: callbackQuery.from.language_code,
+    channelConversationId: callbackQuery.message?.business_connection_id,
   }
 
   return {

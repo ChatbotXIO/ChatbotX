@@ -78,6 +78,8 @@ export type TelegramSticker = z.infer<typeof telegramStickerSchema>
 
 export const telegramMessageSchema = z.object({
   message_id: z.number(),
+  /** Set on a message in a chat of a business account the bot is connected to. */
+  business_connection_id: z.string().optional(),
   from: telegramUserSchema.optional(),
   chat: telegramChatSchema,
   date: z.number(),
@@ -127,6 +129,9 @@ export const telegramUpdateSchema = z.object({
   update_id: z.number(),
   message: telegramMessageSchema.optional(),
   callback_query: telegramCallbackQuerySchema.optional(),
+  // A message in a private chat of a connected business account: from the
+  // customer, or written by the account owner in their own app.
+  business_message: telegramMessageSchema.optional(),
   // The bot's own membership changed (added/promoted/removed in a group or channel).
   my_chat_member: telegramChatMemberUpdatedSchema.optional(),
   // Another member's status changed; only sent when listed in `allowed_updates`.
@@ -148,49 +153,48 @@ export type TelegramInlineKeyboardMarkup = {
   inline_keyboard: TelegramInlineKeyboardButton[][]
 }
 
-export type TelegramSendMessageRequest = {
+/** The chat a request goes to, through a business connection when set. */
+export type TelegramChatTarget = {
   chat_id: number | string
+  business_connection_id?: string
+}
+
+export type TelegramSendMessageRequest = TelegramChatTarget & {
   text: string
   parse_mode?: "HTML" | "Markdown" | "MarkdownV2"
   reply_markup?: TelegramInlineKeyboardMarkup
 }
 
-export type TelegramSendPhotoRequest = {
-  chat_id: number | string
+export type TelegramSendPhotoRequest = TelegramChatTarget & {
   photo: string
   caption?: string
   parse_mode?: "HTML" | "Markdown" | "MarkdownV2"
   reply_markup?: TelegramInlineKeyboardMarkup
 }
 
-export type TelegramSendMediaGroupRequest = {
-  chat_id: number | string
+export type TelegramSendMediaGroupRequest = TelegramChatTarget & {
   media: Array<{ type: "photo"; media: string }>
 }
 
-export type TelegramSendDocumentRequest = {
-  chat_id: number | string
+export type TelegramSendDocumentRequest = TelegramChatTarget & {
   document: string
   caption?: string
   reply_markup?: TelegramInlineKeyboardMarkup
 }
 
-export type TelegramSendAudioRequest = {
-  chat_id: number | string
+export type TelegramSendAudioRequest = TelegramChatTarget & {
   audio: string
   caption?: string
   reply_markup?: TelegramInlineKeyboardMarkup
 }
 
-export type TelegramSendVideoRequest = {
-  chat_id: number | string
+export type TelegramSendVideoRequest = TelegramChatTarget & {
   video: string
   caption?: string
   reply_markup?: TelegramInlineKeyboardMarkup
 }
 
-export type TelegramSendChatActionRequest = {
-  chat_id: number | string
+export type TelegramSendChatActionRequest = TelegramChatTarget & {
   action:
     | "typing"
     | "upload_photo"

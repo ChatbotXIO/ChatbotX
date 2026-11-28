@@ -1,6 +1,7 @@
 import type { SendTextStepSchema } from "@chatbotx.io/flow-config"
 import type { MessageHandlers } from "@chatbotx.io/sdk"
 import { MAX_INLINE_BUTTONS_PER_ROW } from "../../../constants"
+import { chatTarget } from "../../../lib/chat-target"
 import type {
   TelegramAuthValue,
   TelegramSendMessageRequest,
@@ -27,7 +28,7 @@ export function* convertFlowStepText(
   ]
 
   if (buttons.length === 0) {
-    yield { chat_id: contact.sourceId, text: step.text }
+    yield { ...chatTarget(contact), text: step.text }
     return
   }
 
@@ -37,7 +38,7 @@ export function* convertFlowStepText(
   )
 
   yield {
-    chat_id: contact.sourceId,
+    ...chatTarget(contact),
     text: step.text,
     reply_markup: keyboard,
   }

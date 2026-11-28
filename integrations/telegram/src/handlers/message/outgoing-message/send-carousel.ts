@@ -1,5 +1,6 @@
 import type { SendCarouselStepSchema } from "@chatbotx.io/flow-config"
 import type { MessageHandlers } from "@chatbotx.io/sdk"
+import { chatTarget } from "../../../lib/chat-target"
 import type {
   TelegramAuthValue,
   TelegramSendMessageRequest,
@@ -41,7 +42,7 @@ export function* convertFlowStepCarousel(
 
     if (imageUrl) {
       yield {
-        chat_id: chatId,
+        ...chatTarget(contact),
         photo: imageUrl,
         caption: text || undefined,
         parse_mode: "HTML",
@@ -49,7 +50,7 @@ export function* convertFlowStepCarousel(
       }
     } else if (text) {
       yield {
-        chat_id: chatId,
+        ...chatTarget(contact),
         text,
         parse_mode: "HTML",
         reply_markup: replyMarkup,

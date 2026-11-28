@@ -41,6 +41,13 @@ const toAudienceUser = (user: TelegramUser): ChannelAudienceUser => ({
 const toIso = (unixSeconds: number): string =>
   new Date(unixSeconds * 1000).toISOString()
 
+/**
+ * In a business account's private chat, `chat` is the customer: a message
+ * from anyone else was written by the account owner.
+ */
+export const isTelegramOwnerMessage = (message: TelegramMessage): boolean =>
+  message.from?.id !== message.chat.id
+
 /** A message posted in a group/supergroup — scored only, never a DM. */
 export const isTelegramGroupMessage = (message: TelegramMessage): boolean =>
   GROUP_CHAT_TYPES.has(message.chat.type)
@@ -156,6 +163,24 @@ export const webhookHandler = async (
 
     await queue?.add("incomingMessage", {
       type: "incomingMessage",
+      data: {
+        integrationType: "telegram",
+        integrationIdentifier,
+        payload: update,
+      },
+    })
+    return "ok"
+  }
+
+  // A message the account owner wrote in their own app is an echo: the inbox
+  // shows it as their reply and the bot does not answer it.
+  const businessMessage = update.business_message
+  if (businessMessage) {
+    const jobType = isTelegramOwnerMessage(businessMessage)
+      ? "incomingMessageEcho"
+      : "incomingMessage"
+    await queue?.add(jobType, {
+      type: jobType,
       data: {
         integrationType: "telegram",
         integrationIdentifier,
