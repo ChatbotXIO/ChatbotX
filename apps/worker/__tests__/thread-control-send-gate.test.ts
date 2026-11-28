@@ -25,6 +25,7 @@ vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: {
     recordOutboundMessageSent: mocks.recordOutboundMessageSent,
     recordSendFailure: mocks.recordSendFailure,
+    findByIdForWorkspace: vi.fn().mockResolvedValue(null),
   },
   contactService: { unblockIfBlocked: vi.fn().mockResolvedValue(null) },
   conversationService: { markReadByOutbound: vi.fn().mockResolvedValue(true) },

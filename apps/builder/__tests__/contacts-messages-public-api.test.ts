@@ -69,6 +69,7 @@ vi.mock("@chatbotx.io/business", () => ({
   messageService: {
     createOutgoing: mocks.createOutgoing,
     findForContact: mocks.findForContact,
+    assertManualSendWindowOpen: vi.fn().mockResolvedValue(undefined),
   },
   automatedResponseService: {
     findByInboundKeyword: mocks.findByInboundKeyword,
