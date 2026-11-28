@@ -7,7 +7,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // be published when the write failed.
 
 const state = {
-  oldTagIds: [] as { tagId: string }[],
   tags: [] as { id: string; name?: string }[],
 }
 
@@ -44,7 +43,6 @@ const mockDb = {
   ),
   query: {
     tagModel: { findMany: vi.fn(async () => state.tags) },
-    contactsToTagsModel: { findMany: vi.fn(async () => state.oldTagIds) },
   },
 }
 
@@ -144,7 +142,6 @@ const contacts = (...ids: string[]) => ids.map((id) => ({ id }))
 
 beforeEach(() => {
   vi.clearAllMocks()
-  state.oldTagIds = []
   state.tags = [{ id: "tag-1", name: "alpha" }]
   insertBuilder.values.mockReturnValue(insertBuilder)
   insertBuilder.onConflictDoNothing.mockReturnValue(insertBuilder)
@@ -250,7 +247,8 @@ describe("detachByNamesFromContacts", () => {
 
 describe("replaceContactTagsByNames", () => {
   test("publishes the contact when tags were added or removed", async () => {
-    state.oldTagIds = [{ tagId: "tag-old" }]
+    insertReturning.mockResolvedValue([{ tagId: "tag-1" }])
+    deleteReturning.mockResolvedValue([{ tagId: "tag-old" }])
 
     await tagService.replaceContactTagsByNames({
       workspaceId: "ws-1",
@@ -262,8 +260,6 @@ describe("replaceContactTagsByNames", () => {
   })
 
   test("publishes nothing when the set is unchanged", async () => {
-    state.oldTagIds = [{ tagId: "tag-1" }]
-
     await tagService.replaceContactTagsByNames({
       workspaceId: "ws-1",
       contactId: "c-1",

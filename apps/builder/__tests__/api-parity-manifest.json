@@ -88,7 +88,6 @@
     "contacts/reset-contact-custom-fields.action:resetContactCustomFields": "covered:contacts",
     "contacts/unblock-contact.action:unblockContactAction": "covered:contacts",
     "contacts/update-contact-field.action:updateContactFieldAction": "covered:contacts",
-    "contacts/update-contact-tag.action:updateContactTagAction": "covered:contacts",
     "conversations/archive-conversation.action:archiveConversationAction": "covered:conversations",
     "conversations/assign-conversation.action:assignConversationAction": "covered:conversations",
     "conversations/disable-bot.action:disableBotAction": "covered:conversations",

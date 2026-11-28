@@ -4,6 +4,7 @@ type RouteConfig = {
   method: string
   path: string
   summary: string
+  description?: string
   tags: string[]
   successStatus?: number
 }
@@ -426,6 +427,20 @@ describe("PUT /v1/contacts/{identifier}/tags", () => {
       contactId: "contact-1",
       names: ["VIP", "Newsletter"],
     })
+  })
+
+  test("documents that concurrent replaces are not serialized and points to the add/remove operations", () => {
+    const description = procedure.route.description ?? ""
+
+    expect(description).toContain("Concurrent tag changes are not serialized")
+    for (const operation of [
+      "contacts.addTags",
+      "contacts.removeTags",
+      "contacts.addTagsByName",
+      "contacts.removeTagsByName",
+    ]) {
+      expect(description).toContain(operation)
+    }
   })
 })
 

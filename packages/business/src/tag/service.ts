@@ -455,17 +455,9 @@ class TagService extends BaseService {
       accessScope,
     })
 
-    // Get old tags before update
-    const oldTags = await db.query.contactsToTagsModel.findMany({
-      where: {
-        contactId: contact.id,
-      },
-      columns: {
-        tagId: true,
-      },
-    })
-    const oldTagIds = new Set(oldTags.map((t) => t.tagId))
-
+    // What this call reports is what its own INSERT and DELETE changed (their
+    // RETURNING rows), never a read taken before the transaction: a link a
+    // concurrent writer added or removed in between is still reported once.
     const { returnedTags, newlyAppliedTags, removedTagIds } =
       await db.transaction(async (tx) => {
         const upserted = await this.upsertByNames({ workspaceId, names, tx })
@@ -475,49 +467,46 @@ class TagService extends BaseService {
                 where: { id: { in: upserted.map((tag) => tag.id) } },
               })
             : []
+        const wantedIds = tags.map((tag) => tag.id)
 
-        if (tags.length > 0) {
-          await tx
-            .insert(contactsToTagsModel)
-            .values(
-              tags.map((selectedTag) => ({
-                contactId: contact.id,
-                tagId: selectedTag.id,
-              })),
-            )
-            .onConflictDoNothing({
-              target: [
-                contactsToTagsModel.contactId,
-                contactsToTagsModel.tagId,
-              ],
-            })
-        }
+        const inserted =
+          tags.length > 0
+            ? await tx
+                .insert(contactsToTagsModel)
+                .values(
+                  tags.map((selectedTag) => ({
+                    contactId: contact.id,
+                    tagId: selectedTag.id,
+                  })),
+                )
+                .onConflictDoNothing({
+                  target: [
+                    contactsToTagsModel.contactId,
+                    contactsToTagsModel.tagId,
+                  ],
+                })
+                .returning({ tagId: contactsToTagsModel.tagId })
+            : []
 
-        // Remove tags no longer selected (local ContactToTag only).
-        const newTagIdSet = new Set(tags.map((t) => t.id))
-        const removedTagIds = Array.from(oldTagIds).filter(
-          (id) => !newTagIdSet.has(id),
-        )
-        if (removedTagIds.length > 0) {
-          await tx.delete(contactsToTagsModel).where(
-            tags.length > 0
+        // Remove every link no longer wanted (local ContactToTag only), also
+        // one that appeared after the caller looked.
+        const deleted = await tx
+          .delete(contactsToTagsModel)
+          .where(
+            wantedIds.length > 0
               ? and(
                   eq(contactsToTagsModel.contactId, contact.id),
-                  notInArray(
-                    contactsToTagsModel.tagId,
-                    tags.map((t) => t.id),
-                  ),
+                  notInArray(contactsToTagsModel.tagId, wantedIds),
                 )
               : eq(contactsToTagsModel.contactId, contact.id),
           )
-        }
+          .returning({ tagId: contactsToTagsModel.tagId })
 
-        const newlyAppliedTags = tags.filter((tag) => !oldTagIds.has(tag.id))
-
+        const insertedIds = new Set(inserted.map((row) => row.tagId))
         return {
           returnedTags: tags,
-          newlyAppliedTags,
-          removedTagIds,
+          newlyAppliedTags: tags.filter((tag) => insertedIds.has(tag.id)),
+          removedTagIds: deleted.map((row) => row.tagId),
         }
       })
 
@@ -530,49 +519,52 @@ class TagService extends BaseService {
       })
     }
 
-    // Emit tagApplied for newly added tags + enqueue sync
-    for (const tag of newlyAppliedTags) {
-      try {
-        await emitTagApplied(workspaceId, contact.id, tag.id)
-      } catch (error) {
-        logger.error({ err: error }, "Failed to emit tagApplied event:")
-      }
+    try {
+      // Emit tagApplied for newly added tags + enqueue sync
+      for (const tag of newlyAppliedTags) {
+        try {
+          await emitTagApplied(workspaceId, contact.id, tag.id)
+        } catch (error) {
+          logger.error({ err: error }, "Failed to emit tagApplied event:")
+        }
 
-      await tagSyncService.enqueueAttach({
-        workspaceId,
-        contactId: contact.id,
-        tagId: tag.id,
-      })
-    }
-    // One batch resolve+enqueue call for every newly-applied tag on this
-    // contact instead of one per tag (HIGH-1).
-    if (newlyAppliedTags.length > 0) {
-      await adsConversionService.enqueueTagAppliedEvaluationsBulk({
-        workspaceId,
-        pairs: newlyAppliedTags.map((tag) => ({
+        await tagSyncService.enqueueAttach({
+          workspaceId,
           contactId: contact.id,
           tagId: tag.id,
-        })),
-      })
-    }
-
-    // Emit tagRemoved + enqueue channel cleanup for removed tags.
-    for (const tagId of removedTagIds) {
-      try {
-        await emitTagRemoved(workspaceId, contact.id, tagId)
-      } catch (error) {
-        logger.error({ err: error }, "Failed to emit tagRemoved event:")
+        })
+      }
+      // One batch resolve+enqueue call for every newly-applied tag on this
+      // contact instead of one per tag (HIGH-1).
+      if (newlyAppliedTags.length > 0) {
+        await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+          workspaceId,
+          pairs: newlyAppliedTags.map((tag) => ({
+            contactId: contact.id,
+            tagId: tag.id,
+          })),
+        })
       }
 
-      await tagSyncService.enqueueDetach({
-        workspaceId,
-        contactId: contact.id,
-        tagId,
-      })
-    }
+      // Emit tagRemoved + enqueue channel cleanup for removed tags.
+      for (const tagId of removedTagIds) {
+        try {
+          await emitTagRemoved(workspaceId, contact.id, tagId)
+        } catch (error) {
+          logger.error({ err: error }, "Failed to emit tagRemoved event:")
+        }
 
-    await this.invalidateCacheTags(tagCacheTags(workspaceId))
-    await contactService.invalidate({ workspaceId, ids: [contact.id] })
+        await tagSyncService.enqueueDetach({
+          workspaceId,
+          contactId: contact.id,
+          tagId,
+        })
+      }
+    } finally {
+      // The write committed: the caches drop even when a downstream enqueue fails.
+      await this.invalidateCacheTags(tagCacheTags(workspaceId))
+      await contactService.invalidate({ workspaceId, ids: [contact.id] })
+    }
 
     return returnedTags
   }

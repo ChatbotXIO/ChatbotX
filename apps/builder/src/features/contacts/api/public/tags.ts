@@ -173,7 +173,7 @@ export const contactsTagsPublicRouter = {
       path: "/v1/contacts/{identifier}/tags",
       summary: "Replace all tags on contact",
       description:
-        'Sets the contact\'s tags to exactly this list, by tag name — tags not in `tags` are removed, new names are created as tags if they don\'t already exist. Pass an empty array to clear all tags. Example: `{"tags":["VIP","Newsletter"]}`.',
+        'Sets the contact\'s tags to exactly this list, by tag name — tags not in `tags` are removed, new names are created as tags if they don\'t already exist. Pass an empty array to clear all tags. Concurrent tag changes are not serialized: a replace may remove tags added at the same moment, and two overlapping replaces may leave a combined set. To add or remove only some tags, use POST/DELETE `/v1/contacts/{identifier}/tags` or `/tags/by-name` (`contacts.addTags`, `contacts.removeTags`, `contacts.addTagsByName`, `contacts.removeTagsByName`). Example: `{"tags":["VIP","Newsletter"]}`.',
       successStatus: 204,
       tags: ["Contacts"],
     })

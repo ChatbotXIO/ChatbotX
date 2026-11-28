@@ -51,12 +51,6 @@ export type BulkTagStatsContactsRequest = z.infer<
   typeof bulkTagStatsContactsRequest
 >
 
-export const updateContactTagRequest = z.object({
-  contactId: zodBigintAsString(),
-  tags: z.array(z.string().trim()),
-})
-export type UpdateContactTagRequest = z.infer<typeof updateContactTagRequest>
-
 export const removeContactTagsRequest = z.object({
   ids: z.array(zodBigintAsString()),
   tags: z.array(z.string().trim().min(1)).min(1),
