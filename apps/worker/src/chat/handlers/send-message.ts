@@ -47,6 +47,7 @@ import {
   type OutgoingSendResult,
   parseSdkError,
   type ResolvedProductMessage,
+  resolveConversationMessagingWindow,
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
 import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
@@ -86,20 +87,36 @@ const isDirectMessage = (
   message.type !== "comment" ||
   message.contentAttributes?.isPrivateReply === true
 
+/**
+ * The queued job carries the contact inbox as it was at enqueue time. For a
+ * manual send whose stale window reads `closed`, re-read it once: an incoming
+ * message may have reopened the window while the job waited. Open or
+ * unlimited windows need no read. Only `lastIncomingMessageAt` is patched.
+ */
 async function refreshManualSendContactInbox(props: {
   contactInbox: ContactInboxModel
   sendFrom?: SendFrom
   workspaceId: string
 }): Promise<ContactInboxModel> {
+  const { contactInbox } = props
   if (!isManualSend(props.sendFrom)) {
-    return props.contactInbox
+    return contactInbox
   }
-  return (
-    (await contactInboxService.findByIdForWorkspace({
-      id: props.contactInbox.id,
-      workspaceId: props.workspaceId,
-    })) ?? props.contactInbox
-  )
+  const { state } = resolveConversationMessagingWindow({
+    channel: contactInbox.channel,
+    sourceId: null,
+    lastIncomingMessageAt: contactInbox.lastIncomingMessageAt,
+  })
+  if (state !== "closed") {
+    return contactInbox
+  }
+  const current = await contactInboxService.findByIdForWorkspace({
+    id: contactInbox.id,
+    workspaceId: props.workspaceId,
+  })
+  return current
+    ? { ...contactInbox, lastIncomingMessageAt: current.lastIncomingMessageAt }
+    : contactInbox
 }
 
 // Broadcasts and templates are deliberately NOT excluded: the inbox option
@@ -418,7 +435,6 @@ export async function sendMessageToChannel(
       data: {
         contact: {
           ...dispatchContactInbox,
-          workspaceId: conversation.workspaceId,
           sourceConversationId: resolveSourceConversationId(
             conversation,
             contactInbox.channel,
@@ -1633,7 +1649,6 @@ export async function sendFlowStepToChannel({
       data: {
         contact: {
           ...dispatchContactInbox,
-          workspaceId: conversation.workspaceId,
           sourceConversationId: resolveSourceConversationId(
             conversation,
             contactInbox.channel,

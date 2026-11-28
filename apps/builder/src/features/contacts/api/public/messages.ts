@@ -14,6 +14,7 @@ import { withMessageTranslations } from "@/features/translation/lib/message-tran
 import { sendOutgoing } from "@/features/translation/lib/send-outgoing"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
+  possibleErrorsOnClosedMessagingWindow,
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
   possibleErrorsOnSendingMessage,
@@ -234,7 +235,10 @@ export const contactsMessagesPublicRouter = {
           ),
       }),
     )
-    .errors(possibleErrorsOnMutatingResource)
+    .errors({
+      ...possibleErrorsOnMutatingResource,
+      ...possibleErrorsOnClosedMessagingWindow,
+    })
     .handler(async ({ context, input }) => {
       const contactId = await contactIdFor(context, input.identifier)
       const autoReply = await automatedResponseService.findByInboundKeyword(
@@ -256,6 +260,13 @@ export const contactsMessagesPublicRouter = {
         ? { flowId: autoReply.flowId, inboxId: input.inboxId }
         : { text: autoReply.text ?? "", inboxId: input.inboxId }
 
+      await messageService.assertManualSendWindowOpen({
+        workspaceId: context.workspace.id,
+        conversation,
+        contactInbox,
+        input: parsedInput,
+        sendFrom: "api",
+      })
       await messageService.createOutgoing({
         conversation,
         contactInbox,
@@ -294,7 +305,10 @@ export const contactsMessagesPublicRouter = {
           ),
       }),
     )
-    .errors(possibleErrorsOnMutatingResource)
+    .errors({
+      ...possibleErrorsOnMutatingResource,
+      ...possibleErrorsOnClosedMessagingWindow,
+    })
     .handler(async ({ context, input }) => {
       const contactId = await contactIdFor(context, input.identifier)
       const { conversation, contactInbox } =
@@ -307,10 +321,18 @@ export const contactsMessagesPublicRouter = {
       await assertMemberMayStartFlow(context, input.flowId)
       const user = resolveSenderForCaller(context)
 
+      const flowInput = { flowId: input.flowId, inboxId: input.inboxId }
+      await messageService.assertManualSendWindowOpen({
+        workspaceId: context.workspace.id,
+        conversation,
+        contactInbox,
+        input: flowInput,
+        sendFrom: "api",
+      })
       await messageService.createOutgoing({
         conversation,
         contactInbox,
-        input: { flowId: input.flowId, inboxId: input.inboxId },
+        input: flowInput,
         ...(user && { user }),
         sendFrom: "api",
       })

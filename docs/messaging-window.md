@@ -47,12 +47,15 @@ closes for good; both are absolute and null when they do not apply.
 
 ## Where it is enforced
 
-1. **Early, synchronous** - `sendOutgoing`
-   (`apps/builder/src/features/translation/lib/send-outgoing.ts`) throws
+1. **Early, synchronous** - `messageService.assertManualSendWindowOpen`
+   (`packages/business/src/message/assert-manual-send-window-open.ts`) throws
    `messagingWindowClosedException` (`messagingWindowClosed`, 409) before
    anything is queued, so API, CLI and MCP callers get the error at once instead
-   of a 202 followed by a worker failure. Declared on `messages.create` and
-   `contacts.sendMessage`.
+   of a 202 followed by a worker failure. It also lets a flow through whose
+   first step is a WhatsApp or Messenger template. Callers: `sendOutgoing`
+   (`messages.create`, `contacts.sendMessage`, the Inbox action),
+   `contacts.sendFlow` and `contacts.triggerAutoReply`. It is deliberately not
+   inside `createOutgoing`, so system sends cannot throw in their own flow.
 2. **Last line, in the worker** - the window can close while a job waits in the
    queue:
    - Messenger / Instagram: `resolveMessagingPolicy` maps the state to
@@ -91,4 +94,13 @@ other.
 - `messaging-window.ts` is pure (no Node-only imports): the builder router and
   schema import it (AGENTS.md invariant 25).
 - `sendFrom: "api"` also covers system-made sends (e.g. order notifications):
-  those are now refused on WhatsApp/TikTok outside the window too.
+  (order notifications, booking links, call permission requests) are now
+  refused by the WhatsApp/TikTok worker gate outside the window too. Those
+  callers use `createOutgoing` directly, so they get no early 409: the failure
+  surfaces in the worker.
+- The worker re-reads the contact inbox only for a manual send whose queued
+  window reads `closed`, and patches only `lastIncomingMessageAt`, so a message
+  that arrived while the job waited reopens it.
+- `resolveConversationMessagingWindow` (sdk) takes the channel as a plain string
+  (unknown channel: `unlimited`); the list query, the composer and the business
+  gate all use it.

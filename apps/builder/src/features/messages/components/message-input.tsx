@@ -2,10 +2,7 @@
 
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { stepTypes } from "@chatbotx.io/flow-config"
-import {
-  isDirectConversationSource,
-  resolveMessagingWindow,
-} from "@chatbotx.io/sdk"
+import { resolveConversationMessagingWindow } from "@chatbotx.io/sdk"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
@@ -78,6 +75,12 @@ import { InputMenu, SendFlowDialogTrigger } from "./input-menu"
 import { MediaFilePreview } from "./media-file-preview"
 import { SendQueueNotice } from "./send-queue-notice"
 import { ThreadControlLockedComposer } from "./thread-control-locked-composer"
+
+/** Outside the messaging window only a template-first flow can be sent. */
+const TEMPLATE_START_TYPE_BY_CHANNEL: Partial<Record<string, string>> = {
+  whatsapp: stepTypes.enum.sendWaTemplateMessage,
+  messenger: stepTypes.enum.sendMessengerTemplateMessage,
+}
 
 // Media Library selection metadata kept for preview purposes only. The form
 // field only carries `mediaFileIds` (the DB ids sent to the server) — the
@@ -562,17 +565,15 @@ export const MessageInput = () => {
   const [clockTick, setClockTick] = useState(0)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: clockTick is the invalidation trigger
-  const messagingWindow = useMemo(() => {
-    const parsed = channelTypes.safeParse(channel)
-    if (!parsed.success) {
-      return null
-    }
-    return resolveMessagingWindow({
-      channel: parsed.data,
-      isDirect: isDirectConversationSource(sourceId),
-      lastIncomingMessageAt,
-    })
-  }, [channel, sourceId, lastIncomingMessageAt, clockTick])
+  const messagingWindow = useMemo(
+    () =>
+      resolveConversationMessagingWindow({
+        channel: channel ?? "",
+        sourceId,
+        lastIncomingMessageAt,
+      }),
+    [channel, sourceId, lastIncomingMessageAt, clockTick],
+  )
 
   const windowChangesAtMs = messagingWindow?.changesAt?.getTime() ?? null
   useEffect(() => {
@@ -591,6 +592,9 @@ export const MessageInput = () => {
 
   const isMessagingWindowClosed = messagingWindow?.state === "closed"
   // Meta DMs close after the 7-day human-agent window; the copy differs.
+  const templateStartType = channel
+    ? TEMPLATE_START_TYPE_BY_CHANNEL[channel]
+    : undefined
   const isMetaDmWindowClosed =
     isMessagingWindowClosed &&
     (channel === "messenger" || channel === "instagram")
@@ -665,11 +669,9 @@ export const MessageInput = () => {
           <p className="text-muted-foreground text-sm">
             {t("messages.messagingWindowClosed")}
           </p>
-          {channel === "whatsapp" && (
+          {templateStartType && (
             // Outside the window only an approved template goes out.
-            <SendFlowDialogTrigger
-              templateStartType={stepTypes.enum.sendWaTemplateMessage}
-            >
+            <SendFlowDialogTrigger templateStartType={templateStartType}>
               <Button type="button" variant="outline">
                 <WorkflowIcon aria-hidden />
                 {t("actions.sendFlow")}

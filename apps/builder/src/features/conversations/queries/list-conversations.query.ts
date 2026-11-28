@@ -16,12 +16,8 @@ import type {
   ContactInboxOperationalModel,
   InboxModel,
 } from "@chatbotx.io/database/types"
-import {
-  isDirectConversationSource,
-  resolveMessagingWindow,
-} from "@chatbotx.io/sdk"
+import { resolveConversationMessagingWindow } from "@chatbotx.io/sdk"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { channelTypes } from "@chatbotx.io/utils/channel"
 import { endOfHour } from "date-fns"
 import z from "zod"
 import {
@@ -53,17 +49,12 @@ const DEFAULT_PER_PAGE = 20
 const resolveContactInboxMessagingWindow = (
   contactInbox: ContactInboxOperationalModel,
   conversationSourceId: string | null,
-) => {
-  const channel = channelTypes.safeParse(contactInbox.channel)
-  if (!channel.success) {
-    return { state: "unlimited", changesAt: null, closesAt: null } as const
-  }
-  return resolveMessagingWindow({
-    channel: channel.data,
-    isDirect: isDirectConversationSource(conversationSourceId),
+) =>
+  resolveConversationMessagingWindow({
+    channel: contactInbox.channel,
+    sourceId: conversationSourceId,
     lastIncomingMessageAt: contactInbox.lastIncomingMessageAt,
   })
-}
 
 const mapConversationContactInbox = (
   contactInbox: ContactInboxOperationalModel & { inbox: InboxModel },

@@ -1,13 +1,6 @@
 import { describe, expect, test, vi } from "vitest"
 
 const mockSendMessage = vi.fn()
-const findByIdForWorkspace = vi.fn()
-
-vi.mock("@chatbotx.io/business", () => ({
-  contactInboxService: {
-    findByIdForWorkspace: (...args: unknown[]) => findByIdForWorkspace(...args),
-  },
-}))
 
 vi.mock("../src/client", () => ({
   getWhatsappClient: vi.fn(() => ({
@@ -57,22 +50,6 @@ describe("WhatsApp sendMessage — messaging window", () => {
   test("leaves automation untouched", async () => {
     mockSendMessage.mockResolvedValue({ messages: [{ id: "wamid.1" }] })
     await run(25 * HOUR, undefined)
-    expect(mockSendMessage).toHaveBeenCalled()
-  })
-
-  test("uses a fresh incoming timestamp before refusing a queued send", async () => {
-    findByIdForWorkspace.mockResolvedValue({
-      lastIncomingMessageAt: new Date(Date.now() - HOUR),
-    })
-    mockSendMessage.mockResolvedValue({ messages: [{ id: "wamid.1" }] })
-    await sendMessage({
-      ctx,
-      data: {
-        contact: { ...contactLastSeen(25 * HOUR), workspaceId: "w1" },
-        message: { text: "hi", contentType: "text" },
-        sendFrom: "inbox",
-      },
-    } as never)
     expect(mockSendMessage).toHaveBeenCalled()
   })
 

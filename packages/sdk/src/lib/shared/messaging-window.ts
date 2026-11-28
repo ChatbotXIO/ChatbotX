@@ -1,4 +1,4 @@
-import type { ChannelType } from "@chatbotx.io/utils/channel"
+import { type ChannelType, channelTypes } from "@chatbotx.io/utils/channel"
 import { isManualSend, type SendFrom } from "@chatbotx.io/utils/send-from"
 import { ChannelError } from "../channel-error"
 import { ChannelErrorCategory } from "../channel-error-codes"
@@ -113,6 +113,28 @@ export function resolveMessagingWindow(input: {
     return { state: "humanAgent", changesAt: closeEnd, closesAt: closeEnd }
   }
   return { state: "closed", ...NO_CHANGE }
+}
+
+/**
+ * `resolveMessagingWindow` for a channel that arrives as a plain string (a DB
+ * column, a route param). An unknown channel has no window: `unlimited`.
+ */
+export function resolveConversationMessagingWindow(input: {
+  channel: string
+  sourceId: string | null | undefined
+  lastIncomingMessageAt: Date | string | null | undefined
+  now?: Date | number
+}): MessagingWindow {
+  const channel = channelTypes.safeParse(input.channel)
+  if (!channel.success) {
+    return { state: "unlimited", ...NO_CHANGE }
+  }
+  return resolveMessagingWindow({
+    channel: channel.data,
+    isDirect: isDirectConversationSource(input.sourceId),
+    lastIncomingMessageAt: input.lastIncomingMessageAt,
+    now: input.now,
+  })
 }
 
 /**

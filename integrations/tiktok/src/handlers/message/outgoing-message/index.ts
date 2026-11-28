@@ -17,6 +17,24 @@ import type { TiktokAuthValue } from "../../../schema"
 import { uploadAndBuildImagePayload } from "./send-media"
 import { convertFlowStepText } from "./send-text"
 
+type SendMessageData = Parameters<
+  MessageHandlers<TiktokAuthValue>["sendMessage"]
+>[0]["data"]
+
+function assertTiktokManualSendWindowOpen(
+  contact: SendMessageData["contact"],
+  sendFrom: SendMessageData["sendFrom"],
+): void {
+  assertManualSendWindowOpen({
+    channel: "tiktok",
+    sendFrom,
+    lastIncomingMessageAt: contact.lastIncomingMessageAt,
+    code: "tiktok_messaging_window_closed",
+    message:
+      "Cannot send a TikTok message more than 48 hours after the contact's last message",
+  })
+}
+
 export const handledFlowStepTypes = [
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
@@ -31,14 +49,7 @@ export const sendMessage: MessageHandlers<TiktokAuthValue>["sendMessage"] =
     } = props
 
     // Last-line gate: the window can close while the job waits in the queue.
-    assertManualSendWindowOpen({
-      channel: "tiktok",
-      sendFrom,
-      lastIncomingMessageAt: contact.lastIncomingMessageAt,
-      code: "tiktok_messaging_window_closed",
-      message:
-        "Cannot send a TikTok message more than 48 hours after the contact's last message",
-    })
+    assertTiktokManualSendWindowOpen(contact, sendFrom)
 
     const businessId = ctx.auth.metadata.openId
     const messageIds: string[] = []
@@ -97,14 +108,7 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
       data: { contact, step, sendFrom },
     } = props
 
-    assertManualSendWindowOpen({
-      channel: "tiktok",
-      sendFrom,
-      lastIncomingMessageAt: contact.lastIncomingMessageAt,
-      code: "tiktok_messaging_window_closed",
-      message:
-        "Cannot send a TikTok message more than 48 hours after the contact's last message",
-    })
+    assertTiktokManualSendWindowOpen(contact, sendFrom)
 
     const businessId = ctx.auth.metadata.openId
     const messageIds: string[] = []
