@@ -53,6 +53,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./auth-cas": "./src/auth-cas.ts",
     "./client": "./src/client.ts",
     "./enums": "./src/enums.ts",
     "./errors": "./src/errors.ts",

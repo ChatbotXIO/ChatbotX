@@ -1,19 +1,10 @@
 import {
-  coexistService,
-  contactScanService,
-  contactSyncService,
   instagramIntegrationService,
   messengerIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import {
-  connectionStateService,
-  type PendingQuotaRelease,
-} from "@chatbotx.io/business/connection"
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
-import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import {
   type InstagramAuthValue,
   isDisconnectSafeError,
@@ -72,63 +63,11 @@ export const disconnectInstagram = async (ctx: {
     }
   }
 
-  const pendingRelease: { current: PendingQuotaRelease | null } = {
-    current: null,
-  }
-  await db.transaction(async (tx) => {
-    // The page's open contact-import items end and its owed history sync is
-    // cancelled, so a reconnect never starts one unasked (the integration row is
-    // locked first, the order a handoff takes it in).
-    await contactSyncService.cancelForInbox(
-      {
-        workspaceId: ctx.workspaceId,
-        inboxId: integrationInstagram.inboxId,
-        lock: { channel: "instagram", integrationId: integrationInstagram.id },
-      },
-      tx,
-    )
-
-    // Both Instagram variants run coexist history (the Facebook-linked one too,
-    // which a contacts import hands off to), so neither is skipped.
-    await coexistService.tearDownForIntegration({
-      workspaceId: ctx.workspaceId,
-      integrationId: integrationInstagram.id,
-      channel: "instagram",
-      currentError: "Integration disconnected",
-      tx,
-    })
-
-    // The contact scan supports both Instagram variants too.
-    await contactScanService.cancelForIntegration({
-      channel: "instagram",
-      integrationId: integrationInstagram.id,
-      tx,
-    })
-    // Polymorphic FK cleanup — stale MetaCapiEvent rows would keep occupying
-    // the (workspaceId, channel, sourceKey) dedup slot after a reconnect.
-    await metaCapiEventRepository.deleteByIntegration(
-      {
-        workspaceId: ctx.workspaceId,
-        channel: "instagram",
-        integrationId: integrationInstagram.id,
-      },
-      tx,
-    )
-
-    await instagramIntegrationService.disconnect({
-      id: integrationInstagram.id,
-      tx,
-    })
-
-    await connectionStateService.disconnectInbox({
-      inboxId: integrationInstagram.inboxId,
-      ownerId: workspace.ownerId,
-      workspaceId: ctx.workspaceId,
-      tx,
-      pendingRelease,
-    })
+  await instagramIntegrationService.disconnectChannel({
+    integration: integrationInstagram,
+    workspaceId: ctx.workspaceId,
+    ownerId: workspace.ownerId,
   })
-  await connectionStateService.releasePendingQuota(pendingRelease.current)
 
   await auditService.record({
     workspaceId: ctx.workspaceId,

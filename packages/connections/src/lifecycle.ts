@@ -1,9 +1,9 @@
 import {
   authExpiresAtOf,
   connectionStateService,
+  createPendingRelease,
   InvalidConnectionTransitionException,
   isActiveConnectionStatus,
-  type PendingQuotaRelease,
   resolveForeignKey,
   resolveOwnerId,
 } from "@chatbotx.io/business/connection"
@@ -160,9 +160,7 @@ export const disconnect = async (input: {
   // more work (teardown, satellite-row delete) after the transition call;
   // releasing before that transaction actually commits would under-count
   // the release if a later statement in it rolled the whole thing back.
-  const pendingRelease: { current: PendingQuotaRelease | null } = {
-    current: null,
-  }
+  const pendingRelease = createPendingRelease()
   try {
     const updated = await db.transaction(async (tx) => {
       const result = await connectionStateService.transition({

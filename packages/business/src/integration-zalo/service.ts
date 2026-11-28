@@ -1,3 +1,4 @@
+import { accessTokenMatches } from "@chatbotx.io/database/auth-cas"
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
@@ -10,7 +11,6 @@ import type { IntegrationZaloModel } from "@chatbotx.io/database/types"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
 import {
-  accessTokenMatches,
   CONNECTION_STORE_BINDINGS,
   type ConnectionQuotaConsumption,
   recordRefreshedAuth,
@@ -100,14 +100,16 @@ class ZaloIntegrationService extends BaseService {
     })
   }
 
-  async updateAuth(
-    id: string,
-    auth: Record<string, unknown>,
-    name?: string,
-    tx?: DatabaseClient,
+  async updateAuth(props: {
+    id: string
+    workspaceId: string
+    auth: Record<string, unknown>
+    name?: string
+    tx?: DatabaseClient
     /** Compare-and-set for the refresh cron; see `accessTokenMatches`. */
-    expectedAccessToken?: string,
-  ): Promise<boolean> {
+    expectedAccessToken?: string
+  }): Promise<boolean> {
+    const { id, workspaceId, auth, name, tx, expectedAccessToken } = props
     const client = tx ?? db
     const [row] = await client
       .update(integrationZaloModel)
@@ -115,6 +117,7 @@ class ZaloIntegrationService extends BaseService {
       .where(
         and(
           eq(integrationZaloModel.id, id),
+          eq(integrationZaloModel.workspaceId, workspaceId),
           expectedAccessToken
             ? accessTokenMatches(integrationZaloModel.auth, expectedAccessToken)
             : undefined,

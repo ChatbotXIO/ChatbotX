@@ -28,6 +28,8 @@ const mocks = vi.hoisted(() => ({
   rollbackLiveIncrement: vi.fn(async () => undefined),
   findOwnerUserIdByWorkspaceId: vi.fn(async () => "owner-1"),
   findInboxForUpdate: vi.fn(),
+  findInbox: vi.fn(),
+  resumeTenantSuspended: vi.fn(async () => undefined),
   listInboxIdentities: vi.fn(),
   recordDeletion: vi.fn(async () => undefined),
   loggerError: vi.fn(),
@@ -51,6 +53,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
   inboxRepository: {
     updateConnectionMirror: mocks.mirrorInbox,
+    findById: mocks.findInbox,
     findByIdForUpdate: mocks.findInboxForUpdate,
     listIdentitiesByIds: mocks.listInboxIdentities,
   },
@@ -88,7 +91,10 @@ vi.mock("../../workspace-usage/service", () => ({
 }))
 
 vi.mock("../../inbox/service", () => ({
-  inboxService: { disconnect: mocks.inboxDisconnect },
+  inboxService: {
+    disconnect: mocks.inboxDisconnect,
+    resumeTenantSuspended: mocks.resumeTenantSuspended,
+  },
 }))
 
 vi.mock("../../resource-deletion-log/service", () => ({
@@ -151,6 +157,9 @@ beforeEach(() => {
   mocks.findOwnerUserIdByWorkspaceId.mockReset()
   mocks.findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
   mocks.findInboxForUpdate.mockReset()
+  mocks.findInbox.mockReset()
+  mocks.resumeTenantSuspended.mockReset()
+  mocks.resumeTenantSuspended.mockResolvedValue(undefined)
   mocks.listInboxIdentities.mockReset()
   mocks.recordDeletion.mockReset()
   mocks.recordDeletion.mockResolvedValue(undefined)
@@ -655,6 +664,11 @@ describe("ConnectionStateService.commitReconnect", () => {
 
   test("still calls writeAuth even when no Connection row backs this inbox yet (pre-backfill fallback), but never touches the engine", async () => {
     mocks.findByInboxId.mockResolvedValue(undefined)
+    mocks.findInbox.mockResolvedValue({
+      workspaceId: "ws-1",
+      status: "disconnected",
+      disconnectReason: "token_revoked",
+    })
     const writeAuth = vi.fn(async () => undefined)
 
     await connectionStateService.commitReconnect({
@@ -676,6 +690,55 @@ describe("ConnectionStateService.commitReconnect", () => {
       expect.anything(),
     )
     expect(mocks.tryConsume).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    "manual",
+    "tenant_suspended",
+  ])("resumes an orphan inbox disconnected as %s through the limit-checked resume instead of mirroring it for free", async (disconnectReason) => {
+    mocks.findByInboxId.mockResolvedValue(undefined)
+    mocks.findInbox.mockResolvedValue({
+      workspaceId: "ws-1",
+      status: "disconnected",
+      disconnectReason,
+    })
+
+    await connectionStateService.commitReconnect({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      auth: oauth2Auth,
+      writeAuth: vi.fn(async () => undefined),
+    })
+
+    expect(mocks.resumeTenantSuspended).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        ownerId: "owner-1",
+      }),
+    )
+    expect(mocks.mirrorInbox).not.toHaveBeenCalled()
+  })
+
+  test("propagates a channel-limit failure when resuming an orphan inbox that was manually disconnected", async () => {
+    mocks.findByInboxId.mockResolvedValue(undefined)
+    mocks.findInbox.mockResolvedValue({
+      workspaceId: "ws-1",
+      status: "disconnected",
+      disconnectReason: "manual",
+    })
+    mocks.resumeTenantSuspended.mockRejectedValueOnce(
+      Object.assign(new Error("limit"), { code: "channelLimitReached" }),
+    )
+
+    await expect(
+      connectionStateService.commitReconnect({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        auth: oauth2Auth,
+        writeAuth: vi.fn(async () => undefined),
+      }),
+    ).rejects.toMatchObject({ code: "channelLimitReached" })
   })
 
   test("propagates a reconnectInbox failure (e.g. a channel-limit re-check) so the caller's transaction rolls back the auth write too", async () => {

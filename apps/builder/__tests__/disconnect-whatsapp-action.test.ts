@@ -47,9 +47,11 @@ const integrationWhatsappServiceDisconnect = vi.fn(
     }
     ownerId: string
     workspaceId: string
-    tx: typeof mocks.tx
+    tx?: typeof mocks.tx
   }) => {
-    const tx = props.tx as unknown as {
+    // The real method opens its own transaction when none is passed.
+    const txArg = props.tx ?? mocks.tx
+    const tx = txArg as unknown as {
       update: (arg?: unknown) => {
         set: (arg?: unknown) => { where: (arg?: unknown) => unknown }
       }
@@ -71,20 +73,20 @@ const integrationWhatsappServiceDisconnect = vi.fn(
         channel: "whatsapp",
         integrationId: props.integrationWhatsapp.id,
       },
-      props.tx,
+      txArg,
     )
     tx.delete({ id: "whatsappId" })
     await mocks.deleteWabaIfOrphaned({
       workspaceId: props.workspaceId,
       wabaId: props.integrationWhatsapp.wabaId,
-      tx: props.tx,
+      tx: txArg,
     })
     await mocks.inboxDisconnect({
       inboxId: props.integrationWhatsapp.inboxId,
       ownerId: props.ownerId,
       workspaceId: props.workspaceId,
       reason: "manual",
-      tx: props.tx,
+      tx: txArg,
     })
   },
 )

@@ -72,6 +72,14 @@ export type ConnectionQuotaConsumption =
 /** A `channels` quota release a `transition` call decided on but has not yet executed — see `transition`'s `pendingRelease` handshake and `releasePendingQuota`. */
 export type PendingQuotaRelease = { ownerId: string; workspaceId: string }
 
+/** Where a deferred release is parked until the owning transaction commits. */
+export type PendingQuotaReleaseRef = { current: PendingQuotaRelease | null }
+
+/** A fresh, empty {@link PendingQuotaReleaseRef}. */
+export const createPendingRelease = (): PendingQuotaReleaseRef => ({
+  current: null,
+})
+
 type DisconnectInboxInput = {
   inboxId: string
   workspaceId: string
@@ -83,13 +91,13 @@ type DisconnectInboxInput = {
    * has committed. Without it, a caller-owned `tx` that later rolls back would
    * have already given the unit back.
    */
-  pendingRelease?: { current: PendingQuotaRelease | null }
+  pendingRelease?: PendingQuotaReleaseRef
 }
 
 /** `tx` / `pendingRelease` a disconnect path accepts when a caller owns the transaction. */
 export type DisconnectTransactionScope = {
   tx?: DatabaseClient
-  pendingRelease?: { current: PendingQuotaRelease | null }
+  pendingRelease?: PendingQuotaReleaseRef
 }
 
 /** What the deletion log snapshots about a channel at the moment a user removes it. */
@@ -227,16 +235,14 @@ class ConnectionStateService extends BaseService {
     scope: DisconnectTransactionScope,
     work: (
       client: DatabaseClient,
-      pendingRelease: { current: PendingQuotaRelease | null } | undefined,
+      pendingRelease: PendingQuotaReleaseRef | undefined,
     ) => Promise<void>,
   ): Promise<void> {
     if (scope.tx) {
       await work(scope.tx, scope.pendingRelease)
       return
     }
-    const pendingRelease: { current: PendingQuotaRelease | null } = {
-      current: null,
-    }
+    const pendingRelease = createPendingRelease()
     await db.transaction((client) => work(client, pendingRelease))
     await this.releasePendingQuota(pendingRelease.current)
   }
@@ -368,24 +374,7 @@ class ConnectionStateService extends BaseService {
       input.tx,
     )
     if (!connection) {
-      // An orphan channel (satellite row and inbox, no `Connection`): the
-      // fresh token is already saved, so restore `Inbox.status` too, or the
-      // user reconnects and the channel stays disconnected. No quota here —
-      // like `markLegacyInboxUnhealthy`, this row was never counted through
-      // the Connection domain.
-      const mirror = (tx: DatabaseClient) =>
-        this.mirrorInboxStatus({
-          inboxId: input.inboxId,
-          workspaceId: input.workspaceId,
-          to: "connected",
-          reason: null,
-          tx,
-        })
-      if (input.tx) {
-        await mirror(input.tx)
-      } else {
-        await db.transaction(mirror)
-      }
+      await this.reconnectOrphanInbox(input)
       return
     }
     if (connection.workspaceId !== input.workspaceId) {
@@ -421,6 +410,77 @@ class ConnectionStateService extends BaseService {
         workspaceId: input.workspaceId,
       })
       throw err
+    }
+  }
+
+  /**
+   * `reconnectInbox` for an orphan channel (satellite row and inbox, no
+   * `Connection`): the fresh token is already saved, so restore `Inbox.status`
+   * too, or the user reconnects and the channel stays disconnected.
+   *
+   * Quota depends on how the inbox got here. `token_revoked` (see
+   * `markLegacyInboxUnhealthy`) never released its unit, so the mirror alone is
+   * right. Every other disconnect reason went through `inboxService.disconnect`,
+   * which released the unit: reviving without consuming one again would bypass
+   * the channel limit, so those go through the limit-checked resume.
+   */
+  private async reconnectOrphanInbox(input: {
+    inboxId: string
+    workspaceId: string
+    tx?: DatabaseClient
+    quotaConsumption?: ConnectionQuotaConsumption
+    ownerId?: string
+  }): Promise<void> {
+    const inbox = await inboxRepository.findById({
+      id: input.inboxId,
+      tx: input.tx,
+    })
+    if (inbox && inbox.workspaceId !== input.workspaceId) {
+      throw new ConnectionNotFoundException(input.inboxId)
+    }
+
+    const quotaReleased =
+      inbox?.status === inboxStatuses.enum.disconnected &&
+      inbox.disconnectReason !== null &&
+      inbox.disconnectReason !== "token_revoked"
+    if (quotaReleased) {
+      const ownerId =
+        input.ownerId ??
+        (await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+          workspaceId: input.workspaceId,
+        }))
+      if (!ownerId) {
+        throw new ConnectionNotFoundException(input.inboxId)
+      }
+      await inboxService.resumeTenantSuspended({
+        inboxId: input.inboxId,
+        workspaceId: input.workspaceId,
+        ownerId,
+        tx: input.tx,
+      })
+      if (input.quotaConsumption) {
+        // Lets a caller that owns `tx` hand the unit back if its COMMIT fails.
+        Object.assign(input.quotaConsumption, {
+          consumed: true,
+          workspaceId: input.workspaceId,
+          workspaceUsageIncremented: true,
+        })
+      }
+      return
+    }
+
+    const mirror = (tx: DatabaseClient) =>
+      this.mirrorInboxStatus({
+        inboxId: input.inboxId,
+        workspaceId: input.workspaceId,
+        to: "connected",
+        reason: null,
+        tx,
+      })
+    if (input.tx) {
+      await mirror(input.tx)
+    } else {
+      await db.transaction(mirror)
     }
   }
 
@@ -547,7 +607,7 @@ class ConnectionStateService extends BaseService {
      * this transition keeps releasing immediately once its own DB work
      * resolves.
      */
-    pendingRelease?: { current: PendingQuotaRelease | null }
+    pendingRelease?: PendingQuotaReleaseRef
   }): Promise<ConnectionModel> {
     const quotaConsumption: ConnectionQuotaConsumption =
       input.quotaConsumption ?? {
@@ -840,13 +900,12 @@ class ConnectionStateService extends BaseService {
     lastError?: string
     callerTransaction?: {
       tx: DatabaseClient
-      pendingRelease: { current: PendingQuotaRelease | null }
+      pendingRelease: PendingQuotaReleaseRef
     }
   }): Promise<{ outcome: ProviderEventOrder; connection: ConnectionModel }> {
     const strategy = PROVIDER_ACCOUNT_EVENT_STRATEGY[input.event]
-    const pendingRelease = input.callerTransaction?.pendingRelease ?? {
-      current: null,
-    }
+    const pendingRelease =
+      input.callerTransaction?.pendingRelease ?? createPendingRelease()
 
     const run = async (tx: DatabaseClient) => {
       const existing = await connectionRepository.findByIdForUpdateById(

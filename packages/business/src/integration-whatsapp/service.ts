@@ -780,67 +780,72 @@ class IntegrationWhatsappService extends BaseService {
     integrationWhatsapp: IntegrationWhatsappModel
     ownerId: string
     workspaceId: string
-    tx: DatabaseClient
-    /** Receives the quota release; the caller runs it after its commit. */
+    /** Joins the caller's transaction; omitted, one is opened and owned here. */
+    tx?: DatabaseClient
+    /** With `tx`: receives the quota release; the caller runs it after its commit. */
     pendingRelease?: DisconnectTransactionScope["pendingRelease"]
   }): Promise<void> {
-    const { integrationWhatsapp, ownerId, workspaceId, tx, pendingRelease } =
-      props
+    const { integrationWhatsapp, ownerId, workspaceId } = props
 
-    await tx
-      .update(coexistSyncRunModel)
-      .set({
-        status: "failed",
-        finishedAt: new Date(),
-        currentError: "Integration disconnected",
-      })
-      .where(
-        and(
-          eq(coexistSyncRunModel.integrationId, integrationWhatsapp.id),
-          inArray(coexistSyncRunModel.status, LIVE_RUN_STATUSES),
-        ),
-      )
+    await connectionStateService.runDisconnectInTransaction(
+      props,
+      async (tx, pendingRelease) => {
+        await tx
+          .update(coexistSyncRunModel)
+          .set({
+            status: "failed",
+            finishedAt: new Date(),
+            currentError: "Integration disconnected",
+          })
+          .where(
+            and(
+              eq(coexistSyncRunModel.integrationId, integrationWhatsapp.id),
+              inArray(coexistSyncRunModel.status, LIVE_RUN_STATUSES),
+            ),
+          )
 
-    await tx
-      .delete(whatsappCoexistStagingModel)
-      .where(
-        eq(
-          whatsappCoexistStagingModel.phoneNumberId,
-          integrationWhatsapp.phoneNumberId,
-        ),
-      )
+        await tx
+          .delete(whatsappCoexistStagingModel)
+          .where(
+            eq(
+              whatsappCoexistStagingModel.phoneNumberId,
+              integrationWhatsapp.phoneNumberId,
+            ),
+          )
 
-    // Polymorphic FK cleanup — no DB-level cascade for
-    // MetaCapiEvent.integrationId; stale rows would keep occupying the
-    // (workspaceId, channel, sourceKey) dedup slot after a reconnect.
-    await metaCapiEventRepository.deleteByIntegration(
-      {
-        workspaceId,
-        channel: "whatsapp",
-        integrationId: integrationWhatsapp.id,
+        // Polymorphic FK cleanup — no DB-level cascade for
+        // MetaCapiEvent.integrationId; stale rows would keep occupying the
+        // (workspaceId, channel, sourceKey) dedup slot after a reconnect.
+        await metaCapiEventRepository.deleteByIntegration(
+          {
+            workspaceId,
+            channel: "whatsapp",
+            integrationId: integrationWhatsapp.id,
+          },
+          tx,
+        )
+
+        await tx
+          .delete(integrationWhatsappModel)
+          .where(eq(integrationWhatsappModel.id, integrationWhatsapp.id))
+
+        // The business-account credential outlives a single number, so it is only
+        // dropped once this workspace has no other number on that account.
+        await whatsappBusinessAccountService.deleteIfOrphaned({
+          workspaceId,
+          wabaId: integrationWhatsapp.wabaId,
+          tx,
+        })
+
+        await connectionStateService.disconnectInbox({
+          inboxId: integrationWhatsapp.inboxId,
+          workspaceId,
+          ownerId,
+          tx,
+          pendingRelease,
+        })
       },
-      tx,
     )
-
-    await tx
-      .delete(integrationWhatsappModel)
-      .where(eq(integrationWhatsappModel.id, integrationWhatsapp.id))
-
-    // The business-account credential outlives a single number, so it is only
-    // dropped once this workspace has no other number on that account.
-    await whatsappBusinessAccountService.deleteIfOrphaned({
-      workspaceId,
-      wabaId: integrationWhatsapp.wabaId,
-      tx,
-    })
-
-    await connectionStateService.disconnectInbox({
-      inboxId: integrationWhatsapp.inboxId,
-      workspaceId,
-      ownerId,
-      tx,
-      pendingRelease,
-    })
   }
 
   /**

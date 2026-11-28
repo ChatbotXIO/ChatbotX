@@ -1,3 +1,4 @@
+import { accessTokenMatches } from "@chatbotx.io/database/auth-cas"
 import {
   and,
   type DatabaseClient,
@@ -453,7 +454,10 @@ class IntegrationThreadsService extends BaseService {
         and(
           eq(integrationThreadsModel.id, props.id),
           eq(integrationThreadsModel.workspaceId, props.workspaceId),
-          sql`${integrationThreadsModel.auth} -> 'tokens' ->> 'accessToken' = ${props.expectedCurrentAccessToken}`,
+          accessTokenMatches(
+            integrationThreadsModel.auth,
+            props.expectedCurrentAccessToken,
+          ),
         ),
       )
       .returning({ threadsUserId: integrationThreadsModel.threadsUserId })

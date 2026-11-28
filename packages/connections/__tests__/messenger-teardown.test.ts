@@ -29,6 +29,7 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
+  createPendingRelease: () => ({ current: null }),
   connectionStateService: {
     disconnectInbox: mocks.disconnectInbox,
     releasePendingQuota: mocks.releasePendingQuota,

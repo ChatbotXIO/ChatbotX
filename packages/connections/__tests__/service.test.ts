@@ -126,6 +126,7 @@ vi.mock("@chatbotx.io/business/workspace", () => ({
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
+  createPendingRelease: () => ({ current: null }),
   authExpiresAtOf: (auth: {
     authType: string
     tokens?: { expiresAt?: string }

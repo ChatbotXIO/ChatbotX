@@ -1,5 +1,5 @@
-import { type SQL, sql } from "@chatbotx.io/database/client"
 import type { AnyPgColumn } from "drizzle-orm/pg-core"
+import { type SQL, sql } from "./client"
 
 /**
  * `WHERE` fragment: the row's stored access token is still `expected`.

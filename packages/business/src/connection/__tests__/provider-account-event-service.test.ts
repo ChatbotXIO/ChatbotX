@@ -16,6 +16,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
 }))
 vi.mock("../state-service", () => ({
+  createPendingRelease: () => ({ current: null }),
   connectionStateService: {
     applyProviderAccountEvent: mocks.applyProviderAccountEvent,
     releasePendingQuota: mocks.releasePendingQuota,

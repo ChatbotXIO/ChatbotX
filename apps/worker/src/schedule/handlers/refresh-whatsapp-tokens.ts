@@ -29,9 +29,6 @@ async function refreshOne(integration: {
     return
   }
 
-  // The token this refresh started from; the write only lands while it is current.
-  let expectedAccessToken: string | undefined
-
   await refreshWithErrorHandling<WhatsappAuthValue>({
     id: integration.id,
     workspaceId: integration.workspaceId,
@@ -52,15 +49,17 @@ async function refreshOne(integration: {
       if (auth.metadata.isManual) {
         return
       }
-      expectedAccessToken = auth.tokens?.accessToken
 
       const refreshedAuth = await integrationWhatsapp.refreshAuth?.({ auth })
       if (!refreshedAuth) {
         throw new Error("WhatsApp refreshAuth returned no auth")
       }
-      return refreshedAuth
+      return {
+        auth: refreshedAuth,
+        expectedAccessToken: auth.tokens?.accessToken,
+      }
     },
-    apply: (newAuth) =>
+    apply: (newAuth, expectedAccessToken) =>
       integrationWhatsappService.updateAuth({
         id: integration.id,
         workspaceId: integration.workspaceId,

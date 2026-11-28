@@ -5,11 +5,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import {
-  connectionStateService,
-  type PendingQuotaRelease,
-} from "@chatbotx.io/business/connection"
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { findOrFail } from "@chatbotx.io/database/client"
 import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { isRevokedTokenError } from "@chatbotx.io/integration-whatsapp"
@@ -50,19 +46,11 @@ export const disconnectWhatsappAction = workspaceActionClientAllowExpired
         }
       }
 
-      const pendingRelease: { current: PendingQuotaRelease | null } = {
-        current: null,
-      }
-      await db.transaction((tx) =>
-        integrationWhatsappService.disconnect({
-          integrationWhatsapp,
-          ownerId: workspace.ownerId,
-          workspaceId,
-          tx,
-          pendingRelease,
-        }),
-      )
-      await connectionStateService.releasePendingQuota(pendingRelease.current)
+      await integrationWhatsappService.disconnect({
+        integrationWhatsapp,
+        ownerId: workspace.ownerId,
+        workspaceId,
+      })
 
       await auditService.record({
         action: "disconnect",

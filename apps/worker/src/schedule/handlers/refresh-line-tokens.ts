@@ -26,15 +26,18 @@ async function refreshOne(integration: {
         id: integration.id,
         workspaceId: integration.workspaceId,
       })
-      return await integrations.line.refreshAuth?.({
-        auth: current.auth as LineAuthValue,
-      })
+      const auth = current.auth as LineAuthValue
+      const refreshed = await integrations.line.refreshAuth?.({ auth })
+      return refreshed
+        ? { auth: refreshed, expectedAccessToken: auth.tokens?.accessToken }
+        : undefined
     },
-    apply: (newAuth) =>
+    apply: (newAuth, expectedAccessToken) =>
       lineIntegrationService.updateAuth({
         id: integration.id,
         workspaceId: integration.workspaceId,
         auth: newAuth,
+        expectedAccessToken,
       }),
     markError: (error) =>
       lineIntegrationService.markTokenRefreshError({

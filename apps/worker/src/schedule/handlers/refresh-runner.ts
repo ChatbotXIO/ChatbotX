@@ -18,6 +18,11 @@ export async function runRefreshBatch<T>(
   }
 }
 
+export type RefreshResult<TAuth> = {
+  auth: TAuth
+  expectedAccessToken?: string
+}
+
 export type RefreshWithErrorHandlingInput<TAuth> = {
   id: string
   workspaceId: string
@@ -31,11 +36,16 @@ export type RefreshWithErrorHandlingInput<TAuth> = {
   withLock?: (fn: () => Promise<void>) => Promise<void>
   // Performs the lookup and the provider's refresh call. Return `undefined`
   // to skip this integration silently (no audit record, no error).
-  refresh: () => Promise<TAuth | undefined>
+  // `expectedAccessToken` is the access token the refresh started from; it is
+  // handed to `apply` so the write can be a compare-and-set against it.
+  refresh: () => Promise<RefreshResult<TAuth> | undefined>
   // Persists the refreshed auth returned by `refresh`. Return `false` when the
   // write was skipped because a reconnect replaced the auth meanwhile: nothing
   // was refreshed, so no audit record is written.
-  apply: (newAuth: TAuth) => Promise<unknown>
+  apply: (
+    newAuth: TAuth,
+    expectedAccessToken: string | undefined,
+  ) => Promise<boolean | undefined>
   markError: (error: unknown) => Promise<void>
   auditDetail: string
   // Invoked when `distributedLock.runExclusive` itself rejects (e.g. a
@@ -72,12 +82,14 @@ export async function refreshWithErrorHandling<TAuth>(
           })
     const run = lock(async () => {
       try {
-        const newAuth = await refresh()
-        if (newAuth === undefined) {
+        const refreshed = await refresh()
+        if (refreshed === undefined) {
           return
         }
 
-        if ((await apply(newAuth)) === false) {
+        if (
+          (await apply(refreshed.auth, refreshed.expectedAccessToken)) === false
+        ) {
           return
         }
 

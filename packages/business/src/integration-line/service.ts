@@ -1,3 +1,4 @@
+import { accessTokenMatches } from "@chatbotx.io/database/auth-cas"
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import {
   and,
@@ -371,7 +372,12 @@ class LineIntegrationService extends BaseService {
     id: string
     workspaceId: string
     auth: Record<string, unknown>
-  }): Promise<void> {
+    /**
+     * Compare-and-set for the refresh cron: the write lands only while this is
+     * still the stored access token. Returns `false` when it was skipped.
+     */
+    expectedAccessToken?: string
+  }): Promise<boolean> {
     const [row] = await db
       .update(integrationLineModel)
       .set({ auth: props.auth, tokenRefreshError: null })
@@ -379,6 +385,12 @@ class LineIntegrationService extends BaseService {
         and(
           eq(integrationLineModel.id, props.id),
           eq(integrationLineModel.workspaceId, props.workspaceId),
+          props.expectedAccessToken
+            ? accessTokenMatches(
+                integrationLineModel.auth,
+                props.expectedAccessToken,
+              )
+            : undefined,
         ),
       )
       .returning({
@@ -386,6 +398,9 @@ class LineIntegrationService extends BaseService {
         workspaceId: integrationLineModel.workspaceId,
       })
     if (!row) {
+      if (props.expectedAccessToken) {
+        return false
+      }
       throw notFoundException("LINE integration not found")
     }
     await recordRefreshedAuth({
@@ -394,6 +409,7 @@ class LineIntegrationService extends BaseService {
       sourceId: row.channelId,
       auth: props.auth as AuthValue,
     })
+    return true
   }
 
   async markTokenRefreshError(props: {

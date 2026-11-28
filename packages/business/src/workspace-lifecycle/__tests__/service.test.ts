@@ -76,6 +76,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("../../connection/state-service", () => ({
+  createPendingRelease: () => ({ current: null }),
   connectionStateService: { transition: mockConnectionTransition },
 }))
 

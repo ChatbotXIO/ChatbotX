@@ -38,7 +38,7 @@ import {
 } from "../connection"
 import {
   connectionStateService,
-  type PendingQuotaRelease,
+  createPendingRelease,
 } from "../connection/state-service"
 import { finalizeContactProfile } from "../contact-locale"
 import { channelLimitReachedException, notFoundException } from "../errors"
@@ -273,9 +273,7 @@ class IntegrationWebchatService extends BaseService {
     ])
 
     // `withDeleteGuard` may re-run its body, so each run overwrites the handle.
-    const pendingRelease: { current: PendingQuotaRelease | null } = {
-      current: null,
-    }
+    const pendingRelease = createPendingRelease()
     await withDeleteGuard(
       {
         workspaceId: input.workspaceId,

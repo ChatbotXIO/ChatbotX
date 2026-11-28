@@ -61,12 +61,13 @@ export async function reconnectZaloHandler(props: {
       workspaceId: props.workspaceId,
       auth: authValue,
       writeAuth: async (tx) => {
-        await zaloIntegrationService.updateAuth(
-          integrationZalo.id,
-          authValue,
-          authValue.metadata.oaName,
+        await zaloIntegrationService.updateAuth({
+          id: integrationZalo.id,
+          workspaceId: props.workspaceId,
+          auth: authValue,
+          name: authValue.metadata.oaName,
           tx,
-        )
+        })
       },
     })
 

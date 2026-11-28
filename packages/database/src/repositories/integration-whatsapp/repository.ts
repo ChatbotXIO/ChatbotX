@@ -1,4 +1,5 @@
 import type { EncryptedData } from "@chatbotx.io/encryption"
+import { accessTokenMatches } from "../../auth-cas"
 import {
   and,
   type DatabaseClient,
@@ -328,7 +329,10 @@ class IntegrationWhatsappRepository {
         and(
           workspaceIntegrationFilter(input),
           input.expectedAccessToken
-            ? sql`${integrationWhatsappModel.auth} -> 'tokens' ->> 'accessToken' = ${input.expectedAccessToken}`
+            ? accessTokenMatches(
+                integrationWhatsappModel.auth,
+                input.expectedAccessToken,
+              )
             : undefined,
         ),
       )

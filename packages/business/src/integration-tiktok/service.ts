@@ -1,3 +1,4 @@
+import { accessTokenMatches } from "@chatbotx.io/database/auth-cas"
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import {
   and,
@@ -144,7 +145,12 @@ class TiktokIntegrationService extends BaseService {
     id: string
     workspaceId: string
     auth: Record<string, unknown>
-  }): Promise<void> {
+    /**
+     * Compare-and-set for the refresh paths: the write lands only while this is
+     * still the stored access token. Returns `false` when it was skipped.
+     */
+    expectedAccessToken?: string
+  }): Promise<boolean> {
     const [row] = await db
       .update(integrationTiktokModel)
       .set({ auth: props.auth, tokenRefreshError: null })
@@ -152,11 +158,20 @@ class TiktokIntegrationService extends BaseService {
         and(
           eq(integrationTiktokModel.id, props.id),
           eq(integrationTiktokModel.workspaceId, props.workspaceId),
+          props.expectedAccessToken
+            ? accessTokenMatches(
+                integrationTiktokModel.auth,
+                props.expectedAccessToken,
+              )
+            : undefined,
         ),
       )
       .returning({ openId: integrationTiktokModel.openId })
 
     if (!row) {
+      if (props.expectedAccessToken) {
+        return false
+      }
       throw notFoundException("TikTok integration not found")
     }
 
@@ -166,6 +181,7 @@ class TiktokIntegrationService extends BaseService {
       sourceId: row.openId,
       auth: props.auth as AuthValue,
     })
+    return true
   }
 
   /**

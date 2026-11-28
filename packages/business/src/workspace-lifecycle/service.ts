@@ -51,6 +51,7 @@ import { coexistService } from "../coexist/service"
 import type { ConnectionEvent } from "../connection/state"
 import {
   connectionStateService,
+  createPendingRelease,
   type PendingQuotaRelease,
 } from "../connection/state-service"
 import { CONTACT_SCAN_ERRORS } from "../contact-scan/constants"
@@ -655,9 +656,7 @@ class WorkspaceLifecycleService extends BaseService {
         // caller knows when it actually commits, so `disconnectWorkspaceChannels`
         // bubbles this up through `pendingReleases` instead of releasing it
         // here.
-        const pendingRelease: { current: PendingQuotaRelease | null } = {
-          current: null,
-        }
+        const pendingRelease = createPendingRelease()
         await connectionStateService.transition({
           connectionId: connection.id,
           event,

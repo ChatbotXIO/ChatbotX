@@ -40,13 +40,17 @@ async function refreshOne(integration: {
         )
         return
       }
-      return await refreshTiktokAuth(auth)
+      return {
+        auth: await refreshTiktokAuth(auth),
+        expectedAccessToken: auth.tokens?.accessToken,
+      }
     },
-    apply: (newAuth) =>
+    apply: (newAuth, expectedAccessToken) =>
       tiktokIntegrationService.updateAuth({
         id: integration.id,
         workspaceId: integration.workspaceId,
         auth: newAuth,
+        expectedAccessToken,
       }),
     markError: (error) =>
       tiktokIntegrationService.markTokenRefreshError({

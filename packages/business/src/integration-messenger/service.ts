@@ -1,3 +1,4 @@
+import { accessTokenMatches } from "@chatbotx.io/database/auth-cas"
 import {
   and,
   type DatabaseClient,
@@ -20,7 +21,6 @@ import {
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
-import { accessTokenMatches } from "../connection/auth-cas"
 import { recordRefreshedAuth } from "../connection/record-refreshed-auth"
 import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"

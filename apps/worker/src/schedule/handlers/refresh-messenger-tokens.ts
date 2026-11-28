@@ -18,9 +18,6 @@ async function refreshOne(integration: {
     return
   }
 
-  // The token this refresh started from; the write only lands while it is current.
-  let expectedAccessToken: string | undefined
-
   await refreshWithErrorHandling<MessengerAuthValue>({
     id: integration.id,
     workspaceId: integration.workspaceId,
@@ -38,14 +35,16 @@ async function refreshOne(integration: {
       }
 
       const auth = current.auth as MessengerAuthValue
-      expectedAccessToken = auth.tokens?.accessToken
       const refreshedAuth = await integrationMessenger.refreshAuth?.({ auth })
       if (!refreshedAuth) {
         throw new Error("Messenger refreshAuth returned no auth")
       }
-      return refreshedAuth
+      return {
+        auth: refreshedAuth,
+        expectedAccessToken: auth.tokens?.accessToken,
+      }
     },
-    apply: (newAuth) =>
+    apply: (newAuth, expectedAccessToken) =>
       messengerIntegrationService.updateAuth({
         id: integration.id,
         workspaceId: integration.workspaceId,
